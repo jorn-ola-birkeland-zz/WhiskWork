@@ -212,7 +212,7 @@ namespace WhiskWork.Core
             CreateTransientWorkStepsRecursively(transientRootPath,expandStep, item.Id);
 
             var workItemClass = WorkItemClass.Combine(expandStep.WorkItemClass, item.Id);
-            var transientWorkStep = new WorkStep(transientRootPath, expandStep.Path, expandStep.Ordinal, WorkStepType.Transient, workItemClass);
+            var transientWorkStep = new WorkStep(transientRootPath, expandStep.Path, expandStep.Ordinal, WorkStepType.Transient, workItemClass, expandStep.Title);
             _workflowRepository.CreateWorkStep(transientWorkStep);
 
             return transientWorkStep;
@@ -228,7 +228,7 @@ namespace WhiskWork.Core
                 var childTransientPath = transientRootPath + offset;
 
                 var workItemClass = WorkItemClass.Combine(childStep.WorkItemClass,workItemId);
-                _workflowRepository.CreateWorkStep(new WorkStep(childTransientPath, transientRootPath, childStep.Ordinal, childStep.Type, workItemClass));
+                _workflowRepository.CreateWorkStep(new WorkStep(childTransientPath, transientRootPath, childStep.Ordinal, childStep.Type, workItemClass, childStep.Title));
 
                 CreateTransientWorkStepsRecursively(childTransientPath, childStep, workItemId);
             }

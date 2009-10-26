@@ -26,7 +26,7 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
             _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal,
-                                    "task");
+                                    "task", "Tasks");
             _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1,
                                     WorkStepType.Begin, "task");
             _workflowRepository.Add("/development/inprocess/tasks/inprocess", "/development/inprocess/tasks", 2,
@@ -84,6 +84,16 @@ namespace WhiskWork.UnitTest
             Assert.AreEqual(WorkStepType.End,
                             _workflowRepository.GetWorkStep("/development/inprocess/cr1/tasks/done").Type);
         }
+
+        [TestMethod]
+        public void ShouldCreateTitleOnTransientChildSteps()
+        {
+            _wp.CreateWorkItem("cr1", "/analysis");
+            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+
+            Assert.AreEqual("Tasks", _workflowRepository.GetWorkStep("/development/inprocess/cr1/tasks").Title);
+        }
+
 
         [TestMethod]
         public void ShouldNotIncludeTransientStepsOfEarlierWorkItemsWhenCreatingTransientSteps()

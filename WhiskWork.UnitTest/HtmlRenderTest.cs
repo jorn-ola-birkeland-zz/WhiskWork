@@ -302,8 +302,8 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis");
-            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            Create("/analysis", "cr1");
+            Move("/development", "cr1");
 
 
             var doc = GetFullDocument();
@@ -320,13 +320,130 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis");
-            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            Create("/analysis", "cr1");
+            Move("/development", "cr1");
 
 
             var doc = GetFullDocument();
 
             Assert.AreEqual("development.inprocess.cr1", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='transient']/@id").Value);
+        }
+
+        [TestMethod]
+        public void ShouldRenderTitleForChildOfTransientStep()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
+            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+
+            Create("/analysis", "cr1");
+            Move("/development", "cr1");
+
+
+            var doc = GetFullDocument();
+
+            Assert.IsNotNull(doc.SelectSingleNode("//li[@class='transient']/ol/li[@class='tasks']/h1"));
+        }
+
+        [TestMethod]
+        public void ExpandIntegrationTest1()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/inprogress", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
+            _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
+            _workflowRepository.Add("/test", "/", 2, WorkStepType.Normal, "cr");
+            _workflowRepository.Add("/done", "/", 2, WorkStepType.End, "cr");
+
+            Create("/analysis", "cr1");
+            Move("/development", "cr1");
+
+            AssertIsAsExpected(Resources.ExpandIntegarationTest1);
+        }
+
+        [TestMethod]
+        public void ExpandIntegrationTest2()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/inprogress", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
+            _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
+            _workflowRepository.Add("/test", "/", 2, WorkStepType.Normal, "cr");
+            _workflowRepository.Add("/done", "/", 2, WorkStepType.End, "cr");
+
+
+            Create("/analysis", "cr1", "cr2");
+            Move("/development", "cr1", "cr2");
+
+            AssertIsAsExpected(Resources.ExpandIntegarationTest2);
+        }
+
+
+        [TestMethod]
+        public void FullFeatureTest()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
+            _workflowRepository.Add("/analysis/inprocess", "/analysis", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/analysis/done", "/analysis", 1, WorkStepType.Normal, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr", "Development");
+            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
+            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/inprocess", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
+            _workflowRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
+            _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
+            _workflowRepository.Add("/feedback", "/", 3, WorkStepType.Parallel, "cr");
+            _workflowRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
+            _workflowRepository.Add("/feedback/demo", "/feedback", 2, WorkStepType.Normal, "cr-demo", "Demo");
+            _workflowRepository.Add("/feedback/test", "/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
+            _workflowRepository.Add("/done", "/", 4, WorkStepType.End, "cr", "Done");
+
+            Create("/analysis","cr1","cr2","cr3","cr4","cr5","cr6","cr7","cr8","cr9","cr10", "cr11", "cr12");
+            Move("/analysis/done","cr4");
+            Move("/development/inprocess", "cr5","cr6");
+            Create("/development/inprocess/cr5", "cr5-1", "cr5-2", "cr5-3", "cr5-4");
+            Create("/development/inprocess/cr6", "cr6-1", "cr6-2", "cr6-3", "cr6-4");
+            Move("/development/inprocess/cr5/tasks/done", "cr5-1", "cr5-2");
+            Move("/development/inprocess/cr6/tasks/inprocess", "cr6-1");
+            Move("/development/done", "cr7", "cr8", "cr9","cr10", "cr11", "cr12");
+            Move("/feedback/review", "cr7", "cr8");
+            Move("/feedback/demo", "cr9", "cr10");
+            Move("/feedback/test", "cr11");
+            Move("/done", "cr7.review");
+            Move("/done", "cr9.demo");
+            Move("/done", "cr12");
+
+            AssertIsAsExpected(Resources.FullIntegrationTest1);
+        }
+
+        private void Create(string path, params string[] workItemIds)
+        {
+            Array.ForEach(workItemIds, workItemId => _wp.CreateWorkItem(workItemId,path) );
+        }
+
+        private void Move(string path, params string[] workItemIds)
+        {
+            Array.ForEach(workItemIds, workItemId => _wp.UpdateWorkItem(workItemId, path, new NameValueCollection()));
+        }
+
+
+        private void AssertIsAsExpected(string expectedXml)
+        {
+            var expected = new XmlDocument();
+            expected.LoadXml(expectedXml);
+
+            var actual = GetFullDocument();
+            Assert.AreEqual(expected.InnerXml, actual.InnerXml);
         }
 
         private XmlDocument GetFullDocument()

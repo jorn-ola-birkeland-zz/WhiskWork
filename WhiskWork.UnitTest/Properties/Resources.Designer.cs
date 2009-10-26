@@ -61,8 +61,7 @@ namespace WhiskWork.UnitTest.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;html&gt;
+        ///   Looks up a localized string similar to &lt;html&gt;
         ///  &lt;body&gt;
         ///    &lt;ol&gt;
         ///      &lt;li id=&quot;analysis&quot; class=&quot;workstep step-cr analysis&quot;&gt;&lt;/li&gt;
@@ -74,7 +73,9 @@ namespace WhiskWork.UnitTest.Properties {
         ///                &lt;ol&gt;
         ///                  &lt;li class=&quot;workstep step-cr-cr1&quot;&gt;
         ///                    &lt;ol&gt;
-        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt; [rest of string was truncated]&quot;;.
+        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt;
+        ///                    &lt;/ol&gt;
+        ///            [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ExpandIntegarationTest1 {
             get {
@@ -102,6 +103,29 @@ namespace WhiskWork.UnitTest.Properties {
         internal static string ExpandIntegarationTest2 {
             get {
                 return ResourceManager.GetString("ExpandIntegarationTest2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;html&gt;
+        ///  &lt;body&gt;
+        ///    &lt;ol&gt;
+        ///      &lt;li id=&quot;analysis&quot; class=&quot;workstep step-cr analysis&quot;&gt;&lt;/li&gt;
+        ///      &lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;
+        ///        &lt;ol&gt;
+        ///          &lt;li id=&quot;development.inprocess&quot; class=&quot;inprocess&quot;&gt;
+        ///            &lt;ol&gt;
+        ///              &lt;li id=&quot;development.inprocess.cr1&quot; class=&quot;transient&quot;&gt;
+        ///                &lt;ol&gt;
+        ///                  &lt;li class=&quot;workstep step-cr-cr1&quot;&gt;
+        ///                    &lt;ol&gt;
+        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt;
+        ///                    &lt;/ol&gt;
+        ///            [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string FullIntegrationTest1 {
+            get {
+                return ResourceManager.GetString("FullIntegrationTest1", resourceCulture);
             }
         }
     }

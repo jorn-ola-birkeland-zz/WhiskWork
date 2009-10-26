@@ -41,8 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssertUtils.cs" />
-    <Compile Include="HtmlRendererFullIntegrationTest.cs" />
-    <Compile Include="HtmlRendererExpandIntegrationTest.cs" />
     <Compile Include="HtmlRenderTest.cs" />
     <Compile Include="ParallelWorkStepsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,7 +76,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\FullIntegarationTest1.html" />
+    <Content Include="Resources\FullIntegrationTest1.html" />
     <Content Include="Resources\ExpandIntegarationTest2.html" />
     <Content Include="Resources\ExpandIntegarationTest1.html" />
   </ItemGroup>
