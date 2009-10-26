@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Collections.Specialized;
 using WhiskWork.Core;
+using WhiskWork.Generic;
 
 namespace WhiskWork.UnitTest
 {
@@ -103,6 +104,20 @@ namespace WhiskWork.UnitTest
 
             Assert.AreEqual(0, _wp.GetWorkItems("/feedback").Where(wi => wi.Id == "cr1").Count());
         }
+
+        [TestMethod]
+        public void ShouldNotBeAbleToMoveParallelLockedWorkItem()
+        {
+            CreateSimpleParallelWorkflow();
+
+            _wp.CreateWorkItem("cr1", "/development");
+            _wp.UpdateWorkItem("cr1", "/feedback/review", new NameValueCollection());
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () => _wp.UpdateWorkItem("cr1", "/done", new NameValueCollection())
+                );
+        }
+
 
         [TestMethod]
         public void ShouldLockWorkItemAndCreateChildWorkItemsWhenMovedToRootOfParallelStep()

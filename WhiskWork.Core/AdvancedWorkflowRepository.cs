@@ -19,7 +19,7 @@ namespace WhiskWork.Core
                 DeleteWorkStepsRecursively(workStep);
             }
 
-            _workflowRepository.DeleteWorkStep(step.Path);
+            DeleteWorkStep(step.Path);
         }
 
 

@@ -79,6 +79,21 @@ namespace WhiskWork.Core
             return step.Type == WorkStepType.Expand;
         }
 
+        public bool IsParallelStep(string path)
+        {
+            return !IsRoot(path) && IsParallelStep(_workflowRepository.GetWorkStep(path));
+        }
+
+        public bool IsParallelStep(WorkStep step)
+        {
+            return step.Type == WorkStepType.Parallel;
+        }
+
+        public bool IsRoot(string path)
+        {
+            return path == "/";
+        }
+
         public bool IsValidWorkStepForWorkItem(WorkItem item, WorkStep workStep)
         {
             return item.Classes.Contains(workStep.WorkItemClass);
@@ -86,18 +101,7 @@ namespace WhiskWork.Core
 
         public IEnumerable<string> GetWorkItemClasses(WorkStep workStep)
         {
-            var classes = new List<string> { workStep.WorkItemClass };
-
-            if (workStep.ParentPath != "/")
-            {
-                var parentWorkstep = _workflowRepository.GetWorkStep(workStep.ParentPath);
-                if (parentWorkstep != null && parentWorkstep.Type == WorkStepType.Parallel)
-                {
-                    classes.Add(parentWorkstep.WorkItemClass);
-                }
-            }
-
-            return classes;
+            yield return workStep.WorkItemClass;
         }
 
         

@@ -15,11 +15,6 @@ namespace WhiskWork.Core
             Ordinal = ordinal;
         }
 
-        public static WorkItem New(string id, string path)
-        {
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,0);
-        }
-
         public static WorkItem New(string id, string path, IEnumerable<string> workItemClasses)
         {
             return new WorkItem(id, path, workItemClasses, WorkItemStatus.Normal, null,0);

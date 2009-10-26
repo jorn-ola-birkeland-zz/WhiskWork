@@ -70,7 +70,7 @@ namespace WhiskWork.Core
         {
             var workItemsInStep = _workItemRepository.GetWorkItems(workItem.Path);
 
-            return workItemsInStep.Count()>0 ? workItemsInStep.Max(wi => wi.Ordinal) : 1;
+            return workItemsInStep.Count()>0 ? workItemsInStep.Max(wi => wi.Ordinal) + 1 : 1;
         }
     }
 }

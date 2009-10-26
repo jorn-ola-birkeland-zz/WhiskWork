@@ -8,10 +8,25 @@ using WhiskWork.Generic;
 
 namespace WhiskWork.Web
 {
+    public class RootWorkStep : WorkStep
+    {
+        private RootWorkStep() : base("/", null, 0, WorkStepType.Normal, null)
+        {
+        }
+
+        public static RootWorkStep Instance
+        {
+            get
+            {
+                return new RootWorkStep();
+            }
+        }
+    }
+
     public class HtmlRenderer
     {
         private readonly IWorkflowRepository _workflowRepository;
-        private IWorkItemRepository _workItemRepository;
+        private readonly IWorkItemRepository _workItemRepository;
 
         public HtmlRenderer(IWorkflowRepository workflowRepository, IWorkItemRepository workItemRepository)
         {
@@ -28,7 +43,7 @@ namespace WhiskWork.Web
                     htmlWriter.RenderBeginTag(HtmlTextWriterTag.Html);
                     htmlWriter.RenderBeginTag(HtmlTextWriterTag.Body);
 
-                    WriteStepsRecursively(htmlWriter, "/");
+                    WriteStepsRecursively(htmlWriter, RootWorkStep.Instance);
 
                     htmlWriter.RenderEndTag(); //body
                     htmlWriter.RenderEndTag(); //html
@@ -36,54 +51,168 @@ namespace WhiskWork.Web
             }
         }
 
-        private void WriteStepsRecursively(HtmlTextWriter writer, string path)
+        private void WriteStepsRecursively(HtmlTextWriter writer, WorkStep workStep)
+        {
+            var query = new WorkStepQuery(_workflowRepository);
+
+            if (query.IsParallelStep(workStep))
+            {
+                RenderList(writer, workStep, HtmlTextWriterTag.Ul);
+            }
+            else if(query.IsExpandStep(workStep))
+            {
+                RenderExpandStep(writer, workStep);
+            }
+            else
+            {
+                RenderList(writer,workStep,HtmlTextWriterTag.Ol);
+            }
+        }
+
+        private void RenderList(HtmlTextWriter writer, WorkStep workStep, HtmlTextWriterTag listTag)
+        {
+            var childSteps = _workflowRepository.GetChildWorkSteps(workStep.Path);
+            if (childSteps.Count() == 0)
+            {
+                return;
+            }
+
+            writer.RenderBeginTag(listTag);
+            RenderChildSteps(writer, childSteps);
+            writer.RenderEndTag();
+        }
+
+        private void RenderExpandStep(HtmlTextWriter writer, WorkStep workStep)
         {
             writer.RenderBeginTag(HtmlTextWriterTag.Ol);
-            foreach (var workStep in _workflowRepository.GetChildWorkSteps(path).OrderBy(step => step.Ordinal))
-            {
-                string id = GenerateWorkStepId(workStep);
-                writer.AddAttribute(HtmlTextWriterAttribute.Id,id);
+            RenderExpandTransientListItems(writer, workStep);
+            RenderExpandTemplateListItem(writer, workStep);
 
-                string workstep = GenerateWorkStepClasses(workStep);
-                writer.AddAttribute(HtmlTextWriterAttribute.Class, workstep);
-
-                writer.RenderBeginTag(HtmlTextWriterTag.Li);
-                writer.RenderBeginTag(HtmlTextWriterTag.H1);
-                writer.Write(workStep.Title);
-                writer.RenderEndTag(); //h1
-
-
-                RenderWorkItem(writer, workStep);
-
-                WriteStepsRecursively(writer, workStep.Path);
-
-                writer.RenderEndTag(); //li
-            }
             writer.RenderEndTag(); //ol
         }
 
-        private void RenderWorkItem(HtmlTextWriter writer, WorkStep workStep)
+        private void RenderExpandTransientListItems(HtmlTextWriter writer, WorkStep step)
         {
+            var transientSteps = _workflowRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
+
+            foreach (var transientStep in transientSteps)
+            {
+                writer.AddAttribute(HtmlTextWriterAttribute.Id,GenerateWorkStepId(transientStep));
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, "transient");
+                writer.RenderBeginTag(HtmlTextWriterTag.Li);
+
+                writer.RenderBeginTag(HtmlTextWriterTag.Ol);
+
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, GetLeafStepClasses(transientStep).Join(' '));
+                writer.RenderBeginTag(HtmlTextWriterTag.Li);
+
+                RenderWorkItems(writer,transientStep);
+
+                writer.RenderEndTag();
+
+                var childSteps = _workflowRepository.GetChildWorkSteps(transientStep.Path);
+                RenderChildSteps(writer, childSteps);
+
+                writer.RenderEndTag(); //ol
+
+                writer.RenderEndTag(); //li
+            }
+        }
+
+        private void RenderExpandTemplateListItem(HtmlTextWriter writer, WorkStep workStep)
+        {
+            writer.AddAttribute(HtmlTextWriterAttribute.Class, "expand");
+            writer.RenderBeginTag(HtmlTextWriterTag.Li);
+
+
             writer.RenderBeginTag(HtmlTextWriterTag.Ol);
-            foreach (var workItem in _workItemRepository.GetWorkItems(workStep.Path).OrderBy(wi => wi.Ordinal))
+
+            writer.AddAttribute(HtmlTextWriterAttribute.Class, GetLeafStepClasses(workStep).Join(' '));
+            writer.RenderBeginTag(HtmlTextWriterTag.Li);
+            writer.RenderEndTag();
+
+            var childSteps = _workflowRepository.GetChildWorkSteps(workStep.Path).Where(ws=>ws.Type!=WorkStepType.Transient);
+            RenderChildSteps(writer, childSteps);
+
+            writer.RenderEndTag(); //ol
+
+            writer.RenderEndTag(); //li
+            
+        }
+
+        private void RenderChildSteps(HtmlTextWriter writer, IEnumerable<WorkStep> childSteps)
+        {
+            foreach (var childStep in childSteps.OrderBy(step => step.Ordinal))
+            {
+                var id = GenerateWorkStepId(childStep);
+                writer.AddAttribute(HtmlTextWriterAttribute.Id, id);
+
+                var workStepClass = GenerateWorkStepClass(childStep);
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, workStepClass);
+
+                writer.RenderBeginTag(HtmlTextWriterTag.Li);
+                RenderTitle(writer, childStep);
+
+
+                RenderWorkItems(writer, childStep);
+
+                WriteStepsRecursively(writer, childStep);
+
+                writer.RenderEndTag(); //li
+            }
+        }
+
+        private static void RenderTitle(HtmlTextWriter writer, WorkStep step)
+        {
+            if(string.IsNullOrEmpty(step.Title))
+            {
+                return;
+            }
+
+            writer.RenderBeginTag(HtmlTextWriterTag.H1);
+            writer.Write(step.Title);
+            writer.RenderEndTag(); //h1
+        }
+
+        private void RenderWorkItems(HtmlTextWriter writer, WorkStep workStep)
+        {
+            var workItems = _workItemRepository.GetWorkItems(workStep.Path).Where(wi=>wi.Status!=WorkItemStatus.ParallelLocked);
+            if(workItems.Count()==0)
+            {
+                return;
+            }
+
+            writer.RenderBeginTag(HtmlTextWriterTag.Ol);
+            foreach (var workItem in workItems.OrderBy(wi => wi.Ordinal))
             {
                 writer.AddAttribute(HtmlTextWriterAttribute.Id, workItem.Id);
 
+                var workItemClass = GenerateWorkItemClass(workItem);
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, workItemClass);
+
+
                 writer.RenderBeginTag(HtmlTextWriterTag.Li);
                 writer.RenderEndTag(); //li
             }
             writer.RenderEndTag(); //ol
         }
 
-        private string GenerateWorkStepClasses(WorkStep workStep)
+        private static string GenerateWorkItemClass(WorkItem item)
+        {
+            var classes = new List<string> {"workitem"};
+            classes.AddRange(item.Classes);
+
+            return classes.Join(' ');
+        }
+
+        private string GenerateWorkStepClass(WorkStep workStep)
         {
             var classes = new List<string>();
             var query = new WorkStepQuery(_workflowRepository);
 
-            if(query.IsLeafStep(workStep))
+            if(!query.IsExpandStep(workStep) && query.IsLeafStep(workStep))
             {
-                classes.Add("workstep");
-                classes.Add(GetWorkStepClass(workStep));
+                classes.AddRange(GetLeafStepClasses(workStep));
             }
 
             classes.Add(GetLeafDirectory(workStep));
@@ -91,12 +220,18 @@ namespace WhiskWork.Web
             return classes.Join(' ');
         }
 
+        private static IEnumerable<string> GetLeafStepClasses(WorkStep workStep)
+        {
+            yield return "workstep";
+            yield return GetWorkItemClassForWorkStep(workStep);
+        }
+
         private static string GetLeafDirectory(WorkStep workStep)
         {
             return workStep.Path.Split('/').Last();
         }
 
-        private static string GetWorkStepClass(WorkStep workStep)
+        private static string GetWorkItemClassForWorkStep(WorkStep workStep)
         {
             return string.Format("step-{0}", workStep.WorkItemClass);
         }

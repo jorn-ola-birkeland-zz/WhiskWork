@@ -17,8 +17,8 @@ namespace WhiskWork.Core
         {
             _workflowRepository = new AdvancedWorkflowRepository(workflowRepository);
             _workItemRepository = workItemRepository;
-            _workStepQuery = new WorkStepQuery(workflowRepository);
-            _workItemQuery = new WorkItemQuery(workflowRepository, workItemRepository);
+            _workStepQuery = new WorkStepQuery(_workflowRepository);
+            _workItemQuery = new WorkItemQuery(_workflowRepository, _workItemRepository);
         }
 
         public IEnumerable<WorkItem> GetWorkItems(string path)
@@ -162,11 +162,27 @@ namespace WhiskWork.Core
 
         private WorkItem Move(WorkItem workItemToMove, WorkStep stepToMoveTo)
         {
-            int ordinal = _workItemQuery.GetNextOrdinal(workItemToMove);
-            WorkItem movedWorkItem = workItemToMove.MoveTo(stepToMoveTo).UpdateOrdinal(ordinal);
+            var fromStepPath = workItemToMove.Path;
+
+            var movedWorkItem = workItemToMove.MoveTo(stepToMoveTo);
+
+            var ordinal = _workItemQuery.GetNextOrdinal(movedWorkItem);
+            movedWorkItem = movedWorkItem.UpdateOrdinal(ordinal);
 
             _workItemRepository.UpdateWorkItem(movedWorkItem);
+
+            RenumOrdinals(fromStepPath);
+
             return movedWorkItem;
+        }
+
+        private void RenumOrdinals(string path)
+        {
+            var ordinal = 1;
+            foreach (var workItem in _workItemRepository.GetWorkItems(path).OrderBy(wi=>wi.Ordinal))
+            {
+                _workItemRepository.UpdateWorkItem(workItem.UpdateOrdinal(ordinal++));
+            }
         }
 
         private void TryUpdatingExpandLockOnParent(WorkItem item)
@@ -204,7 +220,7 @@ namespace WhiskWork.Core
 
         private void CreateTransientWorkStepsRecursively(string transientRootPath, WorkStep rootStep, string workItemId)
         {
-            var subSteps = _workflowRepository.GetChildWorkSteps(rootStep.Path);
+            var subSteps = _workflowRepository.GetChildWorkSteps(rootStep.Path).Where(ws=>ws.Type!=WorkStepType.Transient);
             foreach (var childStep in subSteps)
             {
                 var offset = childStep.Path.Remove(0, rootStep.Path.Length);
@@ -261,5 +277,12 @@ namespace WhiskWork.Core
         }
 
 
+        public void DeleteWorkItem(string id)
+        {
+            var workItem = _workItemRepository.GetWorkItem(id);
+            _workItemRepository.Delete(workItem);
+
+            RenumOrdinals(workItem.Path);
+        }
     }
 }

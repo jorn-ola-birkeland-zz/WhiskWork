@@ -3,6 +3,8 @@ using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
 using System.Linq;
+using WhiskWork.Generic;
+using System.Collections.Generic;
 
 namespace WhiskWork.UnitTest
 {
@@ -58,7 +60,7 @@ namespace WhiskWork.UnitTest
         }
 
         [TestMethod]
-        public void ShouldMoveToTransientStepWhenEnteringSubRoot()
+        public void ShouldMoveToTransientStepWhenEnteringExpandStep()
         {
             _wp.CreateWorkItem("cr1", "/analysis");
             _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
@@ -67,7 +69,7 @@ namespace WhiskWork.UnitTest
         }
 
         [TestMethod]
-        public void ShouldCreateTransientWorkStepsWhenWorkItemEnterSubRoot()
+        public void ShouldCreateTransientWorkStepsWhenWorkItemEnterExpandStep()
         {
             _wp.CreateWorkItem("cr1", "/analysis");
             _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
@@ -82,6 +84,20 @@ namespace WhiskWork.UnitTest
             Assert.AreEqual(WorkStepType.End,
                             _workflowRepository.GetWorkStep("/development/inprocess/cr1/tasks/done").Type);
         }
+
+        [TestMethod]
+        public void ShouldNotIncludeTransientStepsOfEarlierWorkItemsWhenCreatingTransientSteps()
+        {
+            _wp.CreateWorkItem("cr1", "/analysis");
+            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            _wp.CreateWorkItem("cr2", "/analysis");
+            _wp.UpdateWorkItem("cr2", "/development", new NameValueCollection());
+
+            AssertUtils.AssertThrows<KeyNotFoundException>(
+                () => _workflowRepository.GetWorkStep("/development/inprocess/cr2/cr1")
+                );
+        }
+
 
         [TestMethod]
         public void ShouldCreateChildItemOfExpandedWorkItemInLeafStep()
