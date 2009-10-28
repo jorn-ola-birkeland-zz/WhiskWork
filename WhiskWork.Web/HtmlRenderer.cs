@@ -36,20 +36,41 @@ namespace WhiskWork.Web
 
         public void RenderFull(Stream stream)
         {
-            using(var streamWriter = new StreamWriter(stream))
+            RenderFull(stream, RootWorkStep.Instance);
+        }
+
+        public void RenderFull(Stream stream, string path)
+        {
+            if(string.IsNullOrEmpty(path) || RootWorkStep.Instance.Path==path)
             {
-                using(var htmlWriter=new HtmlTextWriter(streamWriter))
+                RenderFull(stream, RootWorkStep.Instance);
+            }
+            else
+            {
+                var workStep = _workflowRepository.GetWorkStep(path);
+
+                RenderFull(stream, workStep);
+            }
+        }
+
+
+        public void RenderFull(Stream stream, WorkStep workStep)
+        {
+            using (var streamWriter = new StreamWriter(stream))
+            {
+                using (var htmlWriter = new HtmlTextWriter(streamWriter))
                 {
                     htmlWriter.RenderBeginTag(HtmlTextWriterTag.Html);
                     htmlWriter.RenderBeginTag(HtmlTextWriterTag.Body);
 
-                    WriteStepsRecursively(htmlWriter, RootWorkStep.Instance);
+                    WriteStepsRecursively(htmlWriter, workStep);
 
                     htmlWriter.RenderEndTag(); //body
                     htmlWriter.RenderEndTag(); //html
                 }
             }
         }
+
 
         private void WriteStepsRecursively(HtmlTextWriter writer, WorkStep workStep)
         {

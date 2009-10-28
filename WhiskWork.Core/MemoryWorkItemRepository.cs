@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WhiskWork.Core;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Core
 {
-    public class TestWorkItemRepository : IWorkItemRepository
+    public class MemoryWorkItemRepository : IWorkItemRepository
     {
         private readonly Dictionary<string, WorkItem> _workItems = new Dictionary<string, WorkItem>();
 
@@ -39,9 +38,14 @@ namespace WhiskWork.UnitTest
             return _workItems.Values.Where(wi => wi.ParentId == id).ToList();
         }
 
-        public void Delete(WorkItem workItem)
+        public void DeleteWorkItem(WorkItem workItem)
         {
             _workItems.Remove(workItem.Id);
-        }   
+        }
+
+        public bool ExistsWorkItem(string id)
+        {
+            return _workItems.ContainsKey(id);
+        }
     }
 }

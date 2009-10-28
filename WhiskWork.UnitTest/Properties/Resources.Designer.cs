@@ -61,71 +61,15 @@ namespace WhiskWork.UnitTest.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;html&gt;
-        ///  &lt;body&gt;
-        ///    &lt;ol&gt;
-        ///      &lt;li id=&quot;analysis&quot; class=&quot;workstep step-cr analysis&quot;&gt;&lt;/li&gt;
-        ///      &lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;
-        ///        &lt;ol&gt;
-        ///          &lt;li id=&quot;development.inprocess&quot; class=&quot;inprocess&quot;&gt;
-        ///            &lt;ol&gt;
-        ///              &lt;li id=&quot;development.inprocess.cr1&quot; class=&quot;transient&quot;&gt;
-        ///                &lt;ol&gt;
-        ///                  &lt;li class=&quot;workstep step-cr-cr1&quot;&gt;
-        ///                    &lt;ol&gt;
-        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt;
-        ///                    &lt;/ol&gt;
-        ///            [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to &lt;html&gt;&lt;body&gt;&lt;ol&gt;&lt;li id=&quot;analysis&quot; class=&quot;analysis&quot;&gt;&lt;h1&gt;
+        ///				Analysis
+        ///			&lt;/h1&gt;&lt;ol&gt;&lt;li id=&quot;analysis.inprocess&quot; class=&quot;workstep step-cr inprocess&quot;&gt;&lt;ol&gt;&lt;li id=&quot;cr1&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;li id=&quot;cr2&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;li id=&quot;cr3&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li id=&quot;analysis.done&quot; class=&quot;workstep step-cr done&quot;&gt;&lt;ol&gt;&lt;li id=&quot;cr4&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;&lt;h1&gt;
+        ///				Development
+        ///			&lt;/h1&gt;&lt;ol&gt;&lt;li id=&quot;development.inprocess&quot; class=&quot;inprocess [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string ExpandIntegarationTest1 {
+        internal static string FullFeatureTest {
             get {
-                return ResourceManager.GetString("ExpandIntegarationTest1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;html&gt;
-        ///  &lt;body&gt;
-        ///    &lt;ol&gt;
-        ///      &lt;li id=&quot;analysis&quot; class=&quot;workstep step-cr analysis&quot;&gt;&lt;/li&gt;
-        ///      &lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;
-        ///        &lt;ol&gt;
-        ///          &lt;li id=&quot;development.inprocess&quot; class=&quot;inprocess&quot;&gt;
-        ///            &lt;ol&gt;
-        ///              &lt;li id=&quot;development.inprocess.cr1&quot; class=&quot;transient&quot;&gt;
-        ///                &lt;ol&gt;
-        ///                  &lt;li class=&quot;workstep step-cr-cr1&quot;&gt;
-        ///                    &lt;ol&gt;
-        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt;
-        ///                    &lt;/ol&gt;
-        ///            [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string ExpandIntegarationTest2 {
-            get {
-                return ResourceManager.GetString("ExpandIntegarationTest2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;html&gt;
-        ///  &lt;body&gt;
-        ///    &lt;ol&gt;
-        ///      &lt;li id=&quot;analysis&quot; class=&quot;workstep step-cr analysis&quot;&gt;&lt;/li&gt;
-        ///      &lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;
-        ///        &lt;ol&gt;
-        ///          &lt;li id=&quot;development.inprocess&quot; class=&quot;inprocess&quot;&gt;
-        ///            &lt;ol&gt;
-        ///              &lt;li id=&quot;development.inprocess.cr1&quot; class=&quot;transient&quot;&gt;
-        ///                &lt;ol&gt;
-        ///                  &lt;li class=&quot;workstep step-cr-cr1&quot;&gt;
-        ///                    &lt;ol&gt;
-        ///                      &lt;li id=&quot;cr1&quot; class=&quot;workitem cr cr-cr1&quot;&gt;&lt;/li&gt;
-        ///                    &lt;/ol&gt;
-        ///            [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string FullIntegrationTest1 {
-            get {
-                return ResourceManager.GetString("FullIntegrationTest1", resourceCulture);
+                return ResourceManager.GetString("FullFeatureTest", resourceCulture);
             }
         }
     }

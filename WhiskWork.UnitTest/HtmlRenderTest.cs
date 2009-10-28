@@ -12,15 +12,15 @@ namespace WhiskWork.UnitTest
     [TestClass]
     public class HtmlRenderTest
     {
-        private TestWorkflowRepository _workflowRepository;
-        private TestWorkItemRepository _workItemRepository;
+        private MemoryWorkflowRepository _workflowRepository;
+        private MemoryWorkItemRepository _workItemRepository;
         private Workflow _wp;
 
         [TestInitialize]
         public void Init()
         {
-            _workflowRepository = new TestWorkflowRepository();
-            _workItemRepository = new TestWorkItemRepository();
+            _workflowRepository = new MemoryWorkflowRepository();
+            _workItemRepository = new MemoryWorkItemRepository();
             _wp = new Workflow(_workflowRepository, _workItemRepository);
 
         }
@@ -348,48 +348,6 @@ namespace WhiskWork.UnitTest
         }
 
         [TestMethod]
-        public void ExpandIntegrationTest1()
-        {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/inprogress", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
-            _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
-            _workflowRepository.Add("/test", "/", 2, WorkStepType.Normal, "cr");
-            _workflowRepository.Add("/done", "/", 2, WorkStepType.End, "cr");
-
-            Create("/analysis", "cr1");
-            Move("/development", "cr1");
-
-            AssertIsAsExpected(Resources.ExpandIntegarationTest1);
-        }
-
-        [TestMethod]
-        public void ExpandIntegrationTest2()
-        {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/inprogress", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
-            _workflowRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
-            _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
-            _workflowRepository.Add("/test", "/", 2, WorkStepType.Normal, "cr");
-            _workflowRepository.Add("/done", "/", 2, WorkStepType.End, "cr");
-
-
-            Create("/analysis", "cr1", "cr2");
-            Move("/development", "cr1", "cr2");
-
-            AssertIsAsExpected(Resources.ExpandIntegarationTest2);
-        }
-
-
-        [TestMethod]
         public void FullFeatureTest()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
@@ -423,7 +381,7 @@ namespace WhiskWork.UnitTest
             Move("/done", "cr9.demo");
             Move("/done", "cr12");
 
-            AssertIsAsExpected(Resources.FullIntegrationTest1);
+            AssertIsAsExpected(Resources.FullFeatureTest);
         }
 
         private void Create(string path, params string[] workItemIds)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace WhiskWork.Core
 {
@@ -28,6 +29,11 @@ namespace WhiskWork.Core
 
         public void CreateWorkItem(string id, string path)
         {
+            if(!IsValidId(id))
+            {
+                throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
+            }
+
             var leafStep = _workStepQuery.GetLeafStep(path);
 
             if(leafStep.Type!=WorkStepType.Begin)
@@ -66,6 +72,12 @@ namespace WhiskWork.Core
             newWorkItem = newWorkItem.UpdateOrdinal(_workItemQuery.GetNextOrdinal(newWorkItem));
 
             _workItemRepository.CreateWorkItem(newWorkItem);
+        }
+
+        private static bool IsValidId(string workItemId)
+        {
+            var regex = new Regex("^[\\-,a-z,A-Z,0-9]*$");
+            return regex.IsMatch(workItemId);
         }
 
         public void UpdateWorkItem(string id, string path, NameValueCollection properties)
@@ -109,6 +121,8 @@ namespace WhiskWork.Core
                 throw new InvalidOperationException("Item is expandlocked and cannot be moved");
             }
 
+            ThrowIfMovingFromTransientStepToParallelStep(workItem, toStep);
+
             WorkStep parallelStep;
             if (_workStepQuery.IsWithinParallelStep(toStep, out parallelStep))
             {
@@ -130,6 +144,11 @@ namespace WhiskWork.Core
             }
 
 
+            if (!_workStepQuery.IsValidWorkStepForWorkItem(workItemToMove, stepToMoveTo))
+            {
+                throw new InvalidOperationException("Invalid step for work item");
+            }
+
             if (_workItemQuery.IsChildOfParallelledWorkItem(workItemToMove))
             {
                 if (IsMergeable(workItemToMove, toStep))
@@ -138,18 +157,7 @@ namespace WhiskWork.Core
                 }
             }
 
-            if (!_workStepQuery.IsValidWorkStepForWorkItem(workItemToMove, stepToMoveTo))
-            {
-                throw new InvalidOperationException("Invalid step for work item");
-            }
-
-            WorkStep transientStep;
-            if (_workStepQuery.IsInTransientStep(workItem, out transientStep))
-            {
-                _workflowRepository.DeleteWorkStepsRecursively(transientStep);
-
-                workItemToMove = workItemToMove.RemoveClass(transientStep.WorkItemClass);
-            }
+            workItemToMove = CleanUpIfInTransientStep(workItemToMove);
 
             WorkItem movedWorkItem = Move(workItemToMove, stepToMoveTo);
 
@@ -158,6 +166,41 @@ namespace WhiskWork.Core
                 TryUpdatingExpandLockOnParent(movedWorkItem);
             }
 
+        }
+
+        private void ThrowIfMovingFromTransientStepToParallelStep(WorkItem workItem, WorkStep toStep)
+        {
+            WorkStep transientStep;
+
+            var isInTransientStep = _workStepQuery.IsInTransientStep(workItem, out transientStep);
+
+            WorkStep parallelStepRoot;
+            var isWithinParallelStep = _workStepQuery.IsWithinParallelStep(toStep, out parallelStepRoot);
+
+            if(isInTransientStep && isWithinParallelStep)
+            {
+                throw new InvalidOperationException("Cannot move directly from transient step to parallelstep");
+            }
+        }
+
+        private WorkItem CleanUpIfInTransientStep(WorkItem workItemToMove)
+        {
+            WorkStep transientStep;
+            if (_workStepQuery.IsInTransientStep(workItemToMove, out transientStep))
+            {
+                DeleteChildWorkItems(workItemToMove);
+                _workflowRepository.DeleteWorkStepsRecursively(transientStep);
+                workItemToMove = workItemToMove.RemoveClass(transientStep.WorkItemClass);
+            }
+            return workItemToMove;
+        }
+
+        private void DeleteChildWorkItems(WorkItem workItem)
+        {
+            foreach (var childWorkItem in _workItemRepository.GetChildWorkItems(workItem.Id))
+            {
+                DeleteWorkItem(childWorkItem.Id);
+            }
         }
 
         private WorkItem Move(WorkItem workItemToMove, WorkStep stepToMoveTo)
@@ -242,7 +285,7 @@ namespace WhiskWork.Core
 
             foreach (WorkItem child in _workItemRepository.GetChildWorkItems(item.ParentId).ToList())
             {
-                _workItemRepository.Delete(child);
+                _workItemRepository.DeleteWorkItem(child);
             }
 
             return unlockedParent;
@@ -280,9 +323,50 @@ namespace WhiskWork.Core
         public void DeleteWorkItem(string id)
         {
             var workItem = _workItemRepository.GetWorkItem(id);
-            _workItemRepository.Delete(workItem);
 
+            ThrowInvalidOperationExceptionIfParentIsParallelLocked(workItem);
+
+            DeleteWorkItemRecursively(workItem);
+        }
+
+        private void ThrowInvalidOperationExceptionIfParentIsParallelLocked(WorkItem workItem)
+        {
+            if(workItem.ParentId!=null)
+            {
+                var parent = _workItemRepository.GetWorkItem(workItem.ParentId);
+                if(parent.Status == WorkItemStatus.ParallelLocked)
+                {
+                    throw new InvalidOperationException("Cannot delete workitem which is child of paralleled workitem");
+                }
+            }
+        }
+
+        private void DeleteWorkItemRecursively(WorkItem workItem)
+        {
+            var childWorkItems = _workItemRepository.GetChildWorkItems(workItem.Id);
+
+            if(childWorkItems.Count()>0)
+            {
+                foreach (var childWorkItem in childWorkItems)
+                {
+                    DeleteWorkItemRecursively(childWorkItem);
+                }
+            }
+
+
+            _workItemRepository.DeleteWorkItem(workItem);
             RenumOrdinals(workItem.Path);
+            CleanUpIfInTransientStep(workItem);
+        }
+
+        public bool ExistsWorkItem(string workItemId)
+        {
+            return _workItemRepository.ExistsWorkItem(workItemId);
+        }
+
+        public WorkItem GetWorkItem(string id)
+        {
+            return _workItemRepository.GetWorkItem(id);
         }
     }
 }

@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WhiskWork.Core;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Core
 {
-    public class TestWorkflowRepository : IWorkflowRepository
+    public class MemoryWorkflowRepository : IWorkflowRepository
     {
         private readonly Dictionary<string, WorkStep> _workSteps = new Dictionary<string, WorkStep>();
 
@@ -32,6 +31,11 @@ namespace WhiskWork.UnitTest
 
         public WorkStep GetWorkStep(string path)
         {
+            if(!_workSteps.ContainsKey(path))
+            {
+                throw new ArgumentException("Workstep not found: '"+path+"'");
+            }
+
             return _workSteps[path];
         }
 

@@ -50,8 +50,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="TestWorkflowRepository.cs" />
-    <Compile Include="TestWorkItemRepository.cs" />
     <Compile Include="UpdatePropertiesTest.cs" />
     <Compile Include="WorkflowTest.cs" />
   </ItemGroup>
@@ -76,9 +74,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\FullIntegrationTest1.html" />
-    <Content Include="Resources\ExpandIntegarationTest2.html" />
-    <Content Include="Resources\ExpandIntegarationTest1.html" />
+    <Content Include="Resources\FullFeatureTest.html" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

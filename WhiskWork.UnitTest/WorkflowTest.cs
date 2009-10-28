@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
 
@@ -7,17 +8,65 @@ namespace WhiskWork.UnitTest
     [TestClass]
     public class WorkflowTest
     {
-        TestWorkflowRepository _workflowRepository;
-        TestWorkItemRepository _workItemRepository;
+        MemoryWorkflowRepository _workflowRepository;
+        MemoryWorkItemRepository _workItemRepository;
         Workflow _wp;
 
         [TestInitialize]
         public void Init()
         {
-            _workflowRepository = new TestWorkflowRepository();
-            _workItemRepository = new TestWorkItemRepository();
+            _workflowRepository = new MemoryWorkflowRepository();
+            _workItemRepository = new MemoryWorkItemRepository();
             _wp = new Workflow(_workflowRepository, _workItemRepository);
         }
+
+        [TestMethod]
+        public void ShouldCreateWorkItemInBeginStep()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+
+            _wp.CreateWorkItem("cr1", "/analysis");
+            Assert.AreEqual("/analysis", _workItemRepository.GetWorkItem("cr1").Path);
+        }
+
+        [TestMethod]
+        public void ShouldNotCreateWorkItemInNormalStep()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () => _wp.CreateWorkItem("cr1", "/development"));
+        }
+
+
+        [TestMethod]
+        public void ShouldNotCreateWorkItemWithSlashInId()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem("cr/1", "/analysis"));
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem("/cr1", "/analysis"));
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem("cr1/", "/analysis"));
+        }
+
+        [TestMethod]
+        public void ShouldNotCreateWorkItemWithDotInId()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem("cr.1", "/analysis"));
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem(".cr1", "/analysis"));
+            AssertUtils.AssertThrows<ArgumentException>(
+                () => _wp.CreateWorkItem("cr1.", "/analysis"));
+        }
+
 
         [TestMethod]
         public void ShouldSetCorrectOrdinalWhenCreatingWorkItem()
@@ -59,6 +108,7 @@ namespace WhiskWork.UnitTest
             Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr2").Ordinal);
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr3").Ordinal);
         }
+
 
         private void SetUpAndTestBasicOrdinal()
         {
