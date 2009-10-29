@@ -67,6 +67,62 @@ namespace WhiskWork.UnitTest
                 () => _wp.CreateWorkItem("cr1.", "/analysis"));
         }
 
+        [TestMethod]
+        public void ShouldCreateWorkItemWithSingleProperty()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" } });
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(1, workItem.Properties.Count);
+            Assert.AreEqual("CR1", workItem.Properties["Name"]);
+        }
+
+        [TestMethod]
+        public void ShouldCreateWorkItemWithTwoProperties()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developers", "A, B" } });
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(2, workItem.Properties.Count);
+            Assert.AreEqual("CR1", workItem.Properties["Name"]);
+            Assert.AreEqual("A, B", workItem.Properties["Developers"]);
+        }
+
+        [TestMethod]
+        public void ShouldUpdateOneOfTwoProperties()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } });
+            _wp.UpdateWorkItem("cr1", "/analysis", new NameValueCollection { { "Developer", "B" } });
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(2, workItem.Properties.Count);
+            Assert.AreEqual("CR1", workItem.Properties["Name"]);
+            Assert.AreEqual("B", workItem.Properties["Developer"]);
+        }
+
+        [TestMethod]
+        public void ShouldMoveUpdateOneOfTwoProperties()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } });
+            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection { { "Developer", "B" } });
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(2, workItem.Properties.Count);
+            Assert.AreEqual("/development", workItem.Path);
+            Assert.AreEqual("CR1", workItem.Properties["Name"]);
+            Assert.AreEqual("B", workItem.Properties["Developer"]);
+        }
+
+
 
         [TestMethod]
         public void ShouldSetCorrectOrdinalWhenCreatingWorkItem()

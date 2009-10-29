@@ -9,5 +9,6 @@ namespace WhiskWork.Core
         WorkStep GetWorkStep(string path);
 
         void DeleteWorkStep(string path);
+        bool ExistsWorkStep(string path);
     }
 }

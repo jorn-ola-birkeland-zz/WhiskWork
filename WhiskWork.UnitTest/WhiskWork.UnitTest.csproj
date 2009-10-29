@@ -43,6 +43,7 @@
     <Compile Include="AssertUtils.cs" />
     <Compile Include="HtmlRenderTest.cs" />
     <Compile Include="ParallelWorkStepsTest.cs" />
+    <Compile Include="PropertiesTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ExpandWorkStepsTest.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

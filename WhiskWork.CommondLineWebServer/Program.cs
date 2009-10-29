@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Text;
 using Abb.One.MicroWebServer;
 using System.IO;
 using WhiskWork.Core;
 using System.Net;
 using WhiskWork.Web;
-using WhiskWork.Generic;
 
 namespace WhiskWork.CommondLineWebServer
 {
@@ -16,9 +13,10 @@ namespace WhiskWork.CommondLineWebServer
     {
         static void Main(string[] args)
         {
-            const string fileDirectory = @"c:\temp\agileboard";
+            const string webRootDirectory = @"c:\temp\agileboard";
+            const string logfile = @"c:\temp\agileboard\workflow.log";
 
-            var router = new WebRouter(fileDirectory);
+            var router = new WebRouter(webRootDirectory, logfile);
             var server = new WebServer(router.ProcessRequest,5555);
 
             Console.WriteLine("Started");
@@ -30,16 +28,17 @@ namespace WhiskWork.CommondLineWebServer
     internal class WebRouter
     {
         private readonly MemoryWorkflowRepository _workflowRepository;
-        private readonly MemoryWorkItemRepository _workItemRepository;
+        private readonly IWorkItemRepository _workItemRepository;
         private readonly Workflow _wp;
         private readonly string _rootDirectory;
 
-        public WebRouter(string directory)
+        public WebRouter(string webDirectory, string logFile)
         {
             _workflowRepository = new MemoryWorkflowRepository();
-            _workItemRepository = new MemoryWorkItemRepository();
+            var logger = new FileWorkItemLogger(logFile); 
+            _workItemRepository = new LoggingWorkItemRepository(logger, new MemoryWorkItemRepository());
             _wp = new Workflow(_workflowRepository, _workItemRepository);
-            _rootDirectory = directory;
+            _rootDirectory = webDirectory;
 
             _workflowRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr", "Scheduled");
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
@@ -67,15 +66,15 @@ namespace WhiskWork.CommondLineWebServer
             var path = httpcontext.Request.RawUrl;
             var httpMethod = httpcontext.Request.HttpMethod;
             
-            Console.WriteLine("Payload: "+ payload);
-            Console.WriteLine("Path: '{0}'",path);
-            Console.WriteLine("HttpMethod: " +httpMethod);
 
             if(TryReturnFile(httpcontext.Response,path))
             {
-                Console.WriteLine("Found file");
                 return;
             }
+
+            Console.WriteLine("Payload: " + payload);
+            Console.WriteLine("Path: '{0}'", path);
+            Console.WriteLine("HttpMethod: " + httpMethod);
 
             string actualPath;
             string workItemId;
@@ -83,14 +82,7 @@ namespace WhiskWork.CommondLineWebServer
             switch (httpMethod.ToLowerInvariant())
             {
                 case "post":
-                    if (IsWorkItem(path, out actualPath, out workItemId))
-                    {
-                        UpdateWorkItem(httpcontext.Response, actualPath, workItemId, payload);
-                    }
-                    else
-                    {
-                        CreateWorkItem(httpcontext.Response, path, payload);                        
-                    }
+                    CreateWorkItem(httpcontext.Response, path, payload);
 
                     break;
                 case "get":
@@ -103,6 +95,14 @@ namespace WhiskWork.CommondLineWebServer
                     }
 
                     break;
+
+                case "put":
+                    if (IsWorkItem(path, out actualPath, out workItemId))
+                    {
+                        UpdateWorkItem(httpcontext.Response, actualPath, workItemId, payload);
+                    }
+                    break;
+
             }
 
         }
@@ -126,7 +126,13 @@ namespace WhiskWork.CommondLineWebServer
 
         private void DeleteWorkItem(HttpListenerResponse response, string path, string id)
         {
-            WorkItem wi = _wp.GetWorkItem(id);
+            if (!_wp.ExistsWorkItem(id))
+            {
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+
+            var wi = _wp.GetWorkItem(id);
 
             if(wi.Path!=path)
             {
@@ -152,9 +158,16 @@ namespace WhiskWork.CommondLineWebServer
 
         private void UpdateWorkItem(HttpListenerResponse response, string path, string id, string payload)
         {
+            if(!_wp.ExistsWorkItem(id) || !_wp.ExistsWorkStep(path))
+            {
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+
+            WorkItem updatdWorkItem;
             try
             {
-                _wp.UpdateWorkItem(id, path, new NameValueCollection());
+                updatdWorkItem = _wp.UpdateWorkItem(id, path, new NameValueCollection());
             }
             catch (Exception e)
             {
@@ -164,7 +177,7 @@ namespace WhiskWork.CommondLineWebServer
             }
 
             response.ContentType = "text/html";
-            response.StatusCode = (int)HttpStatusCode.OK;
+            response.StatusCode = updatdWorkItem.Path!=path ? (int)HttpStatusCode.MovedPermanently : (int)HttpStatusCode.OK;
         }
 
         private bool TryReturnFile(HttpListenerResponse response, string path)
@@ -220,7 +233,7 @@ namespace WhiskWork.CommondLineWebServer
             var renderer = new HtmlRenderer(_workflowRepository, _workItemRepository);
             try
             {
-                renderer.RenderFull(response.OutputStream);
+                renderer.RenderFull(response.OutputStream,path);
             }
             catch (Exception e)
             {
@@ -229,11 +242,28 @@ namespace WhiskWork.CommondLineWebServer
             }
         }
 
-        private void CreateWorkItem(HttpListenerResponse response, string path, string id)
+        private void CreateWorkItem(HttpListenerResponse response, string path, string payload)
         {
+            if (!_wp.ExistsWorkStep(path))
+            {
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+
+            var payLoadParts = payload.Split(',');
+            if(payLoadParts.Length==0 || string.IsNullOrEmpty(payLoadParts[0]))
+            {
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                return;
+            }
+            
+            var id = payLoadParts[0];
+
+            var properties = ParseProperties(payload);
+
             try
             {
-                _wp.CreateWorkItem(id, path);
+                _wp.CreateWorkItem(id, path, properties);
             }
             catch(Exception e)
             {
@@ -245,6 +275,20 @@ namespace WhiskWork.CommondLineWebServer
             response.ContentType = "text/html";
             response.StatusCode = (int)HttpStatusCode.Created;
             response.Headers.Add(HttpResponseHeader.Location,path+"/"+id);
+        }
+
+        private NameValueCollection ParseProperties(string payload)
+        {
+            var properties = new NameValueCollection();
+            var payloadParts = payload.Split(',');
+
+            for (var i = 1; i < payloadParts.Length;i++)
+            {
+                var keyValue = payloadParts[i].Split('=');
+                properties.Add(keyValue[0],keyValue[1]);
+            }
+
+            return properties;
         }
     }
 }

@@ -19,9 +19,9 @@ namespace WhiskWork.Core
         {
             var childWorkItems = new List<WorkItem>();
 
-            foreach (WorkStep subStep in _workflowRepository.GetChildWorkSteps(parallelRootStep.Path))
+            foreach (var subStep in _workflowRepository.GetChildWorkSteps(parallelRootStep.Path))
             {
-                string childId = GetParallelId(parentItem.Id, parallelRootStep, subStep);
+                var childId = GetParallelId(parentItem.Id, parallelRootStep, subStep);
                 var childWorkItem = parentItem.CreateChildItem(childId).AddClass(subStep.WorkItemClass);
 
 

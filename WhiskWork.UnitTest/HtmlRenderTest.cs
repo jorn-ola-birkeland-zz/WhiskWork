@@ -100,6 +100,34 @@ namespace WhiskWork.UnitTest
         }
 
         [TestMethod]
+        public void ShouldRenderSingleWorkItemProperty()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection {{"Name","CR1"}});
+
+            var doc = GetFullDocument();
+
+            Assert.AreEqual("Name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt[@class='name']").InnerText);
+            Assert.AreEqual("CR1", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
+        }
+
+        [TestMethod]
+        public void ShouldRenderTwoWorkItemProperties()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" },{"Developer","A"} });
+
+            var doc = GetFullDocument();
+
+            Assert.AreEqual("Name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt[@class='name']").InnerText);
+            Assert.AreEqual("CR1", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
+
+            Assert.AreEqual("Developer", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt[@class='developer']").InnerText);
+            Assert.AreEqual("A", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='developer']").InnerText);
+        }
+
+
+        [TestMethod]
         public void ShouldRenderTwoWorkItemsInSingleStepWorkflow()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
@@ -181,6 +209,17 @@ namespace WhiskWork.UnitTest
             Assert.AreEqual("workitem cr", classAttribute.Value);
         }
 
+        [TestMethod]
+        public void ShouldRenderFromLeafStep()
+        {
+            _workflowRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr");
+            _wp.CreateWorkItem("cr1", "/scheduled");
+
+            var doc = GetFullDocument(_workflowRepository.GetWorkStep("/scheduled"));
+
+            Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"cr1\"]"));
+        }
+
 
         [TestMethod]
         public void ShouldRenderParallelStepsWithRightClass()
@@ -236,8 +275,8 @@ namespace WhiskWork.UnitTest
 
             var doc = GetFullDocument();
 
-            Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li[@id=\"development.inprocess\"]"));
-            Assert.AreEqual("inprocess",doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/@class").Value);
+            Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li"));
+            Assert.AreEqual("inprocess",doc.SelectSingleNode("//li[@id=\"development\"]/ol/li/@class").Value);
         }
 
         [TestMethod]
@@ -249,8 +288,7 @@ namespace WhiskWork.UnitTest
 
             var doc = GetFullDocument();
 
-            Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li[@id=\"development.inprocess\"]"));
-            Assert.AreEqual("expand", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li/@class").Value);
+            Assert.AreEqual("expand", doc.SelectSingleNode("//li[@id='development']/ol/li/ol/li/@class").Value);
         }
 
 
@@ -263,7 +301,7 @@ namespace WhiskWork.UnitTest
 
             var doc = GetFullDocument();
 
-            Assert.AreEqual("workstep step-cr", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='expand']/ol/li[position()=1]/@class").Value);
+            Assert.AreEqual("workstep step-cr", doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=1]/@class").Value);
         }
 
         [TestMethod]
@@ -276,9 +314,9 @@ namespace WhiskWork.UnitTest
 
             var doc = GetFullDocument();
 
-            Assert.IsNotNull(doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='expand']/ol/li[position()=2]"));
-            Assert.AreEqual("development.inprocess.tasks", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='expand']/ol/li[position()=2]/@id").Value);
-            Assert.AreEqual("workstep step-task tasks", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='expand']/ol/li[position()=2]/@class").Value);
+            Assert.IsNotNull(doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=2]"));
+            Assert.AreEqual("development.inprocess.tasks", doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=2]/@id").Value);
+            Assert.AreEqual("workstep step-task tasks", doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=2]/@class").Value);
         }
 
         [TestMethod]
@@ -308,13 +346,15 @@ namespace WhiskWork.UnitTest
 
             var doc = GetFullDocument();
 
-            Assert.AreEqual("transient", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[position()=1]/@class").Value);
-            Assert.AreEqual("expand", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[position()=2]/@class").Value);
-            Assert.IsNull(doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[position()=3]/@class"));
+            XmlNode developmentInProcess = doc.SelectSingleNode("//li[@id=\"development\"]/ol/li");
+
+            Assert.AreEqual("transient", developmentInProcess.SelectSingleNode("ol/li[position()=1]/@class").Value);
+            Assert.AreEqual("expand", developmentInProcess.SelectSingleNode("ol/li[position()=2]/@class").Value);
+            Assert.IsNull(developmentInProcess.SelectSingleNode("ol/li[position()=3]/@class"));
         }
 
         [TestMethod]
-        public void ShouldRenderTransientStepWithCorrectId()
+        public void ShouldRenderTransientStepWithCorrectIdForWorkItemContainer()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
@@ -323,10 +363,10 @@ namespace WhiskWork.UnitTest
             Create("/analysis", "cr1");
             Move("/development", "cr1");
 
-
             var doc = GetFullDocument();
 
-            Assert.AreEqual("development.inprocess.cr1", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/ol/li[@class='transient']/@id").Value);
+            Assert.IsNull(doc.SelectSingleNode("//li[@class='transient']/@id"));
+            Assert.AreEqual("development.inprocess.cr1", doc.SelectSingleNode("//li[@class='transient']/ol/li/@id").Value);
         }
 
         [TestMethod]
@@ -406,18 +446,24 @@ namespace WhiskWork.UnitTest
 
         private XmlDocument GetFullDocument()
         {
+            return GetFullDocument(RootWorkStep.Instance);        
+        }   
+
+        private XmlDocument GetFullDocument(WorkStep workStep)
+        {
             var htmlRenderer = new HtmlRenderer(_workflowRepository, _workItemRepository);
 
             var doc = new XmlDocument();
             using (var writeStream = new MemoryStream())
             {
-                
-                htmlRenderer.RenderFull(writeStream);
+
+                htmlRenderer.RenderFull(writeStream, workStep);
 
                 var readStream = new MemoryStream(writeStream.ToArray());
                 doc.Load(readStream);
             }
             return doc;
         }
+
     }
 }

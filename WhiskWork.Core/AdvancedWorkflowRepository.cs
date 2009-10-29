@@ -42,5 +42,10 @@ namespace WhiskWork.Core
         {
             _workflowRepository.DeleteWorkStep(path);
         }
+
+        public bool ExistsWorkStep(string path)
+        {
+            return _workflowRepository.ExistsWorkStep(path);
+        }
     }
 }

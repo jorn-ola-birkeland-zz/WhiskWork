@@ -46,8 +46,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdvancedWorkflowRepository.cs" />
+    <Compile Include="FileWorkItemLogger.cs" />
     <Compile Include="IWorkflowRepository.cs" />
+    <Compile Include="IWorkItemLogger.cs" />
     <Compile Include="IWorkItemRepository.cs" />
+    <Compile Include="LoggingWorkItemRepository.cs" />
     <Compile Include="MemoryWorkflowRepository.cs" />
     <Compile Include="MemoryWorkItemRepository.cs" />
     <Compile Include="ParallelStepHelper.cs" />
@@ -60,6 +63,12 @@
     <Compile Include="WorkStep.cs" />
     <Compile Include="WorkStepQuery.cs" />
     <Compile Include="WorkStepType.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">
+      <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
+      <Name>WhiskWork.Generic</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

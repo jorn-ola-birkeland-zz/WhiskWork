@@ -29,12 +29,22 @@ namespace WhiskWork.Core
 
         public void CreateWorkItem(string id, string path)
         {
-            if(!IsValidId(id))
+            CreateWorkItem(id,path,new NameValueCollection());
+        }
+
+        public void CreateWorkItem(string id, string path, NameValueCollection properties)
+        {
+            CreateWorkItem(WorkItem.New(id,path,properties));
+        }
+
+        public void CreateWorkItem(WorkItem newWorkItem)
+        {
+            if(!IsValidId(newWorkItem.Id))
             {
                 throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
             }
 
-            var leafStep = _workStepQuery.GetLeafStep(path);
+            var leafStep = _workStepQuery.GetLeafStep(newWorkItem.Path);
 
             if(leafStep.Type!=WorkStepType.Begin)
             {
@@ -43,7 +53,7 @@ namespace WhiskWork.Core
 
             var classes = _workStepQuery.GetWorkItemClasses(leafStep);
 
-            var newWorkItem = WorkItem.New(id, leafStep.Path, classes);
+            newWorkItem = newWorkItem.MoveTo(leafStep).ReplacesClasses(classes);
 
             WorkStep transientStep;
             if(_workStepQuery.IsWithinTransientStep(leafStep, out transientStep))
@@ -80,7 +90,7 @@ namespace WhiskWork.Core
             return regex.IsMatch(workItemId);
         }
 
-        public void UpdateWorkItem(string id, string path, NameValueCollection properties)
+        public WorkItem UpdateWorkItem(string id, string path, NameValueCollection properties)
         {
             WorkItem workItem;
             if(!_workItemQuery.TryLocateWorkItem(id, out workItem))
@@ -90,26 +100,33 @@ namespace WhiskWork.Core
 
             WorkStep leafStep = _workStepQuery.GetLeafStep(path);
 
+            WorkItem result=null;
+
+            if (properties.Count > 0)
+            {
+                workItem = UpdateWorkItem(workItem, properties);
+            }
+
             if(workItem.Path!=leafStep.Path)
             {
-                MoveWorkItem(workItem, leafStep);
+                result = MoveWorkItem(workItem, leafStep);
             }
-            if(properties.Count>0)
-            {
-                UpdateProperties(id, properties);
-            }
+
+            return result;
         }
 
-        private static void UpdateProperties(string id, NameValueCollection properties)
+        private WorkItem UpdateWorkItem(WorkItem workItem, NameValueCollection properties)
         {
+            workItem = workItem.UpdateProperties(properties);
+            _workItemRepository.UpdateWorkItem(workItem);
+            return workItem;
         }
 
-
-        private void MoveWorkItem(WorkItem workItem, WorkStep toStep)
+        private WorkItem MoveWorkItem(WorkItem workItem, WorkStep toStep)
         {
-            WorkStep stepToMoveTo = toStep;
+            var stepToMoveTo = toStep;
 
-            WorkItem workItemToMove = workItem;
+            var workItemToMove = workItem;
 
             if (_workItemQuery.IsParallelLockedWorkItem(workItem))
             {
@@ -159,13 +176,14 @@ namespace WhiskWork.Core
 
             workItemToMove = CleanUpIfInTransientStep(workItemToMove);
 
-            WorkItem movedWorkItem = Move(workItemToMove, stepToMoveTo);
+            var movedWorkItem = Move(workItemToMove, stepToMoveTo);
 
             if (_workItemQuery.IsChildOfExpandedWorkItem(movedWorkItem))
             {
                 TryUpdatingExpandLockOnParent(movedWorkItem);
             }
 
+            return movedWorkItem;
         }
 
         private void ThrowIfMovingFromTransientStepToParallelStep(WorkItem workItem, WorkStep toStep)
@@ -368,5 +386,11 @@ namespace WhiskWork.Core
         {
             return _workItemRepository.GetWorkItem(id);
         }
+
+        public bool ExistsWorkStep(string path)
+        {
+            return _workflowRepository.ExistsWorkStep(path);
+        }
+
     }
 }
