@@ -39,6 +39,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -51,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebRouter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
@@ -60,6 +62,10 @@
     <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">
       <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
       <Name>WhiskWork.Generic</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.IO\WhiskWork.IO.csproj">
+      <Project>{28A85160-0E3B-4AD9-9FFA-731312F01E20}</Project>
+      <Name>WhiskWork.IO</Name>
     </ProjectReference>
     <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
       <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>

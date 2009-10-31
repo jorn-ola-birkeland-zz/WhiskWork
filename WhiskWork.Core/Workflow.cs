@@ -139,6 +139,7 @@ namespace WhiskWork.Core
             }
 
             ThrowIfMovingFromTransientStepToParallelStep(workItem, toStep);
+            ThrowIfMovingChildOfParalleledWorkItemToExpandStep(workItem, toStep);
 
             WorkStep parallelStep;
             if (_workStepQuery.IsWithinParallelStep(toStep, out parallelStep))
@@ -186,6 +187,7 @@ namespace WhiskWork.Core
             return movedWorkItem;
         }
 
+
         private void ThrowIfMovingFromTransientStepToParallelStep(WorkItem workItem, WorkStep toStep)
         {
             WorkStep transientStep;
@@ -198,6 +200,19 @@ namespace WhiskWork.Core
             if(isInTransientStep && isWithinParallelStep)
             {
                 throw new InvalidOperationException("Cannot move directly from transient step to parallelstep");
+            }
+        }
+
+        private void ThrowIfMovingChildOfParalleledWorkItemToExpandStep(WorkItem workItem, WorkStep toStep)
+        {
+            if(!_workItemQuery.IsChildOfParallelledWorkItem(workItem))
+            {
+                return;
+            }
+
+            if(_workStepQuery.IsExpandStep(toStep))
+            {
+                throw new InvalidOperationException("Cannot move paralleled work item to expand step");
             }
         }
 
@@ -392,5 +407,14 @@ namespace WhiskWork.Core
             return _workflowRepository.ExistsWorkStep(path);
         }
 
+        public WorkStep GetWorkStep(string path)
+        {
+            return _workflowRepository.GetWorkStep(path);
+        }
+
+        public void CreateWorkStep(WorkStep workStep)
+        {
+            _workflowRepository.CreateWorkStep(workStep);
+        }
     }
 }

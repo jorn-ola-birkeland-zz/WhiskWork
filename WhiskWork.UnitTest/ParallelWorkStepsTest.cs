@@ -255,13 +255,28 @@ namespace WhiskWork.UnitTest
 
             _wp.CreateWorkItem("cr1", "/scheduled");
             _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
-            _wp.CreateWorkItem("cr1-1", "/development/inprocess/cr1/tasks");
-            _wp.UpdateWorkItem("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection());
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () => _wp.UpdateWorkItem("cr1", "/feedback", new NameValueCollection())
                 );
         }
+
+        [TestMethod]
+        public void ShouldNotBeAbleToMoveParalleledWorkItemToTransientStep()
+        {
+            CreateParallelWorkflowWithExpandStep();
+
+            _wp.CreateWorkItem("cr1", "/scheduled");
+            _wp.UpdateWorkItem("cr1", "/feedback/review", new NameValueCollection());
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () => _wp.UpdateWorkItem("cr1.review", "/development/inprocess", new NameValueCollection())
+                );
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () => _wp.UpdateWorkItem("cr1.review", "/development/inprocess", new NameValueCollection())
+                );
+        }
+
 
         private void CreateSimpleParallelWorkflow()
         {
