@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace WhiskWork.Core
 {
@@ -67,6 +70,11 @@ namespace WhiskWork.Core
 
         public static WorkItem New(string id, string path, NameValueCollection properties)
         {
+            if (!IsValidId(id))
+            {
+                throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
+            }
+
             return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,0, properties);
         }
 
@@ -141,6 +149,62 @@ namespace WhiskWork.Core
 
             return new WorkItem(Id, Path, Classes, Status, ParentId, Ordinal, modifiedProperties);
         }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is WorkItem))
+            {
+                return false;
+            }
+
+            var item = (WorkItem) obj;
+
+            var result = true;
+
+            result &= Id == item.Id;
+            result &= Path == item.Path;
+            result &= ParentId == item.ParentId;
+            result &= Status == item.Status;
+            result &= Ordinal == item.Ordinal;
+            result &= Classes.SequenceEqual(item.Classes);
+            result &= Properties.SequenceEqual(item.Properties);
+
+            return result;
+        }
+
+        public override int GetHashCode()
+        {
+            var hc = Id!=null ? Id.GetHashCode() : 1;
+            hc ^= Path!=null ? Path.GetHashCode() : 2;
+            hc ^= ParentId!=null ? ParentId.GetHashCode(): 4;
+            hc ^= Status.GetHashCode();
+            hc ^= Ordinal.GetHashCode();
+            hc ^= Classes.Count()>0 ? Classes.Select(s => s.GetHashCode()).Aggregate((hash, next) => hash ^ next) : 8;
+            hc ^= Properties.Count>0 ? Properties.Select(kv => kv.Key.GetHashCode() ^ kv.Value.GetHashCode()).Aggregate((hash, next) => hash ^ next) : 16;
+            
+            return hc;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.AppendFormat("Id={0},", Id);
+            sb.AppendFormat("Path={0},", Path);
+            sb.AppendFormat("ParentId={0},", ParentId);
+            sb.AppendFormat("Status={0},", Status);
+            sb.AppendFormat("Ordinal={0},", Ordinal);
+            sb.AppendFormat("Classes={0},", Classes.Count()>0 ? Classes.Aggregate((current, next) => current + "&" + next): string.Empty);
+            sb.AppendFormat("Properties={0}", Properties.Count()>0 ? Properties.Select(kv => kv.Key+":"+kv.Value).Aggregate((current, next) => current + "&" + next) : string.Empty);
+
+            return sb.ToString();
+        }
+
+        private static bool IsValidId(string workItemId)
+        {
+            var regex = new Regex("^[\\-,a-z,A-Z,0-9]*$");
+            return regex.IsMatch(workItemId);
+        }
+
 
     }
 }

@@ -7,16 +7,16 @@ using System.Text.RegularExpressions;
 
 namespace WhiskWork.Core
 {
-    public class Workflow
+    public class Workflow : IWorkflow
     {
         private readonly AdvancedWorkflowRepository _workflowRepository;
         private readonly IWorkItemRepository _workItemRepository;
         private readonly WorkStepQuery _workStepQuery;
         private readonly WorkItemQuery _workItemQuery;
 
-        public Workflow(IWorkflowRepository workflowRepository, IWorkItemRepository workItemRepository)
+        public Workflow(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository)
         {
-            _workflowRepository = new AdvancedWorkflowRepository(workflowRepository);
+            _workflowRepository = new AdvancedWorkflowRepository(workStepRepository);
             _workItemRepository = workItemRepository;
             _workStepQuery = new WorkStepQuery(_workflowRepository);
             _workItemQuery = new WorkItemQuery(_workflowRepository, _workItemRepository);
@@ -39,11 +39,6 @@ namespace WhiskWork.Core
 
         public void CreateWorkItem(WorkItem newWorkItem)
         {
-            if(!IsValidId(newWorkItem.Id))
-            {
-                throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
-            }
-
             var leafStep = _workStepQuery.GetLeafStep(newWorkItem.Path);
 
             if(leafStep.Type!=WorkStepType.Begin)
@@ -84,10 +79,15 @@ namespace WhiskWork.Core
             _workItemRepository.CreateWorkItem(newWorkItem);
         }
 
-        private static bool IsValidId(string workItemId)
+        public WorkItem UpdateWorkItem(WorkItem workItem)
         {
-            var regex = new Regex("^[\\-,a-z,A-Z,0-9]*$");
-            return regex.IsMatch(workItemId);
+            var nvc = new NameValueCollection();
+            foreach (var property in workItem.Properties)
+            {
+                nvc.Add(property.Key,property.Value);
+            }
+
+            return UpdateWorkItem(workItem.Id, workItem.Path, nvc);
         }
 
         public WorkItem UpdateWorkItem(string id, string path, NameValueCollection properties)
@@ -283,7 +283,7 @@ namespace WhiskWork.Core
         {
             Debug.Assert(expandStep.Type==WorkStepType.Expand);
 
-            var transientRootPath = expandStep.Path+"/"+item.Id;
+            var transientRootPath = WorkStep.CombinePath(expandStep.Path,item.Id);
 
             CreateTransientWorkStepsRecursively(transientRootPath,expandStep, item.Id);
 
@@ -416,5 +416,17 @@ namespace WhiskWork.Core
         {
             _workflowRepository.CreateWorkStep(workStep);
         }
+    }
+
+    public interface IWorkflow
+    {
+        bool ExistsWorkItem(string workItemId);
+        bool ExistsWorkStep(string path);
+        WorkItem UpdateWorkItem(WorkItem workItem);
+        WorkItem UpdateWorkItem(string workItemId, string path, NameValueCollection properties);
+        void CreateWorkStep(WorkStep workStep);
+        void CreateWorkItem(WorkItem workItem);
+        WorkItem GetWorkItem(string workItemId);
+        void DeleteWorkItem(string workItemId);
     }
 }

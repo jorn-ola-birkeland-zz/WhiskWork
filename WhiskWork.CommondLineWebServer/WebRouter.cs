@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using Abb.One.MicroWebServer;
+using WhiskWork.Core;
 using WhiskWork.IO;
 using WhiskWork.Web;
 
@@ -15,7 +17,18 @@ namespace WhiskWork.CommondLineWebServer
         public WebRouter(string webDirectory)
         {
             _rootFileDirectory = webDirectory;
-            _workflowHandler = new WorkflowHttpHandler();
+
+            const string logfile = @"c:\temp\agileboard\workflow.log";
+
+            var memoryWorkStepRepository = new MemoryWorkflowRepository();
+
+            var workStepRepository = memoryWorkStepRepository;
+            var logger = new FileWorkItemLogger(logfile);
+            var workItemRepository = new LoggingWorkItemRepository(logger, new MemoryWorkItemRepository());
+            var wp = new Workflow(workStepRepository, workItemRepository);
+
+            var rendererFactory = new HtmlWorkStepRendererFactory(workItemRepository,workStepRepository);
+            _workflowHandler = new WorkflowHttpHandler(wp, rendererFactory);
         }
 
 

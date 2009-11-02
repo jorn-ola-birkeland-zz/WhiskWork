@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace WhiskWork.Web
 {
-    internal class CsvRequestMessageParser : IRequestMessageParser
+    public class CsvRequestMessageParser : IRequestMessageParser
     {
         #region IRequestMessageParser Members
 
@@ -35,7 +35,7 @@ namespace WhiskWork.Web
 
             if(_values.ContainsKey("id"))
             {
-                return ParseWorkItem(_values);
+                return ParseWorkItem();
             }
 
             if(_values.ContainsKey("step"))
@@ -59,7 +59,7 @@ namespace WhiskWork.Web
             return new WorkStepNode(step, ordinal, type, workItemClass, title);
         }
 
-         private IWorkflowNode ParseWorkItem(Dictionary<string,string> contentParts)
+         private IWorkflowNode ParseWorkItem()
         {
             var id = ExtractValue("id", s => s, null);
 

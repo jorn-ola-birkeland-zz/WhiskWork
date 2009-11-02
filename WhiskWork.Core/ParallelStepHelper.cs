@@ -4,11 +4,11 @@ namespace WhiskWork.Core
 {
     public class ParallelStepHelper
     {
-        private readonly IWorkflowRepository _workflowRepository;
+        private readonly IWorkStepRepository _workStepRepository;
 
-        public ParallelStepHelper(IWorkflowRepository repository)
+        public ParallelStepHelper(IWorkStepRepository repository)
         {
-            _workflowRepository = repository;
+            _workStepRepository = repository;
         }
         public static string GetParallelId(string id, WorkStep parallelRootStep, WorkStep toStep)
         {
@@ -19,7 +19,7 @@ namespace WhiskWork.Core
         {
             var childWorkItems = new List<WorkItem>();
 
-            foreach (var subStep in _workflowRepository.GetChildWorkSteps(parallelRootStep.Path))
+            foreach (var subStep in _workStepRepository.GetChildWorkSteps(parallelRootStep.Path))
             {
                 var childId = GetParallelId(parentItem.Id, parallelRootStep, subStep);
                 var childWorkItem = parentItem.CreateChildItem(childId).AddClass(subStep.WorkItemClass);

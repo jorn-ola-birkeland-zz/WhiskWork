@@ -6,10 +6,10 @@ namespace WhiskWork.Core
 {
     public class WorkStepQuery
     {
-        private readonly IWorkflowRepository _workflowRepository;
-        public WorkStepQuery(IWorkflowRepository repository)
+        private readonly IWorkStepRepository _workStepRepository;
+        public WorkStepQuery(IWorkStepRepository repository)
         {
-            _workflowRepository = repository;
+            _workStepRepository = repository;
         }
 
         public bool IsLeafStep(WorkStep step)
@@ -24,7 +24,7 @@ namespace WhiskWork.Core
 
         public WorkStep GetLeafStep(string path)
         {
-            var currentWorkStep = _workflowRepository.GetWorkStep(path);
+            var currentWorkStep = _workStepRepository.GetWorkStep(path);
             while (true)
             {
                 if (currentWorkStep.Type == WorkStepType.Expand)
@@ -32,7 +32,7 @@ namespace WhiskWork.Core
                     break;
                 }
 
-                var subSteps = _workflowRepository.GetChildWorkSteps(currentWorkStep.Path);
+                var subSteps = _workStepRepository.GetChildWorkSteps(currentWorkStep.Path);
                 if (subSteps.Count() == 0)
                 {
                     break;
@@ -64,11 +64,11 @@ namespace WhiskWork.Core
         public bool IsInTransientStep(WorkItem workItem, out WorkStep transientStep)
         {
             transientStep = null;
-            bool isInTransientStep = _workflowRepository.GetWorkStep(workItem.Path).Type == WorkStepType.Transient;
+            bool isInTransientStep = _workStepRepository.GetWorkStep(workItem.Path).Type == WorkStepType.Transient;
 
             if(isInTransientStep)
             {
-                transientStep = _workflowRepository.GetWorkStep(workItem.Path);
+                transientStep = _workStepRepository.GetWorkStep(workItem.Path);
             }
             
             return isInTransientStep;
@@ -81,7 +81,7 @@ namespace WhiskWork.Core
 
         public bool IsParallelStep(string path)
         {
-            return !IsRoot(path) && IsParallelStep(_workflowRepository.GetWorkStep(path));
+            return !IsRoot(path) && IsParallelStep(_workStepRepository.GetWorkStep(path));
         }
 
         public bool IsParallelStep(WorkStep step)
@@ -91,7 +91,7 @@ namespace WhiskWork.Core
 
         public bool IsRoot(string path)
         {
-            return path == "/";
+            return path == WorkStep.Root.Path;
         }
 
         public bool IsValidWorkStepForWorkItem(WorkItem item, WorkStep workStep)
@@ -110,7 +110,7 @@ namespace WhiskWork.Core
             var currentPath = workStep.Path;
             do
             {
-                var currentWorkStep = _workflowRepository.GetWorkStep(currentPath);
+                var currentWorkStep = _workStepRepository.GetWorkStep(currentPath);
                 if (currentWorkStep.Type == stepType)
                 {
                     ancestorStep = currentWorkStep;
@@ -119,7 +119,7 @@ namespace WhiskWork.Core
 
                 currentPath = currentWorkStep.ParentPath;
             }
-            while (currentPath != "/");
+            while (currentPath != WorkStep.Root.Path);
 
             ancestorStep = null;
             return false;

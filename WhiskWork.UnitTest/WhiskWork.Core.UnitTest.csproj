@@ -7,8 +7,8 @@
     <ProjectGuid>{CB16EA85-7117-406B-9B37-8ADFCDA6BE97}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WhiskWork.UnitTest</RootNamespace>
-    <AssemblyName>WhiskWork.UnitTest</AssemblyName>
+    <RootNamespace>WhiskWork.Core.UnitTest</RootNamespace>
+    <AssemblyName>WhiskWork.Core.UnitTest</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -41,7 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssertUtils.cs" />
-    <Compile Include="HtmlRenderTest.cs" />
     <Compile Include="ParallelWorkStepsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ExpandWorkStepsTest.cs" />
@@ -50,8 +49,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="UpdatePropertiesTest.cs" />
     <Compile Include="WorkflowTest.cs" />
+    <Compile Include="WorkItemTest.cs" />
+    <Compile Include="WorkStepTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
@@ -62,19 +62,12 @@
       <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
       <Name>WhiskWork.Generic</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
-      <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>
-      <Name>WhiskWork.Web</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Resources\FullFeatureTest.html" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WhiskWork.Core.UnitTest.Properties {
+namespace WhiskWork.Web.UnitTest.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace WhiskWork.Core.UnitTest.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WhiskWork.Core.UnitTest.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WhiskWork.Web.UnitTest.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -57,6 +57,19 @@ namespace WhiskWork.Core.UnitTest.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;html&gt;&lt;body&gt;&lt;ol&gt;&lt;li id=&quot;analysis&quot; class=&quot;analysis&quot;&gt;&lt;h1&gt;
+        ///				Analysis
+        ///			&lt;/h1&gt;&lt;ol&gt;&lt;li id=&quot;analysis.inprocess&quot; class=&quot;workstep step-cr inprocess&quot;&gt;&lt;ol&gt;&lt;li id=&quot;cr1&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;li id=&quot;cr2&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;li id=&quot;cr3&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li id=&quot;analysis.done&quot; class=&quot;workstep step-cr done&quot;&gt;&lt;ol&gt;&lt;li id=&quot;cr4&quot; class=&quot;workitem cr&quot;&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li id=&quot;development&quot; class=&quot;development&quot;&gt;&lt;h1&gt;
+        ///				Development
+        ///			&lt;/h1&gt;&lt;ol&gt;&lt;li class=&quot;inprocess&quot;&gt;&lt;ol&gt;&lt;li class=&quot;transient&quot; [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string FullFeatureTest {
+            get {
+                return ResourceManager.GetString("FullFeatureTest", resourceCulture);
             }
         }
     }

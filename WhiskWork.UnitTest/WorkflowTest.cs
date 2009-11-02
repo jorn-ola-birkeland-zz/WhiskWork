@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using WhiskWork.Core;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Core.UnitTest
 {
     [TestClass]
     public class WorkflowTest
@@ -38,33 +37,6 @@ namespace WhiskWork.UnitTest
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () => _wp.CreateWorkItem("cr1", "/development"));
-        }
-
-
-        [TestMethod]
-        public void ShouldNotCreateWorkItemWithSlashInId()
-        {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem("cr/1", "/analysis"));
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem("/cr1", "/analysis"));
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem("cr1/", "/analysis"));
-        }
-
-        [TestMethod]
-        public void ShouldNotCreateWorkItemWithDotInId()
-        {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem("cr.1", "/analysis"));
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem(".cr1", "/analysis"));
-            AssertUtils.AssertThrows<ArgumentException>(
-                () => _wp.CreateWorkItem("cr1.", "/analysis"));
         }
 
         [TestMethod]

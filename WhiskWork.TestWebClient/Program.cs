@@ -16,22 +16,41 @@ namespace WhiskWork.TestWebClient
 
         private static void InitializeWorkflow()
         {
+            //CreateWorkStep("/scheduled", "/", 1, WorkStepType.Begin, "cr", "Scheduled");
+            //CreateWorkStep("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
+            //CreateWorkStep("/inprocess", "/analysis", 1, WorkStepType.Normal, "cr");
+            //CreateWorkStep("/done", "/analysis", 1, WorkStepType.Normal, "cr");
+            //CreateWorkStep("/development", "/", 2, WorkStepType.Begin, "cr", "Development");
+            //CreateWorkStep("/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            //CreateWorkStep("/tasks", "/development/inprocess", 1,WorkStepType.Normal, "task", "Tasks");
+            //CreateWorkStep("/new", "/development/inprocess/tasks", 1,WorkStepType.Begin, "task");
+            //CreateWorkStep("/inprocess", "/development/inprocess/tasks", 1,WorkStepType.Normal, "task");
+            //CreateWorkStep("/done", "/development/inprocess/tasks", 1,WorkStepType.End, "task");
+            //CreateWorkStep("/done", "/development", 2, WorkStepType.End, "cr");
+            //CreateWorkStep("/feedback", "/", 3, WorkStepType.Parallel, "cr");
+            //CreateWorkStep("/review", "/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
+            //CreateWorkStep("/test", "/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
+            //CreateWorkStep("/done", "/", 4, WorkStepType.End, "cr", "Done");
+
             CreateWorkStep("/scheduled", "/", 1, WorkStepType.Begin, "cr", "Scheduled");
-            CreateWorkStep("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
-            CreateWorkStep("/inprocess", "/analysis", 1, WorkStepType.Normal, "cr");
-            CreateWorkStep("/done", "/analysis", 1, WorkStepType.Normal, "cr");
-            CreateWorkStep("/development", "/", 2, WorkStepType.Begin, "cr", "Development");
-            CreateWorkStep("/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            CreateWorkStep("/tasks", "/development/inprocess", 1,WorkStepType.Normal, "task", "Tasks");
-            CreateWorkStep("/new", "/development/inprocess/tasks", 1,WorkStepType.Begin, "task");
-            CreateWorkStep("/inprocess", "/development/inprocess/tasks", 1,WorkStepType.Normal, "task");
-            CreateWorkStep("/done", "/development/inprocess/tasks", 1,WorkStepType.End, "task");
-            CreateWorkStep("/done", "/development", 2, WorkStepType.End, "cr");
-            CreateWorkStep("/feedback", "/", 3, WorkStepType.Parallel, "cr");
-            CreateWorkStep("/review", "/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
-            //CreateWorkStep("/feedback/demo", "/feedback", 2, WorkStepType.Normal, "cr-demo", "Demo");
-            CreateWorkStep("/test", "/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
+
+            CreateWorkStep("/wip", "/", 1, WorkStepType.Normal, "cr");
+            CreateWorkStep("/analysis", "/wip", 1, WorkStepType.Normal, "cr", "Analysis");
+            CreateWorkStep("/inprocess", "/wip/analysis", 1, WorkStepType.Normal, "cr");
+            CreateWorkStep("/done", "/wip/analysis", 1, WorkStepType.Normal, "cr");
+            CreateWorkStep("/development", "/wip", 2, WorkStepType.Begin, "cr", "Development");
+            CreateWorkStep("/inprocess", "/wip/development", 1, WorkStepType.Expand, "cr");
+            CreateWorkStep("/tasks", "/wip/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
+            CreateWorkStep("/new", "/wip/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            CreateWorkStep("/inprocess", "/wip/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
+            CreateWorkStep("/done", "/wip/development/inprocess/tasks", 1, WorkStepType.End, "task");
+            CreateWorkStep("/done", "/wip/development", 2, WorkStepType.End, "cr");
+            CreateWorkStep("/feedback", "/wip/", 3, WorkStepType.Parallel, "cr");
+            CreateWorkStep("/review", "/wip/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
+            CreateWorkStep("/test", "/wip/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
+
             CreateWorkStep("/done", "/", 4, WorkStepType.End, "cr", "Done");
+
         }
 
         private static void RunMainLoop()

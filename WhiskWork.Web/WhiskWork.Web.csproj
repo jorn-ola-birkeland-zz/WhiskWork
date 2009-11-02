@@ -49,10 +49,11 @@
     <Compile Include="CsvRequestMessageParser.cs" />
     <Compile Include="HtmlRenderer.cs" />
     <Compile Include="HttpPostWorkflowNodeVisitor.cs" />
-    <Compile Include="HttpPutWorkflowNodeVisitor.cs" />
     <Compile Include="IRequestMessageParser.cs" />
     <Compile Include="IWorkflowNode.cs" />
     <Compile Include="IWorkflowNodeVisitor.cs" />
+    <Compile Include="IWorkStepRenderer.cs" />
+    <Compile Include="IWorkStepRendererFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RequestMessageParserFactory.cs" />
     <Compile Include="WorkflowHttpHandler.cs" />

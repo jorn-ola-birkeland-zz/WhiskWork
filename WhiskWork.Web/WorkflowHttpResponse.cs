@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using WhiskWork.IO;
@@ -44,6 +45,11 @@ namespace WhiskWork.Web
             get { return new WorkflowHttpResponse(HttpStatusCode.Forbidden); }
         }
 
+        public static WorkflowHttpResponse NotImplemented
+        {
+            get { return new WorkflowHttpResponse(HttpStatusCode.NotImplemented); }
+        }
+
         public static WorkflowHttpResponse InternalServerError
         {
             get { return new WorkflowHttpResponse(HttpStatusCode.InternalServerError); }
@@ -58,16 +64,10 @@ namespace WhiskWork.Web
             get { return _outputStream; }
         }
 
+
         public static WorkflowHttpResponse Created(string locationUrl)
         {
             var response = new WorkflowHttpResponse(HttpStatusCode.Created);
-            response.Headers.Add(HttpResponseHeader.Location, locationUrl);
-            return response;
-        }
-
-        public static WorkflowHttpResponse MovedPermanently(string locationUrl)
-        {
-            var response = new WorkflowHttpResponse(HttpStatusCode.MovedPermanently);
             response.Headers.Add(HttpResponseHeader.Location, locationUrl);
             return response;
         }

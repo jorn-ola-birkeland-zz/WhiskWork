@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
 using System.IO;
 using WhiskWork.Web;
-using WhiskWork.UnitTest.Properties;
+using WhiskWork.Web.UnitTest.Properties;
 
 namespace WhiskWork.UnitTest
 {
@@ -446,7 +446,7 @@ namespace WhiskWork.UnitTest
 
         private XmlDocument GetFullDocument()
         {
-            return GetFullDocument(RootWorkStep.Instance);        
+            return GetFullDocument(WorkStep.Root);        
         }   
 
         private XmlDocument GetFullDocument(WorkStep workStep)
@@ -457,7 +457,7 @@ namespace WhiskWork.UnitTest
             using (var writeStream = new MemoryStream())
             {
 
-                htmlRenderer.RenderFull(writeStream, workStep);
+                htmlRenderer.Render(writeStream, workStep);
 
                 var readStream = new MemoryStream(writeStream.ToArray());
                 doc.Load(readStream);

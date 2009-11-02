@@ -3,18 +3,18 @@ using System.Collections.Generic;
 
 namespace WhiskWork.Core
 {
-    public class AdvancedWorkflowRepository : IWorkflowRepository
+    public class AdvancedWorkflowRepository : IWorkStepRepository
     {
-        private readonly IWorkflowRepository _workflowRepository;
+        private readonly IWorkStepRepository _workStepRepository;
 
-        public AdvancedWorkflowRepository(IWorkflowRepository workflowRepository)
+        public AdvancedWorkflowRepository(IWorkStepRepository workStepRepository)
         {
-            _workflowRepository = workflowRepository;
+            _workStepRepository = workStepRepository;
         }
 
         public void DeleteWorkStepsRecursively(WorkStep step)
         {
-            foreach (var workStep in _workflowRepository.GetChildWorkSteps(step.Path))
+            foreach (var workStep in _workStepRepository.GetChildWorkSteps(step.Path))
             {
                 DeleteWorkStepsRecursively(workStep);
             }
@@ -25,27 +25,27 @@ namespace WhiskWork.Core
 
         public void CreateWorkStep(WorkStep workStep)
         {
-            _workflowRepository.CreateWorkStep(workStep);
+            _workStepRepository.CreateWorkStep(workStep);
         }
 
         public IEnumerable<WorkStep> GetChildWorkSteps(string path)
         {
-            return _workflowRepository.GetChildWorkSteps(path);
+            return _workStepRepository.GetChildWorkSteps(path);
         }
 
         public WorkStep GetWorkStep(string path)
         {
-            return _workflowRepository.GetWorkStep(path);
+            return _workStepRepository.GetWorkStep(path);
         }
 
         public void DeleteWorkStep(string path)
         {
-            _workflowRepository.DeleteWorkStep(path);
+            _workStepRepository.DeleteWorkStep(path);
         }
 
         public bool ExistsWorkStep(string path)
         {
-            return _workflowRepository.ExistsWorkStep(path);
+            return _workStepRepository.ExistsWorkStep(path);
         }
     }
 }

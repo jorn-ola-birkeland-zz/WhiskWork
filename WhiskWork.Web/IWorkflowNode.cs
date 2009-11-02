@@ -1,6 +1,6 @@
 namespace WhiskWork.Web
 {
-    internal interface IWorkflowNode
+    public interface IWorkflowNode
     {
         void AcceptVisitor(IWorkflowNodeVisitor visitor);
     }

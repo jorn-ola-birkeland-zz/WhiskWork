@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using WhiskWork.Core;
 using WhiskWork.Generic;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Core.UnitTest
 {
     [TestClass]
     public class ExpandWorkStepsTest

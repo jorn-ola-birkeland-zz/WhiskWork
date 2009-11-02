@@ -7,53 +7,38 @@ using WhiskWork.Generic;
 
 namespace WhiskWork.Web
 {
-    public class RootWorkStep : WorkStep
+    public class HtmlRenderer : IWorkStepRenderer
     {
-        private RootWorkStep() : base("/", null, 0, WorkStepType.Normal, null)
-        {
-        }
-
-        public static RootWorkStep Instance
-        {
-            get
-            {
-                return new RootWorkStep();
-            }
-        }
-    }
-
-    public class HtmlRenderer
-    {
-        private readonly IWorkflowRepository _workflowRepository;
+        private readonly IWorkStepRepository _workStepRepository;
         private readonly IWorkItemRepository _workItemRepository;
 
-        public HtmlRenderer(IWorkflowRepository workflowRepository, IWorkItemRepository workItemRepository)
+        public HtmlRenderer(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository)
         {
-            _workflowRepository = workflowRepository;
+            _workStepRepository = workStepRepository;
             _workItemRepository = workItemRepository;
         }
 
-        public void RenderFull(Stream stream)
+        public void Render(Stream stream)
         {
-            RenderFull(stream, RootWorkStep.Instance);
+            Render(stream, WorkStep.Root);
         }
 
-        public void RenderFull(Stream stream, string path)
+        public void Render(Stream stream, string path)
         {
-            if(string.IsNullOrEmpty(path) || RootWorkStep.Instance.Path==path)
+            if(string.IsNullOrEmpty(path) || WorkStep.Root.Path==path)
             {
-                RenderFull(stream, RootWorkStep.Instance);
+                Render(stream, WorkStep.Root);
             }
             else
             {
-                var workStep = _workflowRepository.GetWorkStep(path);
+                var workStep = _workStepRepository.GetWorkStep(path);
 
-                RenderFull(stream, workStep);
+                Render(stream, workStep);
             }
         }
 
 
-        public void RenderFull(Stream stream, WorkStep workStep)
+        public void Render(Stream stream, WorkStep workStep)
         {
             using (var streamWriter = new StreamWriter(stream))
             {
@@ -75,7 +60,7 @@ namespace WhiskWork.Web
         {
             RenderWorkItemList(writer, workStep);
 
-            var query = new WorkStepQuery(_workflowRepository);
+            var query = new WorkStepQuery(_workStepRepository);
 
             if (query.IsParallelStep(workStep))
             {
@@ -104,7 +89,7 @@ namespace WhiskWork.Web
 
         private void RenderNonEmptyWorkStepList(HtmlTextWriter writer, WorkStep workStep, HtmlTextWriterTag listTag)
         {
-            var childSteps = _workflowRepository.GetChildWorkSteps(workStep.Path);
+            var childSteps = _workStepRepository.GetChildWorkSteps(workStep.Path);
             if (childSteps.Count() == 0)
             {
                 //RenderWorkItemList(writer,workStep);
@@ -126,7 +111,7 @@ namespace WhiskWork.Web
 
         private void RenderWorkStepListItem(HtmlTextWriter writer, WorkStep workStep)
         {
-            if(!new WorkStepQuery(_workflowRepository).IsExpandStep(workStep) )
+            if(!new WorkStepQuery(_workStepRepository).IsExpandStep(workStep) )
             {
                 var id = GenerateWorkStepId(workStep);
                 writer.AddAttribute(HtmlTextWriterAttribute.Id, id);
@@ -156,7 +141,7 @@ namespace WhiskWork.Web
 
         private void RenderExpandTransientListItems(HtmlTextWriter writer, WorkStep step)
         {
-            var transientSteps = _workflowRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
+            var transientSteps = _workStepRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
 
             foreach (var transientStep in transientSteps)
             {
@@ -179,7 +164,7 @@ namespace WhiskWork.Web
 
             writer.RenderEndTag(); //li
 
-            var childSteps = _workflowRepository.GetChildWorkSteps(transientStep.Path);
+            var childSteps = _workStepRepository.GetChildWorkSteps(transientStep.Path);
             RenderWorkStepListItems(writer, childSteps);
 
             writer.RenderEndTag(); //ol
@@ -200,7 +185,7 @@ namespace WhiskWork.Web
             writer.RenderBeginTag(HtmlTextWriterTag.Li);
             writer.RenderEndTag();
 
-            var childSteps = _workflowRepository.GetChildWorkSteps(workStep.Path).Where(ws=>ws.Type!=WorkStepType.Transient);
+            var childSteps = _workStepRepository.GetChildWorkSteps(workStep.Path).Where(ws=>ws.Type!=WorkStepType.Transient);
             RenderWorkStepListItems(writer, childSteps);
 
             writer.RenderEndTag(); //ol
@@ -284,7 +269,7 @@ namespace WhiskWork.Web
         private string GenerateWorkStepClass(WorkStep workStep)
         {
             var classes = new List<string>();
-            var query = new WorkStepQuery(_workflowRepository);
+            var query = new WorkStepQuery(_workStepRepository);
 
             if(!query.IsExpandStep(workStep) && query.IsLeafStep(workStep))
             {

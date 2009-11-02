@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace WhiskWork.Core
 {
-    public interface IWorkflowRepository
+    public interface IWorkStepRepository
     {
         void CreateWorkStep(WorkStep workStep);
         IEnumerable<WorkStep> GetChildWorkSteps(string path);

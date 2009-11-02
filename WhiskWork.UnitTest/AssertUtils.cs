@@ -1,7 +1,7 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Core.UnitTest
 {
     public static class AssertUtils
     {

@@ -47,7 +47,7 @@
   <ItemGroup>
     <Compile Include="AdvancedWorkflowRepository.cs" />
     <Compile Include="FileWorkItemLogger.cs" />
-    <Compile Include="IWorkflowRepository.cs" />
+    <Compile Include="IWorkStepRepository.cs" />
     <Compile Include="IWorkItemLogger.cs" />
     <Compile Include="IWorkItemRepository.cs" />
     <Compile Include="LoggingWorkItemRepository.cs" />

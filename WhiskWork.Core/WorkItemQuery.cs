@@ -5,18 +5,18 @@ namespace WhiskWork.Core
 {
     public class WorkItemQuery
     {
-        private readonly IWorkflowRepository _workflowRepository;
+        private readonly IWorkStepRepository _workStepRepository;
         private readonly IWorkItemRepository _workItemRepository;
 
-        public WorkItemQuery(IWorkflowRepository repository, IWorkItemRepository workItems)
+        public WorkItemQuery(IWorkStepRepository repository, IWorkItemRepository workItems)
         {
-            _workflowRepository = repository;
+            _workStepRepository = repository;
             _workItemRepository = workItems;
         }
 
         public bool IsDone(WorkItem item)
         {
-            return _workflowRepository.GetWorkStep(item.Path).Type == WorkStepType.End;
+            return _workStepRepository.GetWorkStep(item.Path).Type == WorkStepType.End;
         }
 
         public bool TryLocateWorkItem(string id, out WorkItem item)
@@ -34,7 +34,7 @@ namespace WhiskWork.Core
             }
 
             var parent = _workItemRepository.GetWorkItem(item.ParentId);
-            var workStep = _workflowRepository.GetWorkStep(parent.Path);
+            var workStep = _workStepRepository.GetWorkStep(parent.Path);
 
             return workStep.Type == WorkStepType.Transient;
         }
