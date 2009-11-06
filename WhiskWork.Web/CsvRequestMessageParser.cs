@@ -7,11 +7,9 @@ using System.Linq;
 
 namespace WhiskWork.Web
 {
-    public class CsvRequestMessageParser : IRequestMessageParser
+    public abstract class RequestMessageParser : IRequestMessageParser
     {
-        #region IRequestMessageParser Members
-
-        readonly Dictionary<string, string> _values = new Dictionary<string, string>();
+        private Dictionary<string, string> _values;
 
         public IWorkflowNode Parse(Stream messageStream)
         {
@@ -23,15 +21,7 @@ namespace WhiskWork.Web
                 throw new ArgumentException("Missing data");
             }
 
-            foreach(var property in content.Split(','))
-            {
-                var pair = property.Split('=');
-                if(pair.Length!=2)
-                {
-                    throw new ArgumentException("Illegal format");
-                }
-                _values.Add(pair[0].ToLowerInvariant(), pair[1]);
-            }
+            _values = GetKeyValueMap(content);
 
             if(_values.ContainsKey("id"))
             {
@@ -46,6 +36,8 @@ namespace WhiskWork.Web
             throw new ArgumentException("Unrecognized data");
         }
 
+        protected abstract Dictionary<string,string> GetKeyValueMap(string content);
+
         private IWorkflowNode ParseWorkStep(Dictionary<string,string> contentParts)
         {
             //<path>,<parentPath>,<worksteptype>,<workItemClass>,<title>,<ordinal>
@@ -59,16 +51,16 @@ namespace WhiskWork.Web
             return new WorkStepNode(step, ordinal, type, workItemClass, title);
         }
 
-         private IWorkflowNode ParseWorkItem()
+        private IWorkflowNode ParseWorkItem()
         {
             var id = ExtractValue("id", s => s, null);
 
             var properties = new NameValueCollection();
 
-             foreach (KeyValuePair<string,string> keyValuePair in _values)
-             {
-                 properties.Add(keyValuePair.Key, keyValuePair.Value);
-             }
+            foreach (KeyValuePair<string,string> keyValuePair in _values)
+            {
+                properties.Add(keyValuePair.Key, keyValuePair.Value);
+            }
             return new WorkItemNode(id, properties);
         }
 
@@ -83,6 +75,28 @@ namespace WhiskWork.Web
 
             return defaultValue;
         }
+    }
+
+    public class CsvRequestMessageParser : RequestMessageParser
+    {
+        #region IRequestMessageParser Members
+
+        protected override Dictionary<string,string> GetKeyValueMap(string content)
+        {
+            var values = new Dictionary<string, string>();
+            foreach(var property in content.Split(','))
+            {
+                var pair = property.Split('=');
+                if(pair.Length!=2)
+                {
+                    throw new ArgumentException("Illegal format");
+                }
+                values.Add(pair[0].ToLowerInvariant(), pair[1]);
+            }
+
+            return values;
+        }
+
         #endregion
     }
 }

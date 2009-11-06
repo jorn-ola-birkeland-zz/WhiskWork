@@ -20,7 +20,7 @@ namespace WhiskWork.Web
 
         public WorkItem GetWorkItem(string path)
         {
-            return WorkItem.New(_id, path, _properties);
+            return WorkItem.NewUnchecked(_id, path, _properties);
         }
     }
 }

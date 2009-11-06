@@ -78,6 +78,12 @@ namespace WhiskWork.Core
             return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,0, properties);
         }
 
+        public static WorkItem NewUnchecked(string id, string path, NameValueCollection properties)
+        {
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, 0, properties);
+        }
+
+
         public string Id { get; private set; }
         public string Path { get; private set; }
         public IEnumerable<string> Classes { get; private set; }

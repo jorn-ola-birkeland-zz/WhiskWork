@@ -31,7 +31,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DominoInterOp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\DominoInterOp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -45,8 +50,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EManagerSynchronizationAgent.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WhiskWorkSynchronizationAgent.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
+      <Project>{330250E7-CD02-46E8-9520-29FDABC65919}</Project>
+      <Name>WhiskWork.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
+      <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>
+      <Name>WhiskWork.Web</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

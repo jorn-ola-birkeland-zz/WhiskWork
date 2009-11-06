@@ -1,5 +1,6 @@
 ﻿using System;
 using Abb.One.MicroWebServer;
+using System.IO;
 
 namespace WhiskWork.CommondLineWebServer
 {
@@ -7,7 +8,8 @@ namespace WhiskWork.CommondLineWebServer
     {
         private static void Main(string[] args)
         {
-            const string webRootDirectory = @"c:\temp\agileboard";
+            Console.WriteLine(Directory.GetCurrentDirectory());
+            const string webRootDirectory = @"..\..\..\Example";
 
             var router = new WebRouter(webRootDirectory);
             var server = new WebServer(router.ProcessRequest, 5555);

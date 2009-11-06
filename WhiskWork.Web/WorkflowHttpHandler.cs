@@ -33,8 +33,10 @@ namespace WhiskWork.Web
 
         private WorkflowHttpResponse RespondToPost(WorkflowHttpRequest request)
         {
+            Console.WriteLine(request.RawUrl);
+
             IRequestMessageParser parser;
-            if (!TryLocateParser(request.ContentType, out parser))
+            if (!RequestMessageParserFactory.TryCreateParser(request.ContentType, out parser))
             {
                 return WorkflowHttpResponse.UnsupportedMediaType;
             }
@@ -61,11 +63,6 @@ namespace WhiskWork.Web
             }
             
             return DeleteWorkStep(request.RawUrl);
-        }
-
-        private static bool TryLocateParser(string contentType, out IRequestMessageParser parser)
-        {
-            return RequestMessageParserFactory.TryCreate(contentType, out parser);
         }
 
         private static WorkflowHttpResponse Render(IWorkStepRenderer renderer, string path)

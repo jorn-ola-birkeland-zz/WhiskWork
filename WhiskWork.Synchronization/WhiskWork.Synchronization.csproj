@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{1C6E1331-D939-4A95-B994-20945C97E559}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{126ADE20-6CB2-47B3-AB4E-567B3204B0CF}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WhiskWork.TestWebClient</RootNamespace>
-    <AssemblyName>WhiskWork.TestWebClient</AssemblyName>
+    <RootNamespace>WhiskWork.Synchronization</RootNamespace>
+    <AssemblyName>WhiskWork.Synchronization</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -35,7 +35,6 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -46,18 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
-      <Project>{330250E7-CD02-46E8-9520-29FDABC65919}</Project>
-      <Name>WhiskWork.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
-      <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>
-      <Name>WhiskWork.Web</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

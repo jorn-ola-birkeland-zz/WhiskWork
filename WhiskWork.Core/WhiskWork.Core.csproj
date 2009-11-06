@@ -55,6 +55,11 @@
     <Compile Include="MemoryWorkItemRepository.cs" />
     <Compile Include="ParallelStepHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Synchronization\CreationSynchronizer.cs" />
+    <Compile Include="Synchronization\ISynchronizationAgent.cs" />
+    <Compile Include="Synchronization\StatusSynchronizer.cs" />
+    <Compile Include="Synchronization\SynchronizationEntry.cs" />
+    <Compile Include="Synchronization\SynchronizationMap.cs" />
     <Compile Include="WorkItem.cs" />
     <Compile Include="WorkItemClass.cs" />
     <Compile Include="WorkItemQuery.cs" />

@@ -1,59 +1,51 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Xml;
+﻿#region
+
+using System;
+using WhiskWork.Core.Synchronization;
+
+#endregion
 
 namespace WhiskWork.Synchronizer
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            const string path = "/";
-            var request = (HttpWebRequest)WebRequest.Create("http://localhost:5555" + path);
+            const string rootPath = "/";
+            const string site = "http://localhost:5555";
+            const string beginStep = "/scheduled";
 
-            request.ContentType = "text/html";
-            request.Method = "GET";
+            //var eManagerAgent = new EManagerSynchronizationAgent("20091212", "CMS");
 
-            var doc = new XmlDocument();
-            try
+            var whiskWorkAgent = new WhiskWorkSynchronizationAgent(site, rootPath, beginStep);
+
+            //var map = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
+            //map.AddReciprocalEntry("3. Scheduled for development", "/scheduled");
+            //map.AddReciprocalEntry("2. Development", "/wip/analysis/inprocess");
+            //map.AddReverseEntry("/wip/anlysis/done", "2. Development");
+            //map.AddReverseEntry("/wip/development/inprocess", "2. Development");
+            //map.AddReverseEntry("/wip/development/done", "2. Development");
+            //map.AddReverseEntry("/wip/feedback/review", "2. Development");
+            //map.AddReverseEntry("/wip/feedback/test", "2. Development");
+            //map.AddReciprocalEntry("1. Done", "/done");
+
+
+            //var creationSynchronizer = new CreationSynchronizer(map, eManagerAgent, whiskWorkAgent);
+
+            //foreach (var synchronizationEntry in eManagerAgent.GetAll())
+            //{
+            //    Console.WriteLine(synchronizationEntry);
+            //}
+
+            //var statusSynchronizer = new StatusSynchronizer(map, whiskWorkAgent, eManagerAgent);
+
+            foreach (var entry in whiskWorkAgent.GetAll())
             {
-                var response = (HttpWebResponse)request.GetResponse();
-
-                Console.WriteLine(response.StatusCode);
-
-                doc.Load(response.GetResponseStream());
-
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            var worksteps = doc.SelectNodes("//li[contains(@class,'step-cr')]");
-
-            if (worksteps == null)
-            {
-                return;
-            }
-
-            foreach (XmlNode workstep in worksteps)
-            {
-                var id = workstep.SelectSingleNode("@id").Value;
-                var workStepPath = "/" + id.Replace('.', '/');
-                var workItemIds = workstep.SelectNodes("ol/li[contains(@class,'cr')]/@id");
-
-                if(workItemIds==null)
-                {
-                    continue;
-                }
-
-                foreach (XmlNode workItemId in workItemIds)
-                {
-                    Console.WriteLine("{0}: {1}", workStepPath, workItemId.Value);
-                }
+                Console.WriteLine(entry);
             }
 
+            //creationSynchronizer.Synchronize();
+//                statusSynchronizer.Synchronize();
         }
     }
 }

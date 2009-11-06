@@ -1,0 +1,312 @@
+body
+{
+  font-family:arial;
+}
+
+ol, ul, li
+{
+	display:block;
+	margin:0;
+	padding:0;
+	position:absolute;
+}
+
+h1
+{
+  padding:0;
+  margin:0;
+  height:30px;
+  border-bottom: solid 1px black;
+  font-family:arial;
+  text-align:center;
+  font-size:25px;
+}
+
+.cr
+{
+	width:60px;
+	height:40px;
+	border: solid 1px black;
+	background-color:yellow;
+	margin:5px;
+	position:relative;
+}
+
+.task
+{
+	width:30px;
+	height:30px;
+	border: solid 1px black;
+	background-color:yellow;
+	margin:5px;
+	position:relative;
+	float:left;
+}
+
+.scheduled
+{
+	left:0px;
+	top:0px;
+	height:2000px;
+	width:150px;
+	border:solid 1px black;
+}
+
+
+.analysis
+{
+	left:150px;
+	top:0px;
+	height:2000px;
+	width:150px;
+	border:solid 1px black;
+}
+
+.analysis .inprocess
+{
+	position:absolute;
+	left:0px;
+	top:0px;
+	height:1970px;
+	width:75px;
+}
+
+.analysis .done
+{
+	position:absolute;
+	left:75px;
+	top:0px;
+	height:1970px;
+	width:75px;
+	border-left: dotted 1px black;
+}
+
+.development
+{
+	left:300px;
+	top:0px;
+	height:2000px;
+	width:600px;
+	border:solid 1px black;
+}
+
+.development .inprocess
+{
+	left:0px;
+	top:0px;
+	height:1970px;
+	width:500px;
+}
+
+.development .done
+{
+	left:500px;
+	top:0px;
+	height:1970px;
+	width:100px;
+	border-left:solid 1px black;
+}
+
+.development .inprocess .transient, .development .inprocess .expand
+
+{
+	left:0px;
+	top:0px;
+	height:150px;
+	width:500px;
+	position:relative;
+	border:solid 1px black;
+}
+
+.development .inprocess .transient .step-cr, .development .inprocess .expand .step-cr
+{
+	left:0px;
+	top:0px;
+	height:150px;
+	width:100px;
+}
+
+.development .inprocess .transient .tasks, .development .inprocess .expand .tasks
+{
+	left:100px;
+	top:0px;
+	height:150px;
+	width:400px;
+	border-left:solid 1px black;
+}
+
+.tasks h1
+{
+	left:0px;
+	top:0px;
+	height:30px;
+	margin:0;
+	border-bottom:solid 1px black;
+	font-family:arial;
+	font-size:20px;
+	text-align:center;
+}
+
+.tasks .new
+{
+	left:0px;
+	top:0px;
+	height:120px;
+	width:150px;
+}
+
+.tasks .inprocess
+{
+	left:150px;
+	top:0px;
+	height:120px;
+	width:100px;
+	border-left: solid 1px black;
+}
+
+.tasks .done
+{
+	left:250px;
+	top:0px;
+	height:120px;
+	width:150px;
+}
+
+
+.feedback .review
+{
+	left:900px;
+	top:0px;
+	height:400px;
+	width:150px;
+	border:solid 1px black;
+}
+
+/*
+.feedback .demo
+{
+	left:900px;
+	top:200px;
+	height:400px;
+	width:150px;
+	border:solid 1px black;
+}
+*/
+.feedback .test
+{
+	left:900px;
+	top:400px;
+	height:1600px;
+	width:150px;
+	border:solid 1px black;
+}
+
+.cr-review
+{
+	border:dotted 1px black;
+	background-color:blue;
+}
+
+.cr-demo
+{
+	border:dotted 1px black;
+	background-color:green;
+}
+
+.cr-test
+{
+	border:dotted 1px black;
+	background-color:magenta;
+}
+
+
+#done
+{
+	left:1050px;
+	top:0px;
+	height:2000px;
+	width:150px;
+	border:solid 1px black;
+}
+
+dt, dd
+{
+	display:none;
+}
+
+dd.name
+{
+	display:block;
+	marign:0;
+	margin-left:1px;
+}
+
+.workItemHover dd,
+.workItemHover dt
+{
+	display:block;
+}
+
+.workItemHover dd
+{
+	margin-left:10px;
+}
+
+.workItemHover dt
+{
+	font-weight:bold;
+	text-transform: capitalize;
+}
+
+.workitemHover dd.name
+{
+	position:absolute;
+	left:-80px;
+	top:-10px;
+	font-weight:bold;
+}
+
+.workitemHover dt.name
+{
+	display:none;
+}
+
+.workItemHover.cr dl
+{
+	position: absolute;
+	left: 70px;
+	top:10px;
+	background-color: #ffffaf;
+	border: 1px solid black;
+	z-index: 1000;
+	width: 400;
+}
+
+.workItemHover.task dl
+{
+	position: absolute;
+	left: 35px;
+	top:5px;
+	background-color: #ffffaf;
+	border: 1px solid black;
+	z-index: 1000;
+	width: 200;
+}
+
+.ui-draggable-dragging.cr dl,
+.ui-draggable-dragging.task dl
+{
+	border:none;
+}
+
+.ui-draggable-dragging dd,
+.ui-draggable-dragging dt
+{
+	display:none;
+}
+
+.ui-draggable-dragging dd.name
+{
+	display:block;
+	font-weight:normal;
+}
