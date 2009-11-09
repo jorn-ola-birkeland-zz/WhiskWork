@@ -10,36 +10,29 @@ namespace WhiskWork.Core.UnitTest
     {
         private MockRepository _mocks;
 
-        private ISynchronizationAgent _masterStub;
-        private ISynchronizationAgent _slaveMock;
-
-        private SynchronizationMap _map;
 
         [TestInitialize]
         public void Init()
         {
             _mocks = new MockRepository();
-
-            _masterStub = _mocks.Stub<ISynchronizationAgent>();
-            _slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
-
-            _map = new SynchronizationMap(_masterStub, _slaveMock);
-
         }
 
         [TestMethod]
         public void ShouldCreateMissingSynchronizationEntriesInSlave()
         {
-            _map.AddReciprocalEntry("scheduled", "planned");
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
 
-            var synchronizer = new CreationSynchronizer(_map, _masterStub, _slaveMock);
+            map.AddReciprocalEntry("scheduled", "planned");
+            var synchronizer = new CreationSynchronizer(map, masterStub, slaveMock);
 
             using(_mocks.Record())
             {
-                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "scheduled")});
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "scheduled")});
                
-                Expect.Call(_slaveMock.GetAll()).Return(new SynchronizationEntry[0]);
-                _slaveMock.Create(Entry("1", "planned"));
+                Expect.Call(slaveMock.GetAll()).Return(new SynchronizationEntry[0]);
+                slaveMock.Create(Entry("1", "planned"));
 
             }
             using(_mocks.Playback())
@@ -49,20 +42,44 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldDeleteSuperfluousSynchronizationEntiesInSlave()
+        public void ShouldIgnoreMissingMappingWhenSynchronizingCreation()
         {
-            _map.AddReciprocalEntry("scheduled", "planned");
-            
-            var synchronizer = new CreationSynchronizer(_map, _masterStub, _slaveMock);
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.StrictMock<ISynchronizationAgent>();
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
+
+            var synchronizer = new CreationSynchronizer(map, masterStub, slaveMock);
 
             using (_mocks.Record())
             {
-                SetupResult.For(_masterStub.GetAll()).Return(
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "notMapped") });
+                Expect.Call(slaveMock.GetAll()).Return(new SynchronizationEntry[0]);
+            }
+            using (_mocks.Playback())
+            {
+                synchronizer.Synchronize();
+            }
+            
+        }
+
+        [TestMethod]
+        public void ShouldDeleteSuperfluousSynchronizationEntiesInSlave()
+        {
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
+
+            map.AddReciprocalEntry("scheduled", "planned");
+            var synchronizer = new CreationSynchronizer(map, masterStub, slaveMock);
+
+            using (_mocks.Record())
+            {
+                SetupResult.For(masterStub.GetAll()).Return(
                     new[] { Entry("1", "scheduled") });
 
-                Expect.Call(_slaveMock.GetAll()).Return(
+                Expect.Call(slaveMock.GetAll()).Return(
                     new[] { Entry("1", "planned"),Entry("2", "planned") });
-                _slaveMock.Delete(Entry("2", "planned"));
+                slaveMock.Delete(Entry("2", "planned"));
                 LastCall.Repeat.Once();
 
             }
@@ -75,17 +92,21 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldSynchronizeStatus()
         {
-            _map.AddReciprocalEntry("/analysis", "Development");
-            _map.AddReciprocalEntry("/done", "Done");
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
 
-            var synchronizer = new StatusSynchronizer(_map, _masterStub, _slaveMock);
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
+            map.AddReciprocalEntry("/analysis", "Development");
+            map.AddReciprocalEntry("/done", "Done");
+
+            var synchronizer = new StatusSynchronizer(map, masterStub, slaveMock);
 
             using (_mocks.Record())
             {
-                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done") });
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "/done") });
 
-                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development") });
-                _slaveMock.UpdateStatus(Entry("1","Done"));
+                Expect.Call(slaveMock.GetAll()).Return(new[] { Entry("1", "Development") });
+                slaveMock.UpdateStatus(Entry("1","Done"));
                 LastCall.Repeat.Once();
 
             }
@@ -96,19 +117,47 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldSynchronizeStatusIfSlaveEntriesAreMissing()
+        public void ShouldIgnoreMissingMappingWhenSynchronizingStatus()
         {
-            _map.AddReciprocalEntry("/analysis", "Development");
-            _map.AddReciprocalEntry("/done", "Done");
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.StrictMock<ISynchronizationAgent>();
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
 
-            var synchronizer = new StatusSynchronizer(_map, _masterStub, _slaveMock);
+            var synchronizer = new StatusSynchronizer(map, masterStub, slaveMock);
 
             using (_mocks.Record())
             {
-                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done"),Entry("2","/analysis") });
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "/done") });
+                Expect.Call(slaveMock.GetAll()).Return(new[] { Entry("1", "UnknownMap") });
+                LastCall.Repeat.Once();
+            }
 
-                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("2", "Done") });
-                _slaveMock.UpdateStatus(Entry("2", "Development"));
+            using (_mocks.Playback())
+            {
+                synchronizer.Synchronize();
+            }
+
+        }
+
+
+        [TestMethod]
+        public void ShouldSynchronizeStatusIfSlaveEntriesAreMissing()
+        {
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
+
+            var map = new StatusSynchronizationMap(masterStub, slaveMock);
+            map.AddReciprocalEntry("/analysis", "Development");
+            map.AddReciprocalEntry("/done", "Done");
+
+            var synchronizer = new StatusSynchronizer(map, masterStub, slaveMock);
+
+            using (_mocks.Record())
+            {
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "/done"),Entry("2","/analysis") });
+
+                Expect.Call(slaveMock.GetAll()).Return(new[] { Entry("2", "Done") });
+                slaveMock.UpdateStatus(Entry("2", "Development"));
                 LastCall.Repeat.Once();
 
             }
@@ -118,20 +167,20 @@ namespace WhiskWork.Core.UnitTest
             }
         }
 
-        [TestMethod, Ignore]
+        [TestMethod]
         public void ShouldUpdateProperties()
         {
-            _map.AddReciprocalEntry("/analysis", "Development");
-            _map.AddReciprocalEntry("/done", "Done");
+            var masterStub = _mocks.Stub<ISynchronizationAgent>();
+            var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
 
-            var synchronizer = new PropertySynchronizer(_map, _masterStub, _slaveMock);
+            var synchronizer = new PropertySynchronizer(masterStub, slaveMock);
 
             using (_mocks.Record())
             {
-                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done","Name","name1","Dev","dev1") });
+                SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "/done","Name","name1","Dev","dev1") });
 
-                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development","Name","name2") });
-                _slaveMock.UpdateProperties(Entry("1", "Development", "Name","name1","Dev","dev1"));
+                Expect.Call(slaveMock.GetAll()).Return(new[] { Entry("1", "Development","Name","name2") });
+                slaveMock.UpdateProperties(Entry("1", "Development", "Name","name1","Dev","dev1"));
                 LastCall.Repeat.Once();
 
             }

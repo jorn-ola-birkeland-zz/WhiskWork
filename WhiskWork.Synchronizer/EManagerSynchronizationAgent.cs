@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Data;
 using DominoInterOp;
 using WhiskWork.Core.Synchronization;
+using System.Web;
 
 #endregion
 
@@ -26,15 +27,9 @@ namespace WhiskWork.Synchronizer
 
         public IEnumerable<SynchronizationEntry> GetAll()
         {
-            var host = ConfigurationManager.AppSettings["host"];
-            var loginUrl = ConfigurationManager.AppSettings["loginUrl"];
-            var eManagerUrl = ConfigurationManager.AppSettings["timesheetUrl"];
+            var dominoSource = Login();
 
-            var username = ConfigurationManager.AppSettings["login"];
-            var password = ConfigurationManager.AppSettings["password"];
-
-            var dominoSource = new DominoAuthenticatingHtmlSource(host, loginUrl);
-            dominoSource.Login(username, password);
+            var eManagerUrl = ConfigurationManager.AppSettings["leanViewUrl"];
 
             var source = new DominoCleanupHtmlSource(dominoSource);
 
@@ -71,11 +66,11 @@ namespace WhiskWork.Synchronizer
                             {"team", team},
                             {"release", release},
                             {"project", project},
-                            {"status",status}
+                            {"leanstatus",leanStatus}
                         };
 
 
-                entries.Add(new SynchronizationEntry(id, leanStatus, properties));
+                entries.Add(new SynchronizationEntry(id, status, properties));
             }
 
             return entries;
@@ -93,7 +88,15 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateStatus(SynchronizationEntry entry)
         {
-            throw new NotImplementedException();
+            var dominoSource = Login();
+
+            var unid = entry.Properties["unid"];
+
+            var updateStatusPathPattern = ConfigurationManager.AppSettings["updateStatusPathPattern"];
+
+            var statusUpdatePath = string.Format(updateStatusPathPattern,unid,HttpUtility.UrlEncode(entry.Status));
+
+            dominoSource.Open(statusUpdatePath);
         }
 
         public void UpdateProperties(SynchronizationEntry entry)
@@ -102,6 +105,20 @@ namespace WhiskWork.Synchronizer
         }
 
         #endregion
+
+        private static DominoAuthenticatingHtmlSource Login()
+        {
+            var host = ConfigurationManager.AppSettings["host"];
+            var loginUrl = ConfigurationManager.AppSettings["loginUrl"];
+
+            var username = ConfigurationManager.AppSettings["login"];
+            var password = ConfigurationManager.AppSettings["password"];
+
+            var dominoSource = new DominoAuthenticatingHtmlSource(host, loginUrl);
+            dominoSource.Login(username, password);
+            return dominoSource;
+        }
+
 
     }
 }

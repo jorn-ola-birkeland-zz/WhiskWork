@@ -12,7 +12,7 @@ namespace WhiskWork.Core
         }
         public static string GetParallelId(string id, WorkStep parallelRootStep, WorkStep toStep)
         {
-            return id+"."+toStep.Path.Remove(0, parallelRootStep.Path.Length+1);
+            return id+"-"+toStep.Path.Remove(0, parallelRootStep.Path.Length+1);
         }
 
         public IEnumerable<WorkItem> SplitForParallelism(WorkItem parentItem, WorkStep parallelRootStep)

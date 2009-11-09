@@ -126,6 +126,29 @@ namespace WhiskWork.UnitTest
             Assert.AreEqual("A", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='developer']").InnerText);
         }
 
+        [TestMethod]
+        public void ShouldLowerCasePropertyKeyInClass()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "value" } });
+
+            var doc = GetFullDocument();
+
+            Assert.AreEqual("name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt/@class").InnerText);
+        }
+
+
+        [TestMethod]
+        public void ShouldHtmlEncodePropertyValues()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "name", "&<> " } });
+
+            var doc = GetFullDocument();
+
+            Assert.AreEqual("&<> ", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
+            
+        }
 
         [TestMethod]
         public void ShouldRenderTwoWorkItemsInSingleStepWorkflow()
@@ -245,8 +268,8 @@ namespace WhiskWork.UnitTest
             
             var doc = GetFullDocument();
 
-            Assert.AreEqual("workitem cr cr-test", doc.SelectSingleNode("//li[@id=\"development\"]/ol/li[@id=\"cr1.test\"]/@class").Value);
-            Assert.AreEqual("workitem cr cr-review", doc.SelectSingleNode("//li[@id=\"feedback.review\"]/ol/li[@id=\"cr1.review\"]/@class").Value);
+            Assert.AreEqual("workitem cr cr-test", doc.SelectSingleNode("//li[@id=\"development\"]/ol/li[@id=\"cr1-test\"]/@class").Value);
+            Assert.AreEqual("workitem cr cr-review", doc.SelectSingleNode("//li[@id=\"feedback.review\"]/ol/li[@id=\"cr1-review\"]/@class").Value);
         }
 
         [TestMethod]
@@ -417,8 +440,8 @@ namespace WhiskWork.UnitTest
             Move("/feedback/review", "cr7", "cr8");
             Move("/feedback/demo", "cr9", "cr10");
             Move("/feedback/test", "cr11");
-            Move("/done", "cr7.review");
-            Move("/done", "cr9.demo");
+            Move("/done", "cr7-review");
+            Move("/done", "cr9-demo");
             Move("/done", "cr12");
 
             AssertIsAsExpected(Resources.FullFeatureTest);

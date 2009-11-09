@@ -8,13 +8,13 @@ namespace WhiskWork.Core.Synchronization
         
     }
 
-    public class SynchronizationMap
+    public class StatusSynchronizationMap
     {
         private readonly Dictionary<ISynchronizationAgent, Dictionary<string, string>> _maps;
         private readonly Dictionary<string,string> _map;
         private readonly Dictionary<string, string> _reverseMap;
 
-        public SynchronizationMap(ISynchronizationAgent fromAgent, ISynchronizationAgent toAgent)
+        public StatusSynchronizationMap(ISynchronizationAgent fromAgent, ISynchronizationAgent toAgent)
         {
             _maps = new Dictionary<ISynchronizationAgent, Dictionary<string, string>>();
             _map = new Dictionary<string, string>();

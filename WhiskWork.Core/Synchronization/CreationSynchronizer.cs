@@ -7,9 +7,9 @@ namespace WhiskWork.Core.Synchronization
     {
         private readonly ISynchronizationAgent _master;
         private readonly ISynchronizationAgent _slave;
-        private readonly SynchronizationMap _map;
+        private readonly StatusSynchronizationMap _map;
 
-        public CreationSynchronizer(SynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
+        public CreationSynchronizer(StatusSynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
         {
             _map = map;
             _master = master;
@@ -25,7 +25,6 @@ namespace WhiskWork.Core.Synchronization
             foreach (var id in idsForDeletion)
             {
                 var entry = slaveEntries.Where(e=>e.Id==id).Single();
-                Console.WriteLine("Delete:"+entry);
                 _slave.Delete(entry);
             }
 
@@ -33,18 +32,17 @@ namespace WhiskWork.Core.Synchronization
             foreach (var id in idsForCreation)
             {
                 var entry = masterEntries.Where(e => e.Id == id).Single();
-                Console.WriteLine("Create:"+entry);
 
                 SynchronizationEntry slaveEntry;
 
-                if (TryToSlaveEntry(entry, out slaveEntry))
+                if (TryGetSlaveEntry(entry, out slaveEntry))
                 {
                     _slave.Create(slaveEntry);
                 }
             }
         }
 
-        private bool TryToSlaveEntry(SynchronizationEntry masterEntry, out SynchronizationEntry slaveEntry)
+        private bool TryGetSlaveEntry(SynchronizationEntry masterEntry, out SynchronizationEntry slaveEntry)
         {
             slaveEntry = null;
 
@@ -59,13 +57,5 @@ namespace WhiskWork.Core.Synchronization
 
             return true;
         }
-
-        //private SynchronizationEntry ToMasterEntry(SynchronizationEntry slaveEntry)
-        //{
-        //    var masterStatus = _map.GetMappedValue(_master, slaveEntry.Status);
-
-        //    return new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties);
-            
-        //}
     }
 }

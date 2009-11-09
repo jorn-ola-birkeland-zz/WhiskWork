@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.UI;
 using WhiskWork.Core;
 using WhiskWork.Generic;
@@ -243,16 +244,16 @@ namespace WhiskWork.Web
 
             foreach (var key in item.Properties.AllKeys)
             {
-                writer.AddAttribute(HtmlTextWriterAttribute.Class, key.ToLowerInvariant());
+                var proprtyClass = HttpUtility.HtmlEncode(key.ToLowerInvariant());
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, proprtyClass);
                 writer.RenderBeginTag(HtmlTextWriterTag.Dt);
                 writer.Write(key);
                 writer.RenderEndTag();
 
-                writer.AddAttribute(HtmlTextWriterAttribute.Class, key.ToLowerInvariant());
+                writer.AddAttribute(HtmlTextWriterAttribute.Class, proprtyClass);
                 writer.RenderBeginTag(HtmlTextWriterTag.Dd);
-                writer.Write(item.Properties[key]);
+                writer.Write(HttpUtility.HtmlEncode(item.Properties[key]));
                 writer.RenderEndTag();
-
             }
 
             writer.RenderEndTag();

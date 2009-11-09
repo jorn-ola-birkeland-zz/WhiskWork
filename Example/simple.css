@@ -241,10 +241,22 @@ dd.name
 	margin-left:1px;
 }
 
+dd.title
+{
+	display:block;
+	marign:0;
+	margin-left:1px;
+	font-size:8px;
+	height: 20px;
+	overflow:hidden;
+}
+
+
 .workItemHover dd,
 .workItemHover dt
 {
 	display:block;
+	font-size:16px;
 }
 
 .workItemHover dd

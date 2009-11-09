@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Generic;
+using System.Linq;
 
 namespace WhiskWork.Core.UnitTest
 {
@@ -147,7 +148,7 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldMoveUnlockedExpandedWorkItemFromExpandStep()
+        public void ShouldMoveUnlockedExpandedWorkItemFromTransientStep()
         {
             _wp.CreateWorkItem("cr1", "/analysis");
             _wp.UpdateWorkItem("cr1", "/development/inprocess", new NameValueCollection());
@@ -291,6 +292,35 @@ namespace WhiskWork.Core.UnitTest
                 _wp.CreateWorkItem("cr1-1", "/development/inprocess/tasks/new")
                 );
         }
+
+        [TestMethod]
+        public void ShouldNotMoveChildOfWorkItemInTransientStepDirectlyToExpandStep()
+        {
+            _wp.CreateWorkItem("cr1", "/analysis");
+            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+
+            _wp.CreateWorkItem("cr1-1", "/development/inprocess/cr1");
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () =>
+                 _wp.UpdateWorkItem("cr1-1", "/development/inprocess", new NameValueCollection())
+                );
+        }
+
+        [TestMethod]
+        public void ShouldNotMoveChildOfWorkItemInTransientStepToStepUnderExpandStep()
+        {
+            _wp.CreateWorkItem("cr1", "/analysis");
+            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+
+            _wp.CreateWorkItem("cr1-1", "/development/inprocess/cr1");
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () =>
+                 _wp.UpdateWorkItem("cr1-1", "/development/inprocess/tasks/new", new NameValueCollection())
+                );
+        }
+
 
         [TestMethod]
         public void ShouldRemoveExpandLockWhenSingleChildItemIsDone()

@@ -59,7 +59,7 @@ namespace WhiskWork.Core
         {
             var separator = parentPath == Root.Path ? string.Empty : Separator;
 
-            var regex = new Regex(parentPath + separator + "[a-z,A-Z,0-9]+$");
+            var regex = new Regex(parentPath + separator + @"[a-z,A-Z,0-9,\-]+$");
             if (!regex.IsMatch(path))
             {
                 throw new ArgumentException(string.Format("parent path '{0}' is not sub path of path '{1}'", parentPath, path));
@@ -73,11 +73,11 @@ namespace WhiskWork.Core
                 throw new ArgumentNullException(paramName);
             }
 
-            var regex = new Regex(@"^(\/)$|^(\/[0-9,a-z,A-Z]+)+$");
+            var regex = new Regex(@"^(\/)$|^(\/[0-9,a-z,A-Z,\-]+)+$");
 
             if(!regex.IsMatch(path))
             {
-                throw new ArgumentNullException(paramName, "Must start with '/'");
+                throw new ArgumentException(paramName, "Path must start with '/' but was '"+path+"'");
             }
         }
 

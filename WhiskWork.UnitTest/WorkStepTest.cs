@@ -57,13 +57,12 @@ namespace WhiskWork.Core.UnitTest
 
 
         [TestMethod]
-        public void ShouldCreateWorkStepsWithPathsWithCapitalAndNonCapitalAtoZAndNumbers()
+        public void ShouldCreateWorkStepsWithPathsWithCapitalAndNonCapitalAtoZAndNumbersAndHyphen()
         {
-             new WorkStep("/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", "/", 1,
+             new WorkStep("/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-", "/", 1,
                              WorkStepType.Normal,
                              "class");
         }
-
 
         [TestMethod]
         public void ShouldNotCreateWorkStepsWithPathWithTrailingSlash()

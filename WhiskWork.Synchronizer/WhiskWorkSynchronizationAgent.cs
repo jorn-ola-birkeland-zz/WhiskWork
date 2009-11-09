@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Web;
 using System.Xml;
 using WhiskWork.Core.Synchronization;
 
@@ -140,7 +141,7 @@ namespace WhiskWork.Synchronizer
 
             foreach (var keyValuePair in entry.Properties)
             {
-                payloadBuilder.AppendFormat(",{0}={1}", keyValuePair.Key, keyValuePair.Value);
+                payloadBuilder.AppendFormat(",{0}={1}", HttpUtility.HtmlEncode(keyValuePair.Key), HttpUtility.HtmlEncode(keyValuePair.Value));
             }
             return payloadBuilder.ToString();
         }

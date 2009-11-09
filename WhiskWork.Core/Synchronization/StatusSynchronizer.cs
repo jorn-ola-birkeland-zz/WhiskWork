@@ -7,9 +7,9 @@ namespace WhiskWork.Core.Synchronization
     {
         private readonly ISynchronizationAgent _master;
         private readonly ISynchronizationAgent _slave;
-        private readonly SynchronizationMap _map;
+        private readonly StatusSynchronizationMap _map;
 
-        public StatusSynchronizer(SynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
+        public StatusSynchronizer(StatusSynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
         {
             _map = map;
             _master = master;
@@ -19,37 +19,57 @@ namespace WhiskWork.Core.Synchronization
         public void Synchronize()
         {
             var masterEntries = _master.GetAll().ToDictionary(e=>e.Id);
-            var masterMappedslaveEntries = _slave.GetAll().Select(e=>ToMasterEntry(e)).ToDictionary(e=>e.Id);
-
-            //throw new NotImplementedException(masterEntries["1"]+"-"+masterMappedslaveEntries["1"]);
+            var slaveEntries = _slave.GetAll().ToDictionary(e=>e.Id);
 
             foreach(var masterId in masterEntries.Keys)
             {
-                if(masterMappedslaveEntries.ContainsKey(masterId))
+                if(slaveEntries.ContainsKey(masterId))
                 {
-                    if (masterMappedslaveEntries[masterId].Status != masterEntries[masterId].Status)
+                    SynchronizationEntry masterMappedSlaveEntry;
+                    if(!TryToMasterEntry(slaveEntries[masterId],out masterMappedSlaveEntry))
                     {
-                        //throw new NotImplementedException(ToSlaveEntry(masterEntries[masterId]).ToString());
-                        _slave.UpdateStatus(ToSlaveEntry(masterEntries[masterId]));
+                        continue;
+                    }
+
+                    if (masterMappedSlaveEntry.Status != masterEntries[masterId].Status)
+                    {
+                        SynchronizationEntry slaveEntry;
+                        if (TryToSlaveEntry(masterEntries[masterId], out slaveEntry))
+                        {
+                            _slave.UpdateStatus(slaveEntry);
+                        }
                     }
                 }
             }
-
         }
 
-        private SynchronizationEntry ToSlaveEntry(SynchronizationEntry masterEntry)
+        private bool TryToSlaveEntry(SynchronizationEntry masterEntry, out SynchronizationEntry slaveEntry)
         {
+            if (!_map.ContainsKey(_master, masterEntry.Status))
+            {
+                slaveEntry = null;
+                return false;
+            }
+
+            
             var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
 
-            return new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties);
+            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties);
+            return true;
         }
 
-        private SynchronizationEntry ToMasterEntry(SynchronizationEntry slaveEntry)
+        private bool TryToMasterEntry(SynchronizationEntry slaveEntry, out SynchronizationEntry masterEntry)
         {
+            if(!_map.ContainsKey(_slave, slaveEntry.Status))
+            {
+                masterEntry = null;
+                return false;
+            }
+            
             var masterStatus = _map.GetMappedValue(_slave, slaveEntry.Status);
 
-            return new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties);
-            
+            masterEntry = new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties);
+            return true;
         }
         
     }
@@ -58,11 +78,9 @@ namespace WhiskWork.Core.Synchronization
     {
         private readonly ISynchronizationAgent _master;
         private readonly ISynchronizationAgent _slave;
-        private readonly SynchronizationMap _map;
 
-        public PropertySynchronizer(SynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
+        public PropertySynchronizer(ISynchronizationAgent master, ISynchronizationAgent slave)
         {
-            _map = map;
             _master = master;
             _slave = slave;
         }
@@ -70,33 +88,22 @@ namespace WhiskWork.Core.Synchronization
         public void Synchronize()
         {
             var masterEntries = _master.GetAll().ToDictionary(e => e.Id);
-            var masterMappedslaveEntries = _slave.GetAll().Select(e => ToMasterEntry(e)).ToDictionary(e => e.Id);
+            var slaveEntries = _slave.GetAll().ToDictionary(e => e.Id);
 
             foreach (var masterId in masterEntries.Keys)
             {
-                if (masterMappedslaveEntries.ContainsKey(masterId))
+                if (slaveEntries.ContainsKey(masterId))
                 {
-                    _slave.UpdateProperties(ToSlaveEntry(masterEntries[masterId]));
+                    var slaveEntry = slaveEntries[masterId];
+
+                    var updateEntry = new SynchronizationEntry(masterId, slaveEntry.Status,
+                                                               masterEntries[masterId].Properties);
+
+                    _slave.UpdateProperties(updateEntry);
                 }
             }
 
         }
-
-        private SynchronizationEntry ToSlaveEntry(SynchronizationEntry masterEntry)
-        {
-            var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
-
-            return new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties);
-        }
-
-        private SynchronizationEntry ToMasterEntry(SynchronizationEntry slaveEntry)
-        {
-            var masterStatus = _map.GetMappedValue(_slave, slaveEntry.Status);
-
-            return new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties);
-
-        }
-
-    }
+   }
 
 }
