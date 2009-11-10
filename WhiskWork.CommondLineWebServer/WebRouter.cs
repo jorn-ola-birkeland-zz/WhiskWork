@@ -18,13 +18,17 @@ namespace WhiskWork.CommondLineWebServer
         {
             _rootFileDirectory = webDirectory;
 
-            const string logfile = @"c:\temp\agileboard\workflow.log";
 
             var memoryWorkStepRepository = new MemoryWorkflowRepository();
 
             var workStepRepository = memoryWorkStepRepository;
-            var logger = new FileWorkItemLogger(logfile);
-            var workItemRepository = new LoggingWorkItemRepository(logger, new MemoryWorkItemRepository());
+
+            //const string logfile = @"c:\temp\agileboard\workflow.log";
+            //var logger = new FileWorkItemLogger(logfile);
+            //var workItemRepository = new LoggingWorkItemRepository(logger, new MemoryWorkItemRepository());
+            
+            var workItemRepository = new MemoryWorkItemRepository();
+
             var wp = new Workflow(workStepRepository, workItemRepository);
 
             var rendererFactory = new HtmlWorkStepRendererFactory(workItemRepository,workStepRepository);
