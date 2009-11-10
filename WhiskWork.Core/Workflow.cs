@@ -90,7 +90,7 @@ namespace WhiskWork.Core
             _workItemRepository.CreateWorkItem(newWorkItem);
         }
 
-        public WorkItem UpdateWorkItem(WorkItem workItem)
+        public void UpdateWorkItem(WorkItem workItem)
         {
             var nvc = new NameValueCollection();
             foreach (var property in workItem.Properties)
@@ -98,10 +98,10 @@ namespace WhiskWork.Core
                 nvc.Add(property.Key,property.Value);
             }
 
-            return UpdateWorkItem(workItem.Id, workItem.Path, nvc);
+            UpdateWorkItem(workItem.Id, workItem.Path, nvc);
         }
 
-        public WorkItem UpdateWorkItem(string id, string path, NameValueCollection properties)
+        public void UpdateWorkItem(string id, string path, NameValueCollection properties)
         {
             WorkItem workItem;
             if(!_workItemQuery.TryLocateWorkItem(id, out workItem))
@@ -111,8 +111,6 @@ namespace WhiskWork.Core
 
             var leafStep = _workStepQuery.GetLeafStep(path);
 
-            WorkItem result=null;
-
             if (properties.Count > 0)
             {
                 workItem = UpdateWorkItem(workItem, properties);
@@ -120,10 +118,8 @@ namespace WhiskWork.Core
 
             if(workItem.Path!=leafStep.Path)
             {
-                result = MoveWorkItem(workItem, leafStep);
+                MoveWorkItem(workItem, leafStep);
             }
-
-            return result;
         }
 
         private WorkItem UpdateWorkItem(WorkItem workItem, NameValueCollection properties)
@@ -133,7 +129,7 @@ namespace WhiskWork.Core
             return workItem;
         }
 
-        private WorkItem MoveWorkItem(WorkItem workItem, WorkStep toStep)
+        private void MoveWorkItem(WorkItem workItem, WorkStep toStep)
         {
             var transition = new WorkItemTransition(workItem, toStep);
 
@@ -158,8 +154,6 @@ namespace WhiskWork.Core
             var resultTransition = DoMove(transition);
 
             TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(resultTransition);
-
-            return resultTransition.WorkItem;
         }
 
         private void TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(WorkItemTransition resultTransition)
@@ -473,8 +467,8 @@ namespace WhiskWork.Core
     {
         bool ExistsWorkItem(string workItemId);
         bool ExistsWorkStep(string path);
-        WorkItem UpdateWorkItem(WorkItem workItem);
-        WorkItem UpdateWorkItem(string workItemId, string path, NameValueCollection properties);
+        void UpdateWorkItem(WorkItem workItem);
+        void UpdateWorkItem(string workItemId, string path, NameValueCollection properties);
         void CreateWorkStep(WorkStep workStep);
         void CreateWorkItem(WorkItem workItem);
         WorkItem GetWorkItem(string workItemId);

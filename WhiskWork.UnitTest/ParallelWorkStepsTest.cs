@@ -263,12 +263,16 @@ namespace WhiskWork.Core.UnitTest
 
             _wp.CreateWorkItem("cr1", "/scheduled");
             _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1"));
+            
             _wp.UpdateWorkItem("cr1", "/feedback/review", new NameValueCollection());
-
-            Assert.AreEqual("",_wp.GetWorkItem("cr1-test").Path);
 
             Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1"));
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test"));
+
+            Assert.AreEqual("/development/inprocess/cr1-test", _wp.GetWorkItem("cr1-test").Path);
+            Assert.AreEqual("/feedback/review", _wp.GetWorkItem("cr1-review").Path);
+
         }
 
         [TestMethod]

@@ -86,8 +86,9 @@ namespace WhiskWork.Web.UnitTest
             using (_mocks.Record())
             {
                 Expect.Call(_workflow.ExistsWorkItem("cr1")).Repeat.AtLeastOnce().Return(true);
-                Expect.Call(_workflow.UpdateWorkItem(WorkItem.New("cr1", "/analysis"))).Repeat.Once().Return(
-                    WorkItem.New("cr1", "analysis"));
+                _workflow.UpdateWorkItem(WorkItem.New("cr1", "/analysis"));
+                LastCall.Repeat.Once();
+
             }
             using (_mocks.Playback())
             {

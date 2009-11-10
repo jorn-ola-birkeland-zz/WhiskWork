@@ -216,7 +216,7 @@ h1
 .cr-test
 {
 	border:dotted 1px black;
-	background-color:magenta;
+	background-color:Purple;
 }
 
 
@@ -237,10 +237,12 @@ dt, dd
 dd.name
 {
 	display:block;
-	marign:0;
+	margin:0;
 	margin-left:1px;
+	font-size:26px;
 }
 
+/*
 dd.title
 {
 	display:block;
@@ -250,13 +252,12 @@ dd.title
 	height: 20px;
 	overflow:hidden;
 }
-
+*/
 
 .workItemHover dd,
 .workItemHover dt
 {
 	display:block;
-	font-size:16px;
 }
 
 .workItemHover dd

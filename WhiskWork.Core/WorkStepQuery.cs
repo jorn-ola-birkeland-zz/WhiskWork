@@ -51,6 +51,12 @@ namespace WhiskWork.Core
             return TryLocateFirstAncestorStepOfType(workStep, WorkStepType.Expand, out expandStep);
         }
 
+        public bool IsWithinExpandStep(WorkStep workStep, out WorkStep expandStep)
+        {
+            return TryLocateFirstAncestorStepOfType(workStep, WorkStepType.Expand, out expandStep);
+        }
+
+
         public bool IsWithinTransientStep(WorkStep workStep, out WorkStep transientStep)
         {
             return TryLocateFirstAncestorStepOfType(workStep, WorkStepType.Transient, out transientStep);
