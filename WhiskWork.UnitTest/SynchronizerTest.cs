@@ -139,7 +139,6 @@ namespace WhiskWork.Core.UnitTest
 
         }
 
-
         [TestMethod]
         public void ShouldSynchronizeStatusIfSlaveEntriesAreMissing()
         {
@@ -173,14 +172,14 @@ namespace WhiskWork.Core.UnitTest
             var masterStub = _mocks.Stub<ISynchronizationAgent>();
             var slaveMock = _mocks.DynamicMock<ISynchronizationAgent>();
 
-            var synchronizer = new PropertySynchronizer(masterStub, slaveMock);
+            var synchronizer = new DataSynchronizer(masterStub, slaveMock);
 
             using (_mocks.Record())
             {
                 SetupResult.For(masterStub.GetAll()).Return(new[] { Entry("1", "/done","Name","name1","Dev","dev1") });
 
                 Expect.Call(slaveMock.GetAll()).Return(new[] { Entry("1", "Development","Name","name2") });
-                slaveMock.UpdateProperties(Entry("1", "Development", "Name","name1","Dev","dev1"));
+                slaveMock.UpdateData(Entry("1", "Development", "Name","name1","Dev","dev1"));
                 LastCall.Repeat.Once();
 
             }
@@ -190,8 +189,6 @@ namespace WhiskWork.Core.UnitTest
             }
             
         }
-
-
 
         private static SynchronizationEntry Entry(string id, string status)
         {

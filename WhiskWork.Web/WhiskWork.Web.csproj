@@ -56,6 +56,7 @@
     <Compile Include="IWorkStepRenderer.cs" />
     <Compile Include="IWorkStepRendererFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RequestMessageParser.cs" />
     <Compile Include="RequestMessageParserFactory.cs" />
     <Compile Include="WebCommunication.cs" />
     <Compile Include="WorkflowHttpHandler.cs" />

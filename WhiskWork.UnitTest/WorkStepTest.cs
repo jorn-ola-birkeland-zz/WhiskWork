@@ -99,5 +99,36 @@ namespace WhiskWork.Core.UnitTest
 
             Assert.AreEqual(ws1.ToString(), ws2.ToString());
         }
+
+        [TestMethod]
+        public void ShouldNotAllowNullWorkItemClass()
+        {
+            AssertUtils.AssertThrows<ArgumentNullException>(
+            () => new WorkStep("/step", "/", 1, WorkStepType.Normal, null)
+                );
+        }
+
+        [TestMethod]
+        public void ShouldNotAllowEmptyWorkItemClass()
+        {
+            AssertUtils.AssertThrows<ArgumentException>(
+            () => new WorkStep("/step", "/", 1, WorkStepType.Normal, string.Empty)
+                );
+        }
+        
+        [TestMethod]
+        public void ShouldNotAllowWorkItemClassWithSpace()
+        {
+            AssertUtils.AssertThrows<ArgumentException>(
+            (   ) => new WorkStep("/step", "/", 1, WorkStepType.Normal, "class 1")
+                );
+        }
+
+        [TestMethod]
+        public void ShouldAllowWorkItemClassWithHyphen()
+        {
+            new WorkStep("/step", "/", 1, WorkStepType.Normal, "class-1");
+        }
+
     }
 }

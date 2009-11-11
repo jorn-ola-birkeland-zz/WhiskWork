@@ -127,7 +127,7 @@ namespace WhiskWork.Synchronizer
             PostCsv(payload, entry.Status);
         }
 
-        public void UpdateProperties(SynchronizationEntry entry)
+        public void UpdateData(SynchronizationEntry entry)
         {
             var payload = CreatePayload(entry);
 
@@ -139,13 +139,17 @@ namespace WhiskWork.Synchronizer
             var payloadBuilder = new StringBuilder();
             payloadBuilder.AppendFormat("id={0}", entry.Id);
 
+            if(entry.Ordinal.HasValue)
+            {
+                payloadBuilder.AppendFormat(",ordinal={0}", entry.Ordinal.Value);
+            }
+
             foreach (var keyValuePair in entry.Properties)
             {
                 payloadBuilder.AppendFormat(",{0}={1}", HttpUtility.HtmlEncode(keyValuePair.Key), HttpUtility.HtmlEncode(keyValuePair.Value));
             }
             return payloadBuilder.ToString();
         }
-
 
         private void PostCsv(string payload, string path)
         {

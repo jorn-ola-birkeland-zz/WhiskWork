@@ -48,9 +48,9 @@ namespace WhiskWork.Core.Synchronization
             _getAllCache[index] = entry;
         }
 
-        public void UpdateProperties(SynchronizationEntry entry)
+        public void UpdateData(SynchronizationEntry entry)
         {
-            _innerAgent.UpdateProperties(entry);
+            _innerAgent.UpdateData(entry);
             var index = IndexOf(entry.Id);
             _getAllCache[index] = entry;
         }

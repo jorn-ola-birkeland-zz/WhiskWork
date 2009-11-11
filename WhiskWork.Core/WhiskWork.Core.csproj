@@ -45,8 +45,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AdvancedWorkflowRepository.cs" />
+    <Compile Include="WorkItemCreator.cs" />
+    <Compile Include="WorkItemMover.cs" />
+    <Compile Include="WorkItemRemover.cs" />
+    <Compile Include="WorkItemRepositoryExtension.cs" />
+    <Compile Include="WorkStepRepositoryExtensions.cs" />
     <Compile Include="FileWorkItemLogger.cs" />
+    <Compile Include="IWorkflow.cs" />
     <Compile Include="IWorkStepRepository.cs" />
     <Compile Include="IWorkItemLogger.cs" />
     <Compile Include="IWorkItemRepository.cs" />
@@ -58,16 +63,16 @@
     <Compile Include="Synchronization\CachingSynchronizationAgent.cs" />
     <Compile Include="Synchronization\CreationSynchronizer.cs" />
     <Compile Include="Synchronization\ISynchronizationAgent.cs" />
+    <Compile Include="Synchronization\DataSynchronizer.cs" />
     <Compile Include="Synchronization\StatusSynchronizer.cs" />
     <Compile Include="Synchronization\SynchronizationEntry.cs" />
     <Compile Include="Synchronization\StatusSynchronizationMap.cs" />
     <Compile Include="WorkItem.cs" />
     <Compile Include="WorkItemClass.cs" />
-    <Compile Include="WorkItemQuery.cs" />
     <Compile Include="WorkItemStatus.cs" />
     <Compile Include="Workflow.cs" />
+    <Compile Include="WorkItemTransition.cs" />
     <Compile Include="WorkStep.cs" />
-    <Compile Include="WorkStepQuery.cs" />
     <Compile Include="WorkStepType.cs" />
   </ItemGroup>
   <ItemGroup>

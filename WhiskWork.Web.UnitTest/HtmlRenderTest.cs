@@ -92,7 +92,7 @@ namespace WhiskWork.UnitTest
         public void ShouldRenderSingleWorkItemInSingleStepWorkflow()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1","/analysis");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
 
             var doc = GetFullDocument();
 
@@ -103,7 +103,7 @@ namespace WhiskWork.UnitTest
         public void ShouldRenderSingleWorkItemProperty()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection {{"Name","CR1"}});
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection {{"Name","CR1"}}));
 
             var doc = GetFullDocument();
 
@@ -115,7 +115,7 @@ namespace WhiskWork.UnitTest
         public void ShouldRenderTwoWorkItemProperties()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" },{"Developer","A"} });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" },{"Developer","A"} }));
 
             var doc = GetFullDocument();
 
@@ -130,7 +130,7 @@ namespace WhiskWork.UnitTest
         public void ShouldLowerCasePropertyKeyInClass()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "value" } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "value" } }));
 
             var doc = GetFullDocument();
 
@@ -142,20 +142,30 @@ namespace WhiskWork.UnitTest
         public void ShouldHtmlEncodePropertyValues()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "name", "&<> " } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "name", "&<> " } }));
 
             var doc = GetFullDocument();
 
             Assert.AreEqual("&<> ", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
-            
         }
+
+        [TestMethod]
+        public void ShouldHtmlEncodeTitle()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "<Analysis & Test>");
+
+            var doc = GetFullDocument();
+
+            Assert.AreEqual("<Analysis & Test>", doc.SelectSingleNode("//h1").InnerText.Trim());
+        }
+
 
         [TestMethod]
         public void ShouldRenderTwoWorkItemsInSingleStepWorkflow()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _wp.CreateWorkItem("cr1", "/analysis");
-            _wp.CreateWorkItem("cr2", "/analysis");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
 
             var doc = GetFullDocument();
 
@@ -169,12 +179,12 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
             _workflowRepository.Add("/done", "/", 3, WorkStepType.End, "cr");
-            _wp.CreateWorkItem("cr1", "/analysis");
-            _wp.CreateWorkItem("cr2", "/analysis");
-            _wp.CreateWorkItem("cr3", "/analysis");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr3","/analysis"));
 
-            _wp.UpdateWorkItem("cr2","/development", new NameValueCollection());
-            _wp.UpdateWorkItem("cr3", "/done", new NameValueCollection());
+            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr3", "/done", new NameValueCollection()));
 
             var doc = GetFullDocument();
 
@@ -223,7 +233,7 @@ namespace WhiskWork.UnitTest
         public void ShouldRenderWorkItemWithRightClasses()
         {
             _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
-            _wp.CreateWorkItem("cr1", "/development");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
 
             var doc = GetFullDocument();
 
@@ -236,7 +246,7 @@ namespace WhiskWork.UnitTest
         public void ShouldRenderFromLeafStep()
         {
             _workflowRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr");
-            _wp.CreateWorkItem("cr1", "/scheduled");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
 
             var doc = GetFullDocument(_workflowRepository.GetWorkStep("/scheduled"));
 
@@ -263,9 +273,9 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
             _workflowRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
 
-            _wp.CreateWorkItem("cr1", "/development");
-            _wp.UpdateWorkItem("cr1", "/feedback", new NameValueCollection());
-            
+            _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+
             var doc = GetFullDocument();
 
             Assert.AreEqual("workitem cr cr-test", doc.SelectSingleNode("//li[@id=\"development\"]/ol/li[@id=\"cr1-test\"]/@class").Value);
@@ -280,8 +290,8 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
             _workflowRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
 
-            _wp.CreateWorkItem("cr1", "/development");
-            _wp.UpdateWorkItem("cr1", "/feedback", new NameValueCollection());
+            _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
 
             var doc = GetFullDocument();
 
@@ -449,12 +459,18 @@ namespace WhiskWork.UnitTest
 
         private void Create(string path, params string[] workItemIds)
         {
-            Array.ForEach(workItemIds, workItemId => _wp.CreateWorkItem(workItemId,path) );
+            Array.ForEach(workItemIds, workItemId =>
+                                           {
+                                               _wp.CreateWorkItem(WorkItem.New(workItemId,path));
+                                           });
         }
 
         private void Move(string path, params string[] workItemIds)
         {
-            Array.ForEach(workItemIds, workItemId => _wp.UpdateWorkItem(workItemId, path, new NameValueCollection()));
+            Array.ForEach(workItemIds, workItemId =>
+                                           {
+                                               _wp.UpdateWorkItem(WorkItem.New(workItemId, path, new NameValueCollection()));
+                                           });
         }
 
 

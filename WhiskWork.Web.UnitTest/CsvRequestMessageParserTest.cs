@@ -18,7 +18,6 @@ namespace WhiskWork.Web.UnitTest
             Assert.AreEqual("id1", item.Id);
         }
 
-
         [TestMethod]
         public void ShouldParseWorkItemProperties()
         {
@@ -32,10 +31,20 @@ namespace WhiskWork.Web.UnitTest
         }
 
         [TestMethod]
+        public void ShouldParseWorkItemOrdinal()
+        {
+            var parser = new CsvRequestMessageParser();
+            var node = (WorkItemNode)parser.Parse(CreateStream("id=id1,ordinal=2"));
+
+            var item = node.GetWorkItem("/");
+            Assert.AreEqual(2,item.Ordinal);
+        }
+        
+        [TestMethod]
         public void ShouldParseStepAsWorkStep()
         {
             var parser = new CsvRequestMessageParser();
-            var node = parser.Parse(CreateStream("step=step1")) as WorkStepNode;
+            var node = parser.Parse(CreateStream("step=step1,class=cr")) as WorkStepNode;
 
             Assert.IsNotNull(node);
             var step = node.GetWorkStep("/");

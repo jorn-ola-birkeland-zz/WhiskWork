@@ -52,14 +52,15 @@ namespace WhiskWork.Core
     public class WorkItem
     {
         private readonly NameValueCollection _properties;
-        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, string parentId, int ordinal, NameValueCollection properties)
+        private readonly int? _ordinal;
+        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, string parentId, int? ordinal, NameValueCollection properties)
         {
             Id = id;
             Path = path;
             Classes = workItemClasses;
             Status = status;
             ParentId = parentId;
-            Ordinal = ordinal;
+            _ordinal = ordinal;
             _properties = properties;
         }
 
@@ -75,12 +76,12 @@ namespace WhiskWork.Core
                 throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
             }
 
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,0, properties);
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,null, properties);
         }
 
-        public static WorkItem NewUnchecked(string id, string path, NameValueCollection properties)
+        public static WorkItem NewUnchecked(string id, string path, int? ordinal, NameValueCollection properties)
         {
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, 0, properties);
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, ordinal, properties);
         }
 
 
@@ -89,7 +90,22 @@ namespace WhiskWork.Core
         public IEnumerable<string> Classes { get; private set; }
         public WorkItemStatus Status  { get; private set; }
         public string ParentId { get; private set; }
-        public int Ordinal { get; private set; }
+        public int Ordinal
+        {
+            get
+            {
+                return _ordinal.HasValue ? _ordinal.Value : -1;
+            }
+        }
+
+        public bool HasOrdinal
+        {
+            get
+            {
+                return _ordinal.HasValue;
+            }
+        }
+
         public WorkItemProperties Properties
         {
             get
@@ -98,25 +114,27 @@ namespace WhiskWork.Core
             }
         }
 
+
+
         public WorkItem MoveTo(WorkStep step)
         {
-            return new WorkItem(Id,step.Path,Classes,Status,ParentId, Ordinal,_properties);
+            return new WorkItem(Id,step.Path,Classes,Status,ParentId, _ordinal,_properties);
         }
 
         public WorkItem UpdateStatus(WorkItemStatus status)
         {
-            return new WorkItem(Id, Path, Classes, status, ParentId, Ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, status, ParentId, _ordinal, _properties);
         }
 
 
         public WorkItem CreateChildItem(string id)
         {
-            return new WorkItem(id, Path, Classes, Status, Id, Ordinal, _properties);
+            return new WorkItem(id, Path, Classes, Status, Id, _ordinal, _properties);
         }
 
         public WorkItem UpdateParent(WorkItem parentItem)
         {
-            return new WorkItem(Id, Path, Classes, Status, parentItem.Id, Ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, Status, parentItem.Id, _ordinal, _properties);
         }
 
         public WorkItem UpdateOrdinal(int ordinal)
@@ -128,7 +146,7 @@ namespace WhiskWork.Core
         {
             var newClasses = new List<string>(Classes) { workItemClass };
 
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, Ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
         }
 
         public WorkItem RemoveClass(string workItemClass)
@@ -136,12 +154,42 @@ namespace WhiskWork.Core
             var newClasses = new List<string>(Classes);
             newClasses.Remove(workItemClass);
 
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, Ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
         }
 
         public WorkItem ReplacesClasses(IEnumerable<string> newClasses)
         {
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, Ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
+        }
+
+        public WorkItem UpdatePropertiesAndOrdinalFrom(WorkItem item)
+        {
+            var modifiedProperties = new NameValueCollection(_properties);
+            var modifiedOrdinal = _ordinal;
+
+            foreach (var key in item.Properties.AllKeys)
+            {
+                modifiedProperties[key] = item.Properties[key];
+            }
+
+            if(item.HasOrdinal)
+            {
+                modifiedOrdinal = item.Ordinal;
+            }
+
+            return new WorkItem(Id, Path, Classes, Status, ParentId, modifiedOrdinal, modifiedProperties);
+        }
+
+        public WorkItem UpdateProperties(WorkItemProperties properties)
+        {
+            var modifiedProperties = new NameValueCollection(_properties);
+
+            foreach (var key in properties.AllKeys)
+            {
+                modifiedProperties[key] = properties[key];
+            }
+
+            return new WorkItem(Id, Path, Classes, Status, ParentId, _ordinal, modifiedProperties);
         }
 
         public WorkItem UpdateProperties(NameValueCollection properties)
@@ -153,8 +201,9 @@ namespace WhiskWork.Core
                 modifiedProperties[key] = properties[key];
             }
 
-            return new WorkItem(Id, Path, Classes, Status, ParentId, Ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, ParentId, _ordinal, modifiedProperties);
         }
+
 
         public override bool Equals(object obj)
         {

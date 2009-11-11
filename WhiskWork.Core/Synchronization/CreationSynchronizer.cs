@@ -53,7 +53,8 @@ namespace WhiskWork.Core.Synchronization
 
             var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
 
-            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties);
+            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties)
+                             {Ordinal = masterEntry.Ordinal};
 
             return true;
         }

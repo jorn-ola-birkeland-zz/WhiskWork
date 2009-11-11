@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Globalization;
 using DominoInterOp;
 using WhiskWork.Core.Synchronization;
 using System.Web;
@@ -51,6 +52,7 @@ namespace WhiskWork.Synchronizer
                 var project = (string) row[5];
                 var unid = (string) row[6];
                 var status = (string)row[7];
+                int? ordinal = ToNullableInt((string)row[8]);
 
                 if (team != _team || release != _release)
                 {
@@ -66,25 +68,19 @@ namespace WhiskWork.Synchronizer
                             {"team", team},
                             {"release", release},
                             {"project", project},
-                            {"leanstatus",leanStatus}
+                            {"leanstatus",leanStatus},
+                            {"priority",ordinal.HasValue ? ordinal.Value.ToString() : string.Empty}
                         };
 
 
-                entries.Add(new SynchronizationEntry(id, status, properties));
+                var entry = new SynchronizationEntry(id, status, properties) {Ordinal = ordinal};
+                entries.Add(entry);
             }
 
             return entries;
         }
 
-        public void Create(SynchronizationEntry entry)
-        {
-            throw new NotImplementedException();
-        }
 
-        public void Delete(SynchronizationEntry entry)
-        {
-            throw new NotImplementedException();
-        }
 
         public void UpdateStatus(SynchronizationEntry entry)
         {
@@ -99,7 +95,17 @@ namespace WhiskWork.Synchronizer
             dominoSource.Open(statusUpdatePath);
         }
 
-        public void UpdateProperties(SynchronizationEntry entry)
+        public void Create(SynchronizationEntry entry)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Delete(SynchronizationEntry entry)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateData(SynchronizationEntry entry)
         {
             throw new NotImplementedException();
         }
@@ -119,6 +125,21 @@ namespace WhiskWork.Synchronizer
             return dominoSource;
         }
 
+        private static int? ToNullableInt(string rowItem)
+        {
+            if (string.IsNullOrEmpty(rowItem))
+            {
+                return null;
+            }
+
+            decimal value;
+            if(!decimal.TryParse(rowItem, NumberStyles.Number, CultureInfo.CreateSpecificCulture("en"), out value))
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(Math.Round(value));
+        }
 
     }
 }

@@ -26,6 +26,7 @@ namespace WhiskWork.Core
                 ThrowIfIllegalPath(path, "path");
                 ThrowIfIllegalPath(path, "parentPath");
                 ThrowIfParentPathIsNotProperSubPathOfPath(path, parentPath);
+                ThrowIfIllegalWorkItemClass(workItemClass, "workItemClass");
             }
 
             Path = path;
@@ -35,7 +36,6 @@ namespace WhiskWork.Core
             WorkItemClass = workItemClass;
             Title = title;
         }
-
 
         public static WorkStep Root
         {
@@ -47,39 +47,15 @@ namespace WhiskWork.Core
 
         public static string CombinePath(string path1, string path2)
         {
-            path1 = path1.EndsWith("/") ? path1.Remove(path1.Length - 1, 1) : path1;
-            path2 = path2.StartsWith("/") ? path2.Remove(0, 1) : path2;
+            path1 = path1.EndsWith(Separator) ? path1.Remove(path1.Length - 1, 1) : path1;
+            path2 = path2.StartsWith(Separator) ? path2.Remove(0, 1) : path2;
 
-            var result = path1 + "/" + path2;
+            var result = path1 + Separator + path2;
             return result;
         }
 
 
-        private static void ThrowIfParentPathIsNotProperSubPathOfPath(string path, string parentPath)
-        {
-            var separator = parentPath == Root.Path ? string.Empty : Separator;
 
-            var regex = new Regex(parentPath + separator + @"[a-z,A-Z,0-9,\-]+$");
-            if (!regex.IsMatch(path))
-            {
-                throw new ArgumentException(string.Format("parent path '{0}' is not sub path of path '{1}'", parentPath, path));
-            }
-        }
-
-        private static void ThrowIfIllegalPath(string path, string paramName)
-        {
-            if(path==null)
-            {
-                throw new ArgumentNullException(paramName);
-            }
-
-            var regex = new Regex(@"^(\/)$|^(\/[0-9,a-z,A-Z,\-]+)+$");
-
-            if(!regex.IsMatch(path))
-            {
-                throw new ArgumentException(paramName, "Path must start with '/' but was '"+path+"'");
-            }
-        }
 
         public string Path { get; private set; }
         public string ParentPath { get; private set; }
@@ -133,6 +109,49 @@ namespace WhiskWork.Core
 
             return sb.ToString();
         }
+
+        private static void ThrowIfParentPathIsNotProperSubPathOfPath(string path, string parentPath)
+        {
+            var separator = parentPath == Root.Path ? string.Empty : Separator;
+
+            var regex = new Regex(parentPath + separator + @"[a-z,A-Z,0-9,\-]+$");
+            if (!regex.IsMatch(path))
+            {
+                throw new ArgumentException(string.Format("parent path '{0}' is not sub path of path '{1}'", parentPath, path));
+            }
+        }
+
+        private static void ThrowIfIllegalPath(string path, string paramName)
+        {
+            if (path == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+
+            var regex = new Regex(@"^(\/)$|^(\/[0-9,a-z,A-Z,\-]+)+$");
+
+            if (!regex.IsMatch(path))
+            {
+                throw new ArgumentException(paramName, "Path must start with '/' but was '" + path + "'");
+            }
+        }
+
+        private static void ThrowIfIllegalWorkItemClass(string workItemClass, string paramName)
+        {
+            if (workItemClass == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+
+            var regex = new Regex(@"^[0-9,a-z,A-Z,\-]+$");
+
+            if (!regex.IsMatch(workItemClass))
+            {
+                throw new ArgumentException(paramName, "WorkItem class must only contain a-z,A-Z, 0-9, and - but was '" + workItemClass + "'");
+            }
+
+        }
+
 
     }
 }

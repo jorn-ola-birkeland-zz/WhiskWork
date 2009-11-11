@@ -9,6 +9,6 @@ namespace WhiskWork.Core.Synchronization
         void Create(SynchronizationEntry entry);
         void Delete(SynchronizationEntry entry);
         void UpdateStatus(SynchronizationEntry entry);
-        void UpdateProperties(SynchronizationEntry entry);
+        void UpdateData(SynchronizationEntry entry);
     }
 }

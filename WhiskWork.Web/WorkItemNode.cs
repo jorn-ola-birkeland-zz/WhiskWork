@@ -6,10 +6,12 @@ namespace WhiskWork.Web
     public class WorkItemNode : IWorkflowNode
     {
         private readonly NameValueCollection _properties;
-        private readonly string _id; 
-        public WorkItemNode(string id, NameValueCollection properties)
+        private readonly string _id;
+        private readonly int? _ordinal;
+        public WorkItemNode(string id, int? ordinal, NameValueCollection properties)
         {
             _id = id;
+            _ordinal = ordinal;
             _properties = properties;
         }
 
@@ -20,7 +22,7 @@ namespace WhiskWork.Web
 
         public WorkItem GetWorkItem(string path)
         {
-            return WorkItem.NewUnchecked(_id, path, _properties);
+            return WorkItem.NewUnchecked(_id, path, _ordinal, _properties);
         }
     }
 }

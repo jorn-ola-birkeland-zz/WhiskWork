@@ -25,7 +25,7 @@ namespace WhiskWork.Core.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             Assert.AreEqual("/analysis", _workItemRepository.GetWorkItem("cr1").Path);
         }
 
@@ -36,7 +36,10 @@ namespace WhiskWork.Core.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () => _wp.CreateWorkItem("cr1", "/development"));
+                () =>
+                    {
+                        _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
+                    });
         }
 
         [TestMethod]
@@ -44,7 +47,7 @@ namespace WhiskWork.Core.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" } }));
             var workItem = _wp.GetWorkItem("cr1");
 
             Assert.AreEqual(1, workItem.Properties.Count);
@@ -56,7 +59,7 @@ namespace WhiskWork.Core.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developers", "A, B" } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developers", "A, B" } }));
             var workItem = _wp.GetWorkItem("cr1");
 
             Assert.AreEqual(2, workItem.Properties.Count);
@@ -69,8 +72,8 @@ namespace WhiskWork.Core.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } });
-            _wp.UpdateWorkItem("cr1", "/analysis", new NameValueCollection { { "Developer", "B" } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "B" } }));
             var workItem = _wp.GetWorkItem("cr1");
 
             Assert.AreEqual(2, workItem.Properties.Count);
@@ -79,13 +82,13 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldMoveUpdateOneOfTwoProperties()
+        public void ShouldMoveAndUpdateOneOfTwoProperties()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } });
-            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection { { "Developer", "B" } });
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection { { "Developer", "B" } }));
             var workItem = _wp.GetWorkItem("cr1");
 
             Assert.AreEqual(2, workItem.Properties.Count);
@@ -94,6 +97,17 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual("B", workItem.Properties["Developer"]);
         }
 
+        [TestMethod]
+        public void ShouldUpdateWorkItemOrdinalWhenNotMoving()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
+            _wp.UpdateWorkItem(WorkItem.New("cr1","/analysis").UpdateOrdinal(3));
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(3, workItem.Ordinal);
+        }
 
 
         [TestMethod]
@@ -108,8 +122,8 @@ namespace WhiskWork.Core.UnitTest
         {
             SetUpAndTestBasicOrdinal();
 
-            _wp.UpdateWorkItem("cr2", "/development", new NameValueCollection());
-            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
 
             Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr2").Ordinal);
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr1").Ordinal);
@@ -120,7 +134,7 @@ namespace WhiskWork.Core.UnitTest
         {
             SetUpAndTestBasicOrdinal();
 
-            _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
 
             Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr2").Ordinal);
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr3").Ordinal);
@@ -137,15 +151,28 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr3").Ordinal);
         }
 
+        [TestMethod]
+        public void ShouldCreateWorkItemWithOrdinalsProvided()
+        {
+            _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/development").UpdateOrdinal(3));
+            _wp.CreateWorkItem(WorkItem.New("cr2", "/development").UpdateOrdinal(2));
+            _wp.CreateWorkItem(WorkItem.New("cr3", "/development").UpdateOrdinal(1));
+
+            Assert.AreEqual(3, _workItemRepository.GetWorkItem("cr1").Ordinal);
+            Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr2").Ordinal);
+            Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr3").Ordinal);
+        }
 
         private void SetUpAndTestBasicOrdinal()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development", "/", 1, WorkStepType.End, "cr");
 
-            _wp.CreateWorkItem("cr1", "/analysis");
-            _wp.CreateWorkItem("cr2", "/analysis");
-            _wp.CreateWorkItem("cr3", "/analysis");
+            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr3","/analysis"));
 
             Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr1").Ordinal);
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr2").Ordinal);

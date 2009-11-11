@@ -61,13 +61,11 @@ namespace WhiskWork.Web
         {
             RenderWorkItemList(writer, workStep);
 
-            var query = new WorkStepQuery(_workStepRepository);
-
-            if (query.IsParallelStep(workStep))
+            if (_workStepRepository.IsParallelStep(workStep))
             {
                 RenderParallelStep(writer, workStep);
             }
-            else if(query.IsExpandStep(workStep))
+            else if (_workStepRepository.IsExpandStep(workStep))
             {
                 RenderExpandStep(writer, workStep);
             }
@@ -112,7 +110,7 @@ namespace WhiskWork.Web
 
         private void RenderWorkStepListItem(HtmlTextWriter writer, WorkStep workStep)
         {
-            if(!new WorkStepQuery(_workStepRepository).IsExpandStep(workStep) )
+            if(!_workStepRepository.IsExpandStep(workStep) )
             {
                 var id = GenerateWorkStepId(workStep);
                 writer.AddAttribute(HtmlTextWriterAttribute.Id, id);
@@ -134,23 +132,23 @@ namespace WhiskWork.Web
         private void RenderExpandStep(HtmlTextWriter writer, WorkStep workStep)
         {
             writer.RenderBeginTag(HtmlTextWriterTag.Ol);
-            RenderExpandTransientListItems(writer, workStep);
-            RenderExpandTemplateListItem(writer, workStep);
+            RenderTransientListItems(writer, workStep);
+            RenderExpandListItem(writer, workStep);
 
             writer.RenderEndTag(); //ol
         }
 
-        private void RenderExpandTransientListItems(HtmlTextWriter writer, WorkStep step)
+        private void RenderTransientListItems(HtmlTextWriter writer, WorkStep step)
         {
             var transientSteps = _workStepRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
 
             foreach (var transientStep in transientSteps)
             {
-                RenderExpandTransientListItem(writer,transientStep);
+                RenderTransientListItem(writer,transientStep);
             }
         }
 
-        private void RenderExpandTransientListItem(HtmlTextWriter writer, WorkStep transientStep)
+        private void RenderTransientListItem(HtmlTextWriter writer, WorkStep transientStep)
         {
             writer.AddAttribute(HtmlTextWriterAttribute.Class, "transient");
             writer.RenderBeginTag(HtmlTextWriterTag.Li);
@@ -173,7 +171,7 @@ namespace WhiskWork.Web
             writer.RenderEndTag(); //li
         }
 
-        private void RenderExpandTemplateListItem(HtmlTextWriter writer, WorkStep workStep)
+        private void RenderExpandListItem(HtmlTextWriter writer, WorkStep workStep)
         {
             writer.AddAttribute(HtmlTextWriterAttribute.Class, "expand");
             writer.RenderBeginTag(HtmlTextWriterTag.Li);
@@ -204,7 +202,7 @@ namespace WhiskWork.Web
             }
 
             writer.RenderBeginTag(HtmlTextWriterTag.H1);
-            writer.Write(step.Title);
+            writer.Write(HttpUtility.HtmlEncode(step.Title));
             writer.RenderEndTag(); //h1
         }
 
@@ -270,9 +268,8 @@ namespace WhiskWork.Web
         private string GenerateWorkStepClass(WorkStep workStep)
         {
             var classes = new List<string>();
-            var query = new WorkStepQuery(_workStepRepository);
 
-            if(!query.IsExpandStep(workStep) && query.IsLeafStep(workStep))
+            if(!_workStepRepository.IsExpandStep(workStep) && _workStepRepository.IsLeafStep(workStep))
             {
                 classes.AddRange(GetLeafStepClasses(workStep));
             }

@@ -26,7 +26,7 @@ namespace WhiskWork.Core.Synchronization
                 if(slaveEntries.ContainsKey(masterId))
                 {
                     SynchronizationEntry masterMappedSlaveEntry;
-                    if(!TryToMasterEntry(slaveEntries[masterId],out masterMappedSlaveEntry))
+                    if(!TryGetMasterEntry(slaveEntries[masterId],out masterMappedSlaveEntry))
                     {
                         continue;
                     }
@@ -34,7 +34,7 @@ namespace WhiskWork.Core.Synchronization
                     if (masterMappedSlaveEntry.Status != masterEntries[masterId].Status)
                     {
                         SynchronizationEntry slaveEntry;
-                        if (TryToSlaveEntry(masterEntries[masterId], out slaveEntry))
+                        if (TryGetSlaveEntry(masterEntries[masterId], out slaveEntry))
                         {
                             _slave.UpdateStatus(slaveEntry);
                         }
@@ -43,7 +43,7 @@ namespace WhiskWork.Core.Synchronization
             }
         }
 
-        private bool TryToSlaveEntry(SynchronizationEntry masterEntry, out SynchronizationEntry slaveEntry)
+        private bool TryGetSlaveEntry(SynchronizationEntry masterEntry, out SynchronizationEntry slaveEntry)
         {
             if (!_map.ContainsKey(_master, masterEntry.Status))
             {
@@ -58,7 +58,7 @@ namespace WhiskWork.Core.Synchronization
             return true;
         }
 
-        private bool TryToMasterEntry(SynchronizationEntry slaveEntry, out SynchronizationEntry masterEntry)
+        private bool TryGetMasterEntry(SynchronizationEntry slaveEntry, out SynchronizationEntry masterEntry)
         {
             if(!_map.ContainsKey(_slave, slaveEntry.Status))
             {
@@ -73,37 +73,4 @@ namespace WhiskWork.Core.Synchronization
         }
         
     }
-
-    public class PropertySynchronizer
-    {
-        private readonly ISynchronizationAgent _master;
-        private readonly ISynchronizationAgent _slave;
-
-        public PropertySynchronizer(ISynchronizationAgent master, ISynchronizationAgent slave)
-        {
-            _master = master;
-            _slave = slave;
-        }
-
-        public void Synchronize()
-        {
-            var masterEntries = _master.GetAll().ToDictionary(e => e.Id);
-            var slaveEntries = _slave.GetAll().ToDictionary(e => e.Id);
-
-            foreach (var masterId in masterEntries.Keys)
-            {
-                if (slaveEntries.ContainsKey(masterId))
-                {
-                    var slaveEntry = slaveEntries[masterId];
-
-                    var updateEntry = new SynchronizationEntry(masterId, slaveEntry.Status,
-                                                               masterEntries[masterId].Properties);
-
-                    _slave.UpdateProperties(updateEntry);
-                }
-            }
-
-        }
-   }
-
 }

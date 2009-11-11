@@ -217,12 +217,12 @@ namespace WhiskWork.Web.UnitTest
         {
             using (_mocks.Record())
             {
-                _workflow.CreateWorkStep(new WorkStep("/scheduled", "/", 0, WorkStepType.Normal, null, null));
+                _workflow.CreateWorkStep(new WorkStep("/scheduled", "/", 0, WorkStepType.Normal, "cr", null));
                 LastCall.Throw(exception);
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/", "step=/scheduled");
+                var request = CreateCsvRequest("post", "/", "step=/scheduled,class=cr");
                 Assert.AreEqual(httpStatusCode, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
