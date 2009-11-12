@@ -11,15 +11,23 @@ namespace WhiskWork.Synchronizer
     {
         private static void Main(string[] args)
         {
+
+            if(args.Length!=1)
+            {
+                Console.WriteLine("Usage: WhiskWork.Synchronizer.exe <host[:port]> ");
+                return;
+            }
+
+            var host = args[0];
+
             const string rootPath = "/";
-            const string site = "http://localhost:5555";
             const string beginStep = "/scheduled";
 
 
 
             var eManagerAgent = new CachingSynchronizationAgent(new EManagerSynchronizationAgent("20091212", "CMS"));
 
-            var whiskWorkAgent = new WhiskWorkSynchronizationAgent(site, rootPath, beginStep);
+            var whiskWorkAgent = new WhiskWorkSynchronizationAgent(host, rootPath, beginStep);
 
             var map = new StatusSynchronizationMap(eManagerAgent, whiskWorkAgent);
             map.AddReciprocalEntry("0a - Scheduled for development", "/scheduled");
@@ -32,7 +40,7 @@ namespace WhiskWork.Synchronizer
             map.AddReverseEntry("/feedback/test", "3 - Ready for test");
 
             map.AddReciprocalEntry("4a ACCEPTED - In Dev", "/done");
-            map.AddForwardEntry("4a FAILED - In Dev", "/done");
+            map.AddForwardEntry("4a FAILED - In Dev", "/development/inprocess");
             map.AddForwardEntry("4b ACCEPTED - In Test", "/done");
             map.AddForwardEntry("4b FAILED - In Test", "/done");
             map.AddForwardEntry("4c ACCEPTED - In Stage", "/done");

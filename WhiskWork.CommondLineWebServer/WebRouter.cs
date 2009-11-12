@@ -14,7 +14,7 @@ namespace WhiskWork.CommondLineWebServer
         private readonly string _rootFileDirectory;
         private readonly WorkflowHttpHandler _workflowHandler;
 
-        public WebRouter(string webDirectory)
+        public WebRouter(string webDirectory, string logFilePath)
         {
             _rootFileDirectory = webDirectory;
 
@@ -23,16 +23,17 @@ namespace WhiskWork.CommondLineWebServer
 
             var workStepRepository = memoryWorkStepRepository;
 
-            //const string logfile = @"c:\temp\agileboard\workflow.log";
-            //var logger = new FileWorkItemLogger(logfile);
-            //var workItemRepository = new LoggingWorkItemRepository(logger, new MemoryWorkItemRepository());
-            
-            var workItemRepository = new MemoryWorkItemRepository();
+            IWorkItemRepository workItemRepository = new MemoryWorkItemRepository();
 
-            var wp = new Workflow(workStepRepository, workItemRepository);
+            IWorkflow workflow = new Workflow(workStepRepository, workItemRepository);
+            if (!string.IsNullOrEmpty(logFilePath))
+            {
+                var logger = new FileWorkItemLogger(logFilePath);
+                workflow = new WorkflowLogger(logger, workflow);
+            }
 
             var rendererFactory = new HtmlWorkStepRendererFactory(workItemRepository,workStepRepository);
-            _workflowHandler = new WorkflowHttpHandler(wp, rendererFactory);
+            _workflowHandler = new WorkflowHttpHandler(workflow, rendererFactory);
         }
 
 
@@ -48,8 +49,18 @@ namespace WhiskWork.CommondLineWebServer
 
         private bool TryReturnFile(HttpListenerResponse response, string path)
         {
-            string filePath = path.Remove(0, 1).Replace('/', '\\');
-            string fullPath = Path.Combine(_rootFileDirectory, filePath);
+            if(string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            if(string.IsNullOrEmpty(_rootFileDirectory))
+            {
+                return false;
+            }
+
+            var filePath = path.Remove(0, 1).Replace('/', '\\');
+            var fullPath = Path.Combine(_rootFileDirectory, filePath);
 
             if (!File.Exists(fullPath))
             {

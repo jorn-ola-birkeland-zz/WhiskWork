@@ -9,9 +9,23 @@ namespace WhiskWork.TestWebClient
     {
         private static void Main(string[] args)
         {
-            InitializeWorkflow();
+            if(args.Length!=3)
+            {
+                Console.WriteLine("Usage: WhiskWork.TestWebClient <httpverb> <url> <csv payload>");
+                return;
+            }
 
-            RunMainLoop();
+            var httpverb = args[0];
+            var url = args[1];
+            var payload = args[2];
+
+            Console.WriteLine("url:'{0}' httpverb:'{1}' payload:'{2}'",url,httpverb,payload);
+
+            WebCommunication.SendCsvRequest(url, httpverb, payload);
+
+            //InitializeWorkflow();
+
+            //RunMainLoop();
         }
 
         private static void InitializeWorkflow()
@@ -75,7 +89,7 @@ namespace WhiskWork.TestWebClient
                     payload = parts[2];
                 }
 
-                WebCommunication.SendRequest(path, httpverb, payload);
+                WebCommunication.SendCsvRequest("http://localhost:5555" + path, httpverb, payload);
 
             } while (!string.IsNullOrEmpty(line));
         }
@@ -84,13 +98,13 @@ namespace WhiskWork.TestWebClient
         private static void CreateWorkStep(string step, string parentPath, int ordinal, WorkStepType type, string workItemClass)
         {
             var payload = string.Format("step={0},type={1},class={2},ordinal={3}", step, type, workItemClass, ordinal);
-            WebCommunication.SendRequest(parentPath, "post", payload);
+            WebCommunication.SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
         }
 
         private static void CreateWorkStep(string step, string parentPath, int ordinal, WorkStepType type, string workItemClass, string title)
         {
             var payload = string.Format("step={0},type={1},class={2},ordinal={3},title={4}", step, type, workItemClass, ordinal,title);
-            WebCommunication.SendRequest(parentPath, "post", payload);
+            WebCommunication.SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
         }
     }
 }

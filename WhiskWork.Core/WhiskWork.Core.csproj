@@ -55,7 +55,7 @@
     <Compile Include="IWorkStepRepository.cs" />
     <Compile Include="IWorkItemLogger.cs" />
     <Compile Include="IWorkItemRepository.cs" />
-    <Compile Include="LoggingWorkItemRepository.cs" />
+    <Compile Include="WorkflowLogger.cs" />
     <Compile Include="MemoryWorkflowRepository.cs" />
     <Compile Include="MemoryWorkItemRepository.cs" />
     <Compile Include="ParallelStepHelper.cs" />

@@ -6,9 +6,9 @@ namespace WhiskWork.Web
 {
     public static class WebCommunication
     {
-        public static void SendRequest(string path, string httpverb, string payload)
+        public static void SendCsvRequest(string url, string httpverb, string payload)
         {
-            var request = (HttpWebRequest) WebRequest.Create("http://localhost:5555" + path);
+            var request = (HttpWebRequest) WebRequest.Create(url);
 
             request.ContentType = "text/csv";
             request.Method = httpverb;
