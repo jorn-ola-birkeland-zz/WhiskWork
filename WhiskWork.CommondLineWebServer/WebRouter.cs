@@ -28,7 +28,7 @@ namespace WhiskWork.CommondLineWebServer
             IWorkflow workflow = new Workflow(workStepRepository, workItemRepository);
             if (!string.IsNullOrEmpty(logFilePath))
             {
-                var logger = new FileWorkItemLogger(logFilePath);
+                var logger = new FileWorkflowLogger(logFilePath);
                 workflow = new WorkflowLogger(logger, workflow);
             }
 

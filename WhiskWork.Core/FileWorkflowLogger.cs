@@ -7,10 +7,10 @@ using WhiskWork.Generic;
 
 namespace WhiskWork.Core
 {
-    public class FileWorkItemLogger : IWorkItemLogger, IDisposable
+    public class FileWorkflowLogger : IWorkflowLogger, IDisposable
     {
         private readonly StreamWriter _writer;
-        public FileWorkItemLogger(string path)
+        public FileWorkflowLogger(string path)
         {
             var fi = new FileInfo(path);
 

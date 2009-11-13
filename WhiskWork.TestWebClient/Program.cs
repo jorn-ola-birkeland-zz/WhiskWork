@@ -19,7 +19,7 @@ namespace WhiskWork.TestWebClient
             var url = args[1];
             var payload = args[2];
 
-            Console.WriteLine("url:'{0}' httpverb:'{1}' payload:'{2}'",url,httpverb,payload);
+            //Console.WriteLine("url:'{0}' httpverb:'{1}' payload:'{2}'",url,httpverb,payload);
 
             WebCommunication.SendCsvRequest(url, httpverb, payload);
 

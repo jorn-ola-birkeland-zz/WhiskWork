@@ -72,5 +72,12 @@ namespace WhiskWork.Web.UnitTest.Properties {
                 return ResourceManager.GetString("FullFeatureTest", resourceCulture);
             }
         }
+        
+        internal static byte[] FullJson {
+            get {
+                object obj = ResourceManager.GetObject("FullJson", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

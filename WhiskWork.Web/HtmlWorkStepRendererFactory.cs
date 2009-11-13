@@ -1,9 +1,8 @@
 using WhiskWork.Core;
-using WhiskWork.Web;
 
-namespace WhiskWork.CommondLineWebServer
+namespace WhiskWork.Web
 {
-    internal class HtmlWorkStepRendererFactory : IWorkStepRendererFactory
+    public class HtmlWorkStepRendererFactory : IWorkStepRendererFactory
     {
         private readonly IWorkItemRepository _workItemRepository;
         private readonly IWorkStepRepository _workStepRepository;
@@ -16,7 +15,13 @@ namespace WhiskWork.CommondLineWebServer
 
         public IWorkStepRenderer CreateRenderer(string contentType)
         {
-            return new HtmlRenderer(_workStepRepository, _workItemRepository);
+            switch(contentType)
+            {
+                case "application/json":
+                    return new JsonRenderer(_workStepRepository, _workItemRepository);
+                default:
+                    return new HtmlRenderer(_workStepRepository, _workItemRepository);
+            }
         }
     }
 }

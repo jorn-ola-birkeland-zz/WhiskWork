@@ -49,12 +49,14 @@
     <Compile Include="CsvRequestMessageParser.cs" />
     <Compile Include="FormRequestMessageParser.cs" />
     <Compile Include="HtmlRenderer.cs" />
+    <Compile Include="HtmlWorkStepRendererFactory.cs" />
     <Compile Include="HttpPostWorkflowNodeVisitor.cs" />
     <Compile Include="IRequestMessageParser.cs" />
     <Compile Include="IWorkflowNode.cs" />
     <Compile Include="IWorkflowNodeVisitor.cs" />
     <Compile Include="IWorkStepRenderer.cs" />
     <Compile Include="IWorkStepRendererFactory.cs" />
+    <Compile Include="JsonRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RequestMessageParser.cs" />
     <Compile Include="RequestMessageParserFactory.cs" />

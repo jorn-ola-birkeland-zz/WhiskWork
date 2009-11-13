@@ -15,14 +15,19 @@ namespace WhiskWork.Synchronizer
 {
     internal class EManagerSynchronizationAgent : ISynchronizationAgent
     {
-        private readonly string _release;
-        private readonly string _team;
+        private readonly string _login;
+        private readonly string _password;
+        private readonly string _dominohost;
 
-        public EManagerSynchronizationAgent(string release, string team)
+        public EManagerSynchronizationAgent(string dominohost, string login, string password)
         {
-            _release = release;
-            _team = team;
+            _dominohost = dominohost;
+            _login = login;
+            _password = password;
         }
+
+        public string Release { get; set; }
+        public string Team { get; set; }
 
         #region ISynchronizationAgent Members
 
@@ -54,7 +59,7 @@ namespace WhiskWork.Synchronizer
                 var status = (string)row[7];
                 int? ordinal = ToNullableInt((string)row[8]);
 
-                if (team != _team || release != _release)
+                if ((Team!=null && team != Team) || (Release!=null && release != Release))
                 {
                     continue;
                 }
@@ -112,16 +117,12 @@ namespace WhiskWork.Synchronizer
 
         #endregion
 
-        private static DominoAuthenticatingHtmlSource Login()
+        private DominoAuthenticatingHtmlSource Login()
         {
-            var host = ConfigurationManager.AppSettings["host"];
             var loginUrl = ConfigurationManager.AppSettings["loginUrl"];
 
-            var username = ConfigurationManager.AppSettings["login"];
-            var password = ConfigurationManager.AppSettings["password"];
-
-            var dominoSource = new DominoAuthenticatingHtmlSource(host, loginUrl);
-            dominoSource.Login(username, password);
+            var dominoSource = new DominoAuthenticatingHtmlSource(_dominohost, loginUrl);
+            dominoSource.Login(_login, _password);
             return dominoSource;
         }
 

@@ -4,13 +4,12 @@ using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
 using System.IO;
-using WhiskWork.Web;
 using WhiskWork.Web.UnitTest.Properties;
 
-namespace WhiskWork.UnitTest
+namespace WhiskWork.Web.UnitTest
 {
     [TestClass]
-    public class HtmlRenderTest
+    public class HtmlRendererTest
     {
         private MemoryWorkflowRepository _workflowRepository;
         private MemoryWorkItemRepository _workItemRepository;
@@ -373,8 +372,8 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            Create("/analysis", "cr1");
-            Move("/development", "cr1");
+            _wp.Create("/analysis", "cr1");
+            _wp.Move("/development", "cr1");
 
 
             var doc = GetFullDocument();
@@ -393,8 +392,8 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            Create("/analysis", "cr1");
-            Move("/development", "cr1");
+            _wp.Create("/analysis", "cr1");
+            _wp.Move("/development", "cr1");
 
             var doc = GetFullDocument();
 
@@ -411,8 +410,8 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
             _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
 
-            Create("/analysis", "cr1");
-            Move("/development", "cr1");
+            _wp.Create("/analysis", "cr1");
+            _wp.Move("/development", "cr1");
 
 
             var doc = GetFullDocument();
@@ -439,40 +438,23 @@ namespace WhiskWork.UnitTest
             _workflowRepository.Add("/feedback/test", "/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
             _workflowRepository.Add("/done", "/", 4, WorkStepType.End, "cr", "Done");
 
-            Create("/analysis","cr1","cr2","cr3","cr4","cr5","cr6","cr7","cr8","cr9","cr10", "cr11", "cr12");
-            Move("/analysis/done","cr4");
-            Move("/development/inprocess", "cr5","cr6");
-            Create("/development/inprocess/cr5", "cr5-1", "cr5-2", "cr5-3", "cr5-4");
-            Create("/development/inprocess/cr6", "cr6-1", "cr6-2", "cr6-3", "cr6-4");
-            Move("/development/inprocess/cr5/tasks/done", "cr5-1", "cr5-2");
-            Move("/development/inprocess/cr6/tasks/inprocess", "cr6-1");
-            Move("/development/done", "cr7", "cr8", "cr9","cr10", "cr11", "cr12");
-            Move("/feedback/review", "cr7", "cr8");
-            Move("/feedback/demo", "cr9", "cr10");
-            Move("/feedback/test", "cr11");
-            Move("/done", "cr7-review");
-            Move("/done", "cr9-demo");
-            Move("/done", "cr12");
+            _wp.Create("/analysis","cr1","cr2","cr3","cr4","cr5","cr6","cr7","cr8","cr9","cr10", "cr11", "cr12");
+            _wp.Move("/analysis/done", "cr4");
+            _wp.Move("/development/inprocess", "cr5", "cr6");
+            _wp.Create("/development/inprocess/cr5", "cr5-1", "cr5-2", "cr5-3", "cr5-4");
+            _wp.Create("/development/inprocess/cr6", "cr6-1", "cr6-2", "cr6-3", "cr6-4");
+            _wp.Move("/development/inprocess/cr5/tasks/done", "cr5-1", "cr5-2");
+            _wp.Move("/development/inprocess/cr6/tasks/inprocess", "cr6-1");
+            _wp.Move("/development/done", "cr7", "cr8", "cr9", "cr10", "cr11", "cr12");
+            _wp.Move("/feedback/review", "cr7", "cr8");
+            _wp.Move("/feedback/demo", "cr9", "cr10");
+            _wp.Move("/feedback/test", "cr11");
+            _wp.Move("/done", "cr7-review");
+            _wp.Move("/done", "cr9-demo");
+            _wp.Move("/done", "cr12");
 
             AssertIsAsExpected(Resources.FullFeatureTest);
         }
-
-        private void Create(string path, params string[] workItemIds)
-        {
-            Array.ForEach(workItemIds, workItemId =>
-                                           {
-                                               _wp.CreateWorkItem(WorkItem.New(workItemId,path));
-                                           });
-        }
-
-        private void Move(string path, params string[] workItemIds)
-        {
-            Array.ForEach(workItemIds, workItemId =>
-                                           {
-                                               _wp.UpdateWorkItem(WorkItem.New(workItemId, path, new NameValueCollection()));
-                                           });
-        }
-
 
         private void AssertIsAsExpected(string expectedXml)
         {

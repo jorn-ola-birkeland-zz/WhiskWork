@@ -7,10 +7,10 @@ namespace WhiskWork.Core
 {
     public class WorkflowLogger : IWorkflow
     {
-        private readonly IWorkItemLogger _logger;
+        private readonly IWorkflowLogger _logger;
         private readonly IWorkflow _workflow;
 
-        public WorkflowLogger(IWorkItemLogger logger, IWorkflow workflow)
+        public WorkflowLogger(IWorkflowLogger logger, IWorkflow workflow)
         {
             _logger = logger;
             _workflow = workflow;

@@ -12,20 +12,20 @@ namespace WhiskWork.Synchronizer
         private static void Main(string[] args)
         {
 
-            if(args.Length!=1)
+            if(args.Length<4)
             {
-                Console.WriteLine("Usage: WhiskWork.Synchronizer.exe <host[:port]> ");
+                Console.WriteLine("Usage: WhiskWork.Synchronizer.exe <webhost[:port]> <dominohost[:port]> <dominologin> <dominopassword> [-release:<release>] [-team:<team1[,team2,...]>]");
                 return;
             }
 
             var host = args[0];
+            var eManagerSynchronizationAgent = CreateEManagerSynchronizationAgent(args);
 
             const string rootPath = "/";
             const string beginStep = "/scheduled";
 
 
-
-            var eManagerAgent = new CachingSynchronizationAgent(new EManagerSynchronizationAgent("20091212", "CMS"));
+            var eManagerAgent = new CachingSynchronizationAgent(eManagerSynchronizationAgent);
 
             var whiskWorkAgent = new WhiskWorkSynchronizationAgent(host, rootPath, beginStep);
 
@@ -61,6 +61,34 @@ namespace WhiskWork.Synchronizer
             Console.WriteLine("Synchronizing data eManager->whiteboard");
             dataSynchronizer.Synchronize();
 
+        }
+
+        private static EManagerSynchronizationAgent CreateEManagerSynchronizationAgent(string[] args)
+        {
+            var dominohost = args[1];
+            var login = args[2];
+            var password = args[3];
+
+            var eManagerSynchronizationAgent = new EManagerSynchronizationAgent(dominohost, login, password);
+
+            if(args.Length>3)
+            {
+                for(int i=3;i<args.Length;i++)
+                {
+                    var keyValue = args[i].Split(':');
+
+                    switch(keyValue[0].ToLowerInvariant())
+                    {
+                        case "-release":
+                            eManagerSynchronizationAgent.Release = keyValue[1];
+                            break;
+                        case "-team":
+                            eManagerSynchronizationAgent.Team = keyValue[1];
+                            break;
+                    }
+                }
+            }
+            return eManagerSynchronizationAgent;
         }
     }
 }

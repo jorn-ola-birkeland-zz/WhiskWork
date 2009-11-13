@@ -1,6 +1,6 @@
 namespace WhiskWork.Core
 {
-    public interface IWorkItemLogger
+    public interface IWorkflowLogger
     {
         void LogDeleteWorkItem(string id);
         void LogCreateWorkStep(WorkStep workStep);

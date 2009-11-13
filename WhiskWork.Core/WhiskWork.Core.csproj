@@ -50,10 +50,10 @@
     <Compile Include="WorkItemRemover.cs" />
     <Compile Include="WorkItemRepositoryExtension.cs" />
     <Compile Include="WorkStepRepositoryExtensions.cs" />
-    <Compile Include="FileWorkItemLogger.cs" />
+    <Compile Include="FileWorkflowLogger.cs" />
     <Compile Include="IWorkflow.cs" />
     <Compile Include="IWorkStepRepository.cs" />
-    <Compile Include="IWorkItemLogger.cs" />
+    <Compile Include="IWorkflowLogger.cs" />
     <Compile Include="IWorkItemRepository.cs" />
     <Compile Include="WorkflowLogger.cs" />
     <Compile Include="MemoryWorkflowRepository.cs" />
