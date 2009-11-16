@@ -378,6 +378,8 @@ namespace WhiskWork.Web.UnitTest
 
             var doc = GetFullDocument();
 
+            //Assert.AreEqual(string.Empty, doc.InnerXml);
+
             XmlNode developmentInProcess = doc.SelectSingleNode("//li[@id=\"development\"]/ol/li");
 
             Assert.AreEqual("transient", developmentInProcess.SelectSingleNode("ol/li[position()=1]/@class").Value);

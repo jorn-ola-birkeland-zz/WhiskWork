@@ -71,18 +71,20 @@ namespace WhiskWork.Core
             return TryLocateFirstAncestorStepOfType(workStepRepository, workStep, WorkStepType.Parallel, out parallelStepRoot);
         }
 
-        public static bool IsInTransientStep(this IWorkStepRepository workStepRepository, WorkItem workItem, out WorkStep transientStep)
-        {
-            transientStep = null;
-            bool isInTransientStep = workStepRepository.GetWorkStep(workItem.Path).Type == WorkStepType.Transient;
 
-            if (isInTransientStep)
+        public static bool IsInExpandStep(this IWorkStepRepository workStepRepository, WorkItem workItem, out WorkStep expandStep)
+        {
+            expandStep = null;
+            bool isInExpandStep = workStepRepository.GetWorkStep(workItem.Path).Type == WorkStepType.Expand;
+
+            if (isInExpandStep)
             {
-                transientStep = workStepRepository.GetWorkStep(workItem.Path);
+                expandStep = workStepRepository.GetWorkStep(workItem.Path);
             }
 
-            return isInTransientStep;
+            return isInExpandStep;
         }
+
 
         public static bool IsExpandStep(this IWorkStepRepository workStepRepository, WorkStep step)
         {

@@ -82,6 +82,20 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
+        public void ShouldRemovePropertyIfValueIsEmpty()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "" } }));
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(1, workItem.Properties.Count);
+            Assert.AreEqual("CR1", workItem.Properties["Name"]);
+        }
+
+
+        [TestMethod]
         public void ShouldMoveAndUpdateOneOfTwoProperties()
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
@@ -95,6 +109,20 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual("/development", workItem.Path);
             Assert.AreEqual("CR1", workItem.Properties["Name"]);
             Assert.AreEqual("B", workItem.Properties["Developer"]);
+        }
+
+        [TestMethod]
+        public void ShouldUpdatePropertyOfWorkItemInExpandStep()
+        {
+            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
+
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection { { "Developer", "B" } }));
+
         }
 
         [TestMethod]
@@ -164,6 +192,7 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual(2, _workItemRepository.GetWorkItem("cr2").Ordinal);
             Assert.AreEqual(1, _workItemRepository.GetWorkItem("cr3").Ordinal);
         }
+
 
         private void SetUpAndTestBasicOrdinal()
         {

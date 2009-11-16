@@ -2,6 +2,7 @@ using System;
 using System.Collections.Specialized;
 using System.Linq;
 using WhiskWork.Core;
+using System.Net;
 
 namespace WhiskWork.Web
 {
@@ -49,7 +50,7 @@ namespace WhiskWork.Web
 
         private WorkflowHttpResponse RespondToGet(WorkflowHttpRequest request)
         {
-            var renderer = _rendererFactory.CreateRenderer(request.ContentType);
+            var renderer = _rendererFactory.CreateRenderer(request.Accept);
             return Render(renderer, request.RawUrl);
         }
 
@@ -70,6 +71,7 @@ namespace WhiskWork.Web
             try
             {
                 var response = WorkflowHttpResponse.Ok;
+                response.Headers.Add(HttpRequestHeader.ContentType,renderer.ContentType);
                 renderer.Render(response.OutputStream, path);
 
                 return response;

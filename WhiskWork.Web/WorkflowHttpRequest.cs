@@ -1,10 +1,12 @@
 using System.IO;
+using System.Linq;
 using System.Net;
 
 namespace WhiskWork.Web
 {
     public class WorkflowHttpRequest
     {
+        public string Accept  { get; set; }
         public string ContentType { get; set; }
 
         public string HttpMethod { get; set; }
@@ -21,7 +23,8 @@ namespace WhiskWork.Web
                         InputStream = listenerRequest.InputStream,
                         RawUrl = listenerRequest.RawUrl,
                         HttpMethod = listenerRequest.HttpMethod,
-                        ContentType = listenerRequest.ContentType
+                        ContentType = listenerRequest.ContentType,
+                        Accept = listenerRequest.AcceptTypes != null ? listenerRequest.AcceptTypes.FirstOrDefault() : null
                     };
 
             return request;

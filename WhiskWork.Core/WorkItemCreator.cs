@@ -26,10 +26,7 @@ namespace WhiskWork.Core
             WorkStep transientStep;
             if (WorkStepRepository.IsWithinTransientStep(leafStep, out transientStep))
             {
-                var workItems = WorkItemRepository.GetWorkItems(transientStep.Path);
-                Debug.Assert(workItems.Count() == 1);
-
-                var parentItem = workItems.ElementAt(0);
+                WorkItem parentItem = GetTransientParentWorkItem(transientStep);
                 WorkItemRepository.UpdateWorkItem(parentItem.UpdateStatus(WorkItemStatus.ExpandLocked));
 
                 newWorkItem = newWorkItem.MoveTo(leafStep).UpdateParent(parentItem);
@@ -54,6 +51,12 @@ namespace WhiskWork.Core
 
             WorkItemRepository.CreateWorkItem(newWorkItem);
         }
-        
+
+        private WorkItem GetTransientParentWorkItem(WorkStep transientStep)
+        {
+            var workItemId = transientStep.Path.Split(WorkStep.Separator).Last();
+
+            return WorkItemRepository.GetWorkItem(workItemId);
+        }
     }
 }

@@ -32,7 +32,7 @@ namespace WhiskWork.Core
 
             ThrowIfMovingExpandLockedWorkItem(transition);
 
-            ThrowIfMovingFromTransientStepToParallelStep(transition);
+            ThrowIfMovingFromExpandStepToParallelStep(transition);
 
             transition = CreateTransitionIfMovingToWithinParallelStep(transition);
 
@@ -42,7 +42,7 @@ namespace WhiskWork.Core
 
             transition = CreateTransitionIfMovingToExpandStep(transition);
 
-            transition = CleanUpIfMovingFromTransientStep(transition);
+            transition = CleanUpIfMovingFromExpandStep(transition);
 
             transition = AttemptMergeIfMovingChildOfParallelledWorkItem(transition);
 
@@ -68,18 +68,18 @@ namespace WhiskWork.Core
             }
         }
 
-        private void ThrowIfMovingFromTransientStepToParallelStep(WorkItemTransition transition)
+        private void ThrowIfMovingFromExpandStepToParallelStep(WorkItemTransition transition)
         {
-            WorkStep transientStep;
+            WorkStep expandStep;
 
-            var isInTransientStep = WorkStepRepository.IsInTransientStep(transition.WorkItem, out transientStep);
+            var isInExpandStep = WorkStepRepository.IsInExpandStep(transition.WorkItem, out expandStep);
 
             WorkStep parallelStepRoot;
             var isWithinParallelStep = WorkStepRepository.IsWithinParallelStep(transition.WorkStep, out parallelStepRoot);
 
-            if (isInTransientStep && isWithinParallelStep)
+            if (isInExpandStep && isWithinParallelStep)
             {
-                throw new InvalidOperationException("Cannot move directly from transient step to parallelstep");
+                throw new InvalidOperationException("Cannot move directly from expand step to parallelstep");
             }
         }
 
@@ -120,15 +120,12 @@ namespace WhiskWork.Core
         {
             if (WorkStepRepository.IsExpandStep(transition.WorkStep))
             {
-                var stepToMoveTo = CreateTransientWorkSteps(transition.WorkItem, transition.WorkStep);
-                var workItemToMove = transition.WorkItem.AddClass(stepToMoveTo.WorkItemClass);
-
-                transition = new WorkItemTransition(workItemToMove, stepToMoveTo);
+                CreateTransientWorkSteps(transition.WorkItem, transition.WorkStep);
             }
             return transition;
         }
 
-        private WorkItemTransition CleanUpIfMovingFromTransientStep(WorkItemTransition transition)
+        private WorkItemTransition CleanUpIfMovingFromExpandStep(WorkItemTransition transition)
         {
             var remover = new WorkItemRemover(WorkStepRepository, WorkItemRepository);
 
@@ -192,7 +189,7 @@ namespace WhiskWork.Core
         {
             Debug.Assert(expandStep.Type == WorkStepType.Expand);
 
-            var transientRootPath = WorkStep.CombinePath(expandStep.Path, item.Id);
+            var transientRootPath = ExpandedWorkStep.GetTransientPath(expandStep, item);
 
             CreateTransientWorkStepsRecursively(transientRootPath, expandStep, item.Id);
 
@@ -258,7 +255,7 @@ namespace WhiskWork.Core
             var parent = WorkItemRepository.GetWorkItem(item.ParentId);
             var workStep = WorkStepRepository.GetWorkStep(parent.Path);
 
-            return workStep.Type == WorkStepType.Transient;
+            return workStep.Type == WorkStepType.Expand;
         }
 
 

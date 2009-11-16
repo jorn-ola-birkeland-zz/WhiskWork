@@ -11,12 +11,15 @@ namespace WhiskWork.Core
 
         public WorkItem CleanUpIfInTransientStep(WorkItem workItemToMove)
         {
-            WorkStep transientStep;
-            if (WorkStepRepository.IsInTransientStep(workItemToMove, out transientStep))
+            WorkStep expandStep;
+            if (WorkStepRepository.IsInExpandStep(workItemToMove, out expandStep))
             {
+                var transientStepPath = ExpandedWorkStep.GetTransientPath(expandStep, workItemToMove);
+                var transientStep = WorkStepRepository.GetWorkStep(transientStepPath);
+                
                 DeleteChildWorkItems(workItemToMove);
                 WorkStepRepository.DeleteWorkStepsRecursively(transientStep);
-                workItemToMove = workItemToMove.RemoveClass(transientStep.WorkItemClass);
+                //workItemToMove = workItemToMove.RemoveClass(transientStep.WorkItemClass);
             }
             return workItemToMove;
         }

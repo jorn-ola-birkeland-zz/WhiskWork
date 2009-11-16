@@ -183,10 +183,7 @@ namespace WhiskWork.Core.UnitTest
 
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                ()=>
-                    {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/review", new NameValueCollection()));
-                    });
+                ()=> _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/review")));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
@@ -249,7 +246,7 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldNotBeAbleToMoveFromTransientStepToParallelStep()
+        public void ShouldNotBeAbleToMoveFromExpandStepToParallelStep()
         {
             CreateParallelWorkflowWithExpandStep();
 
@@ -293,7 +290,7 @@ namespace WhiskWork.Core.UnitTest
             _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess", new NameValueCollection()));
 
             var workItem = _wp.GetWorkItem("cr1-review");
-            Assert.AreEqual("/development/inprocess/cr1-review", workItem.Path);
+            Assert.AreEqual("/development/inprocess", workItem.Path);
         }
 
         [TestMethod]
@@ -360,4 +357,4 @@ namespace WhiskWork.Core.UnitTest
             _workflowRepository.Add("/done", "/", 4, WorkStepType.End, "cr", "Done");
         }
     }
-}
+}   

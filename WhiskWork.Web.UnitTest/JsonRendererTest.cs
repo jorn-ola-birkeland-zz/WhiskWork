@@ -93,7 +93,7 @@ namespace WhiskWork.Web.UnitTest
 
 
         [TestMethod]
-        public void ShouldRenderTransientStepWithOneChildWorkItem()
+        public void ShouldRenderExpandedWorkItemWithOneChildWorkItem()
         {
             _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
             _wp.CreateWorkStep(new WorkStep("/development","/",2, WorkStepType.Expand,"cr"));
@@ -110,7 +110,7 @@ namespace WhiskWork.Web.UnitTest
         }
 
         [TestMethod]
-        public void ShouldRenderTwoTransientSteps()
+        public void ShouldRenderTwoWorkItemsinExpandStep()
         {
             _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
             _wp.CreateWorkStep(new WorkStep("/development", "/", 2, WorkStepType.Expand, "cr"));
@@ -123,6 +123,22 @@ namespace WhiskWork.Web.UnitTest
 
             const string expected = "[{workstep:\"analysis\",workitemList:[]},{workstep:\"development\",workitemList:[{id:\"cr1\",worksteps:[{workstep:\"development-cr1-new\",workitemList:[]}]},{id:\"cr2\",worksteps:[{workstep:\"development-cr2-new\",workitemList:[]}]}]}]";
             Assert.AreEqual(expected, json);
+        }
+
+        [TestMethod]
+        public void ShouldSortAccordingToOrdinal()
+        {
+            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+
+            _wp.Create("/analysis", "cr1", "cr2");
+            _wp.UpdateOrdinal("cr1", 2);
+            _wp.UpdateOrdinal("cr2", 1);
+
+            var json = GetJson(WorkStep.Root);
+
+            const string expected = "[{workstep:\"analysis\",workitemList:[{id:\"cr2\"},{id:\"cr1\"}]}]";
+            Assert.AreEqual(expected, json);
+
         }
 
         private string GetJson(WorkStep workStep)

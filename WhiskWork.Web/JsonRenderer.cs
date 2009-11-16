@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using WhiskWork.Core;
 using System.Linq;
@@ -16,11 +17,24 @@ namespace WhiskWork.Web
             _workItemRepository = workItemRepository;
         }
 
+        public string ContentType
+        {
+            get { return "application/json"; }
+        }
+
         public void Render(Stream stream, string path)
         {
-            var workStep =_workStepRepository.GetWorkStep(path);
-            Render(stream, workStep);
+            if (string.IsNullOrEmpty(path) || WorkStep.Root.Path == path)
+            {
+                Render(stream, WorkStep.Root);
+            }
+            else
+            {
+                var workStep = _workStepRepository.GetWorkStep(path);
+                Render(stream, workStep);
+            }
         }
+
 
         public void Render(Stream stream, WorkStep workStep)
         {
@@ -28,14 +42,14 @@ namespace WhiskWork.Web
             {
                 writer.Write("[");
 
-                WriteWorkStepsRecursively(writer, workStep, true);
+                RenderWorkStepsRecursively(writer, workStep, true);
 
                 writer.Write("]");
             }
 
        }
 
-        private void WriteWorkStepsRecursively(TextWriter writer, WorkStep workStep, bool first)
+        private void RenderWorkStepsRecursively(TextWriter writer, WorkStep workStep, bool first)
         {
             foreach (var childWorkStep in _workStepRepository.GetChildWorkSteps(workStep.Path))
             {
@@ -63,10 +77,22 @@ namespace WhiskWork.Web
 
         private void RenderParallelStep(TextWriter writer, WorkStep workStep)
         {
-            WriteWorkStepsRecursively(writer,workStep,true);
+            RenderWorkStepsRecursively(writer,workStep,true);
         }
 
         private void RenderNormalStep(TextWriter writer, WorkStep childWorkStep)
+        {
+            RenderWorkStep(writer, childWorkStep);
+
+            RenderWorkStepsRecursively(writer, childWorkStep, false);
+        }
+
+        private void RenderExpandStep(TextWriter writer, WorkStep workStep)
+        {
+            RenderWorkStep(writer, workStep);
+        }
+
+        private void RenderWorkStep(TextWriter writer, WorkStep childWorkStep)
         {
             writer.Write("{workstep:");
 
@@ -76,102 +102,75 @@ namespace WhiskWork.Web
             writer.Write("workitemList:");
 
             writer.Write("[");
-            
-            WriteWorkItems(writer, childWorkStep, false);
+
+            RenderWorkItems(writer, childWorkStep);
 
             writer.Write("]");
 
 
             writer.Write("}");
-
-            WriteWorkStepsRecursively(writer, childWorkStep, false);
         }
 
-
-        private void RenderExpandStep(TextWriter writer, WorkStep workStep)
+        private void RenderWorkItems(TextWriter writer, WorkStep step)
         {
-            writer.Write("{workstep:");
-
-            writer.Write(CreateWorkStepName(workStep));
-            writer.Write(",");
-            RenderTransientStepsAsWorkItems(writer, workStep);
-            writer.Write("}");
-        }
-
-        private void RenderTransientStepsAsWorkItems(TextWriter writer, WorkStep step)
-        {
-            var transientSteps = _workStepRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
-
-            writer.Write("workitemList:");
-
-            writer.Write("[");
-
-            bool isFirst = true;
-
-            foreach (var transientStep in transientSteps)
-            {
-                if(!isFirst)
-                {
-                    writer.Write(",");
-                }
-                WriteWorkItems(writer,transientStep,true);
-
-                isFirst = false;
-            }
-
-            writer.Write("]");
-        }
-
-        private string CreateWorkStepName(WorkStep childWorkStep)
-        {
-            return "\""+childWorkStep.Path.Replace('/','-').Remove(0,1)+"\"";
-        }
-
-        private void WriteWorkItems(TextWriter writer, WorkStep step, bool renderChildWorkSteps)
-        {
-                //writer.Write(step.WorkItemClass);
                 var first = true;
 
-                foreach (var workItem in _workItemRepository.GetWorkItems(step.Path))
+                foreach (var workItem in _workItemRepository.GetWorkItems(step.Path).OrderBy(wi=>wi.Ordinal))
                 {
                     if (!first)
                     {
                         writer.Write(",");
                     }
 
-                    writer.Write("{");
-
-                    writer.Write("id:\"{0}\"",workItem.Id);
-
-                    RenderProperties(writer, workItem);
-
-                    if(renderChildWorkSteps)
-                    {
-                        writer.Write(",worksteps:[");
-
-                        //throw new NotImplementedException(_workStepRepository.GetChildWorkSteps(workItem.Path).Count().ToString());
-
-                        var currentStep = _workStepRepository.GetWorkStep(workItem.Path);
-
-                        WriteWorkStepsRecursively(writer,currentStep,true);
-
-                        writer.Write("]");
-                        
-                    }
-
-                    writer.Write("}");
+                    RenderWorkItem(step, writer, workItem);
 
                     first = false;
-                } 
-                
+                }
         }
 
-        private void RenderProperties(TextWriter writer, WorkItem item)
+        private void RenderWorkItem(WorkStep step, TextWriter writer, WorkItem workItem)
+        {
+            writer.Write("{");
+
+            writer.Write("id:\"{0}\"",workItem.Id);
+
+            RenderProperties(writer, workItem);
+
+            RenderTransientWorkSteps(step, writer, workItem);
+
+            writer.Write("}");
+        }
+
+
+        private static void RenderProperties(TextWriter writer, WorkItem item)
         {
             foreach (var keyValue in item.Properties)
             {
                 writer.Write(",{0}:\"{1}\"",keyValue.Key, keyValue.Value);
             }
         }
+
+        private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)
+        {
+            var childStepPath = ExpandedWorkStep.GetTransientPath(step, workItem);
+
+            if (_workStepRepository.ExistsWorkStep(childStepPath))
+            {
+                var childStep = _workStepRepository.GetWorkStep(childStepPath);
+                writer.Write(",worksteps:[");
+
+                RenderWorkStepsRecursively(writer, childStep, true);
+
+                writer.Write("]");
+
+            }
+        }
+
+        private static string CreateWorkStepName(WorkStep childWorkStep)
+        {
+            return "\"" + childWorkStep.Path.Replace('/', '-').Remove(0, 1) + "\"";
+        }
+
+
     }
 }

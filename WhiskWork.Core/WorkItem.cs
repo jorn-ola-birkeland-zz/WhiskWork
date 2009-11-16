@@ -164,13 +164,9 @@ namespace WhiskWork.Core
 
         public WorkItem UpdatePropertiesAndOrdinalFrom(WorkItem item)
         {
-            var modifiedProperties = new NameValueCollection(_properties);
             var modifiedOrdinal = _ordinal;
 
-            foreach (var key in item.Properties.AllKeys)
-            {
-                modifiedProperties[key] = item.Properties[key];
-            }
+            var modifiedProperties = GetModifiedProperties(item.Properties);
 
             if(item.HasOrdinal)
             {
@@ -180,17 +176,34 @@ namespace WhiskWork.Core
             return new WorkItem(Id, Path, Classes, Status, ParentId, modifiedOrdinal, modifiedProperties);
         }
 
+
         public WorkItem UpdateProperties(WorkItemProperties properties)
         {
-            var modifiedProperties = new NameValueCollection(_properties);
-
-            foreach (var key in properties.AllKeys)
-            {
-                modifiedProperties[key] = properties[key];
-            }
+            var modifiedProperties = GetModifiedProperties(properties);
 
             return new WorkItem(Id, Path, Classes, Status, ParentId, _ordinal, modifiedProperties);
         }
+
+        private NameValueCollection GetModifiedProperties(WorkItemProperties propertyUpdate)
+        {
+            var modifiedProperties = new NameValueCollection(_properties);
+
+            foreach (var key in propertyUpdate.AllKeys)
+            {
+                var newValue = propertyUpdate[key];
+
+                if (string.IsNullOrEmpty(newValue))
+                {
+                    modifiedProperties.Remove(key);
+                }
+                else
+                {
+                    modifiedProperties[key] = newValue;
+                }
+            }
+            return modifiedProperties;
+        }
+
 
         public WorkItem UpdateProperties(NameValueCollection properties)
         {

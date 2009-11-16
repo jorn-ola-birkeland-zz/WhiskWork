@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,6 +39,11 @@ namespace WhiskWork.Web
             }
         }
 
+        public string ContentType
+        {
+            get { return "text/html"; }
+        }
+
 
         public void Render(Stream stream, WorkStep workStep)
         {
@@ -59,7 +65,6 @@ namespace WhiskWork.Web
 
         private void RenderWorkStepsRecursively(HtmlTextWriter writer, WorkStep workStep)
         {
-            RenderWorkItemList(writer, workStep);
 
             if (_workStepRepository.IsParallelStep(workStep))
             {
@@ -71,6 +76,7 @@ namespace WhiskWork.Web
             }
             else
             {
+                RenderWorkItemList(writer, workStep);
                 RenderNormalStep(writer, workStep);
             }
         }
@@ -138,17 +144,21 @@ namespace WhiskWork.Web
             writer.RenderEndTag(); //ol
         }
 
-        private void RenderTransientListItems(HtmlTextWriter writer, WorkStep step)
+        private void RenderTransientListItems(HtmlTextWriter writer, WorkStep expandStep)
         {
-            var transientSteps = _workStepRepository.GetChildWorkSteps(step.Path).Where(ws => ws.Type == WorkStepType.Transient);
+            var expandedWorkItems = _workItemRepository.GetWorkItems(expandStep.Path).OrderBy(wi=>wi.Ordinal);
 
-            foreach (var transientStep in transientSteps)
+            foreach (var expandedWorkItem in expandedWorkItems)
             {
-                RenderTransientListItem(writer,transientStep);
+                var transientPath = ExpandedWorkStep.GetTransientPath(expandStep, expandedWorkItem);
+                var transientStep = _workStepRepository.GetWorkStep(transientPath);
+
+                RenderTransientListItem(writer, transientStep, expandedWorkItem);
             }
+
         }
 
-        private void RenderTransientListItem(HtmlTextWriter writer, WorkStep transientStep)
+        private void RenderTransientListItem(HtmlTextWriter writer, WorkStep transientStep, WorkItem expandedWorkItem)
         {
             writer.AddAttribute(HtmlTextWriterAttribute.Class, "transient");
             writer.RenderBeginTag(HtmlTextWriterTag.Li);
@@ -159,7 +169,9 @@ namespace WhiskWork.Web
             writer.AddAttribute(HtmlTextWriterAttribute.Class, GetLeafStepClasses(transientStep).Join(' '));
             writer.RenderBeginTag(HtmlTextWriterTag.Li);
 
-            RenderWorkItemList(writer, transientStep);
+            writer.RenderBeginTag(HtmlTextWriterTag.Ol);
+            RenderWorkItem(writer, expandedWorkItem);
+            writer.RenderEndTag(); //ol
 
             writer.RenderEndTag(); //li
 
@@ -217,17 +229,23 @@ namespace WhiskWork.Web
             writer.RenderBeginTag(HtmlTextWriterTag.Ol);
             foreach (var workItem in workItems.OrderBy(wi => wi.Ordinal))
             {
-                writer.AddAttribute(HtmlTextWriterAttribute.Id, workItem.Id);
-
-                var workItemClass = GenerateWorkItemClass(workItem);
-                writer.AddAttribute(HtmlTextWriterAttribute.Class, workItemClass);
-                writer.RenderBeginTag(HtmlTextWriterTag.Li);
-
-                RenderProperties(writer, workItem);
-
-                writer.RenderEndTag(); //li
+                RenderWorkItem(writer, workItem);
             }
             writer.RenderEndTag(); //ol
+        }
+
+        private static void RenderWorkItem(HtmlTextWriter writer, WorkItem workItem)
+        {
+            writer.AddAttribute(HtmlTextWriterAttribute.Id, workItem.Id);
+
+            var workItemClass = GenerateWorkItemClass(workItem);
+            writer.AddAttribute(HtmlTextWriterAttribute.Class, workItemClass);
+            writer.RenderBeginTag(HtmlTextWriterTag.Li);
+
+            RenderProperties(writer, workItem);
+
+            writer.RenderEndTag(); //li
+            
         }
 
         private static void RenderProperties(HtmlTextWriter writer, WorkItem item)

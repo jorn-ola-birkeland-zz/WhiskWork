@@ -35,7 +35,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/scheduled", "id=cr1");
+                var request = CreateCsvPostRequest("/scheduled", "id=cr1");
                 Assert.AreEqual(HttpStatusCode.Created, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -49,7 +49,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/analysis", "step=inprocess,class=cr");
+                var request = CreateCsvPostRequest("/analysis", "step=inprocess,class=cr");
                 Assert.AreEqual(HttpStatusCode.Created, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -62,7 +62,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateRequest("wrong", "/analysis", null, "text/html");
+                var request = CreateRequest("wrong", "/analysis", null, "text/html",null);
                 Assert.AreEqual(HttpStatusCode.MethodNotAllowed, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -75,7 +75,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateRequest("post", "/analysis", null, "text/wrong");
+                var request = CreateRequest("post", "/analysis", null, "text/wrong",null);
                 Assert.AreEqual(HttpStatusCode.UnsupportedMediaType, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -92,13 +92,13 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/analysis", "id=cr1");
+                var request = CreateCsvPostRequest("/analysis", "id=cr1");
                 Assert.AreEqual(HttpStatusCode.OK, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
 
         [TestMethod]
-        public void ShouldRequestHtmlRendererWhenUsingGetWithHtmlContentType()
+        public void ShouldGetRendererWhenReceivingGetRequest()
         {
             var renderer = _mocks.Stub<IWorkStepRenderer>();
 
@@ -108,7 +108,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateHtmlRequest("get", "/", null);
+                var request = CreateHtmlGetRequest("/");
                 Assert.AreEqual(HttpStatusCode.OK, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -124,7 +124,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("delete", "/scheduled/cr1",null);
+                var request = CreateDeleteRequest("/scheduled/cr1");
                 Assert.AreEqual(HttpStatusCode.OK, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
             
@@ -140,7 +140,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("delete", "/scheduled/cr1", null);
+                var request = CreateDeleteRequest("/scheduled/cr1");
                 Assert.AreEqual(HttpStatusCode.NotFound, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
 
@@ -155,7 +155,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("delete", "/scheduled/cr1", null);
+                var request = CreateDeleteRequest("/scheduled/cr1");
                 Assert.AreEqual(HttpStatusCode.NotFound, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
 
@@ -170,7 +170,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("delete", "/scheduled", null);
+                var request = CreateDeleteRequest("/scheduled");
                 Assert.AreEqual(HttpStatusCode.NotFound, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
 
@@ -222,7 +222,7 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/", "step=/scheduled,class=cr");
+                var request = CreateCsvPostRequest("/", "step=/scheduled,class=cr");
                 Assert.AreEqual(httpStatusCode, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
@@ -236,28 +236,33 @@ namespace WhiskWork.Web.UnitTest
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvRequest("post", "/", "id=id1");
+                var request = CreateCsvPostRequest("/", "id=id1");
                 Assert.AreEqual(httpStatusCode, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }
 
-
-        private static WorkflowHttpRequest CreateHtmlRequest(string httpMethod, string url, string httpMessage)
+        private static WorkflowHttpRequest CreateHtmlGetRequest(string url)
         {
-            return CreateRequest(httpMethod, url, httpMessage, "text/html");
+            return CreateRequest("get", url, null, null, "text/html");
+        }
+
+        private static WorkflowHttpRequest CreateDeleteRequest(string url)
+        {
+            return CreateRequest("delete", url, null, null, null);
         }
 
 
-        private static WorkflowHttpRequest CreateCsvRequest(string httpMethod, string url, string httpMessage)
+        private static WorkflowHttpRequest CreateCsvPostRequest(string url, string httpMessage)
         {
-            return CreateRequest(httpMethod, url, httpMessage, "text/csv");
+            return CreateRequest("post", url, httpMessage, "text/csv",null);
         }
 
-        private static WorkflowHttpRequest CreateRequest(string httpMethod, string url, string httpMessage, string contentType)
+        private static WorkflowHttpRequest CreateRequest(string httpMethod, string url, string httpMessage, string contentType, string accept)
         {
             var request =
                 new WorkflowHttpRequest
                     {
+                        Accept = accept,
                         ContentType = contentType,
                         HttpMethod = httpMethod,
                         RawUrl = url,

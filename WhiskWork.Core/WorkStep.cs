@@ -5,10 +5,19 @@ using System.Text.RegularExpressions;
 
 namespace WhiskWork.Core
 {
+    public static class ExpandedWorkStep
+    {
+        public static string GetTransientPath(WorkStep expandedWorkStep, WorkItem workItem)
+        {
+            return WorkStep.CombinePath(expandedWorkStep.Path, workItem.Id);
+        }
+    }
+
     public class WorkStep
     {
-        public const string Separator = "/";
-
+        public const char Separator = '/';
+        private static readonly string _separator = new string(new [] {Separator});
+        
         public WorkStep(string path, string parentPath, int ordinal, WorkStepType workStepType, string workItemClass) : this(path,parentPath,ordinal,workStepType,workItemClass,null, true)
         {
         }
@@ -41,16 +50,16 @@ namespace WhiskWork.Core
         {
             get
             {
-                return new WorkStep(Separator, null, 0, WorkStepType.Normal, null,null,false);
+                return new WorkStep(_separator, null, 0, WorkStepType.Normal, null,null,false);
             }
         }
 
         public static string CombinePath(string path1, string path2)
         {
-            path1 = path1.EndsWith(Separator) ? path1.Remove(path1.Length - 1, 1) : path1;
-            path2 = path2.StartsWith(Separator) ? path2.Remove(0, 1) : path2;
+            path1 = path1.EndsWith(_separator) ? path1.Remove(path1.Length - 1, 1) : path1;
+            path2 = path2.StartsWith(_separator) ? path2.Remove(0, 1) : path2;
 
-            var result = path1 + Separator + path2;
+            var result = path1 + _separator + path2;
             return result;
         }
 
@@ -112,7 +121,7 @@ namespace WhiskWork.Core
 
         private static void ThrowIfParentPathIsNotProperSubPathOfPath(string path, string parentPath)
         {
-            var separator = parentPath == Root.Path ? string.Empty : Separator;
+            var separator = parentPath == Root.Path ? string.Empty : _separator;
 
             var regex = new Regex(parentPath + separator + @"[a-z,A-Z,0-9,\-]+$");
             if (!regex.IsMatch(path))
