@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web;
 
 namespace WhiskWork.Web
 {
@@ -18,7 +19,7 @@ namespace WhiskWork.Web
                 {
                     throw new ArgumentException("Illegal format");
                 }
-                values.Add(pair[0].ToLowerInvariant(), pair[1]);
+                values.Add(HttpUtility.HtmlDecode(pair[0]).ToLowerInvariant(), HttpUtility.HtmlDecode(pair[1]));
             }
 
             return values;

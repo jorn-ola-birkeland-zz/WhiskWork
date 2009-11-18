@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Specialized;
+using WhiskWork.Test.Common;
+
 namespace WhiskWork.Core.UnitTest
 {
     [TestClass]

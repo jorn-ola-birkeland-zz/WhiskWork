@@ -14,16 +14,10 @@ namespace WhiskWork.CommondLineWebServer
         private readonly string _rootFileDirectory;
         private readonly WorkflowHttpHandler _workflowHandler;
 
-        public WebRouter(string webDirectory, string logFilePath)
+        public WebRouter(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository, string webDirectory, string logFilePath)
         {
             _rootFileDirectory = webDirectory;
 
-
-            var memoryWorkStepRepository = new MemoryWorkflowRepository();
-
-            var workStepRepository = memoryWorkStepRepository;
-
-            IWorkItemRepository workItemRepository = new MemoryWorkItemRepository();
 
             IWorkflow workflow = new Workflow(workStepRepository, workItemRepository);
             if (!string.IsNullOrEmpty(logFilePath))

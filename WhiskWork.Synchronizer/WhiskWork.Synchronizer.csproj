@@ -61,6 +61,10 @@
       <Project>{330250E7-CD02-46E8-9520-29FDABC65919}</Project>
       <Name>WhiskWork.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">
+      <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
+      <Name>WhiskWork.Generic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
       <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>
       <Name>WhiskWork.Web</Name>

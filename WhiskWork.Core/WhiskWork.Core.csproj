@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="WorkItemCreator.cs" />
     <Compile Include="WorkItemMover.cs" />
+    <Compile Include="WorkItemProperties.cs" />
     <Compile Include="WorkItemRemover.cs" />
     <Compile Include="WorkItemRepositoryExtension.cs" />
     <Compile Include="WorkStepRepositoryExtensions.cs" />
@@ -66,7 +67,7 @@
     <Compile Include="Synchronization\DataSynchronizer.cs" />
     <Compile Include="Synchronization\StatusSynchronizer.cs" />
     <Compile Include="Synchronization\SynchronizationEntry.cs" />
-    <Compile Include="Synchronization\StatusSynchronizationMap.cs" />
+    <Compile Include="Synchronization\SynchronizationMap.cs" />
     <Compile Include="WorkItem.cs" />
     <Compile Include="WorkItemClass.cs" />
     <Compile Include="WorkItemStatus.cs" />

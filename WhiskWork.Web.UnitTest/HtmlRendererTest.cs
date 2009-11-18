@@ -4,6 +4,7 @@ using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
 using System.IO;
+using WhiskWork.Test.Common;
 using WhiskWork.Web.UnitTest.Properties;
 
 namespace WhiskWork.Web.UnitTest
@@ -30,7 +31,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]"));
         }
@@ -40,7 +41,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("Analysis", doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]/h1").InnerText.Trim());
         }
@@ -53,7 +54,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr", "Development");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("analysis",doc.SelectSingleNode("/html/body/ol/li[position()=1]/@id").Value);
             Assert.AreEqual("development", doc.SelectSingleNode("/html/body/ol/li[position()=2]/@id").Value);
@@ -69,7 +70,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Normal, "cr", "In process");
             _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.Normal, "cr", "Dev. done");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li[@id=\"development.inprocess\"]"));
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li[@id=\"development.done\"]"));
@@ -82,7 +83,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Normal, "cr", "In process");
             _workflowRepository.Add("/development/done", "/development", 2, WorkStepType.Normal, "cr", "Dev. done");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("workstep step-cr inprocess", doc.SelectSingleNode("//li[@id=\"development.inprocess\"]/@class").Value);
         }
@@ -93,7 +94,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]/ol/li[@id=\"cr1\"]"));
         }
@@ -104,7 +105,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection {{"Name","CR1"}}));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("Name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt[@class='name']").InnerText);
             Assert.AreEqual("CR1", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
@@ -116,7 +117,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" },{"Developer","A"} }));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("Name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt[@class='name']").InnerText);
             Assert.AreEqual("CR1", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
@@ -131,7 +132,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "value" } }));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("name", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dt/@class").InnerText);
         }
@@ -143,7 +144,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "name", "&<> " } }));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("&<> ", doc.SelectSingleNode("//li[@id=\"cr1\"]/dl/dd[@class='name']").InnerText);
         }
@@ -153,7 +154,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "<Analysis & Test>");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("<Analysis & Test>", doc.SelectSingleNode("//h1").InnerText.Trim());
         }
@@ -166,7 +167,7 @@ namespace WhiskWork.Web.UnitTest
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("cr1", doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]/ol/li[position()=1]/@id").Value);
             Assert.AreEqual("cr2", doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]/ol/li[position()=2]/@id").Value);
@@ -182,10 +183,10 @@ namespace WhiskWork.Web.UnitTest
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr3","/analysis"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr3", "/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development"));
+            _wp.UpdateWorkItem(WorkItem.New("cr3", "/done"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("cr1", doc.SelectSingleNode("/html/body/ol/li[@id=\"analysis\"]/ol/li/@id").Value);
             Assert.AreEqual("cr2", doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li/@id").Value);
@@ -199,7 +200,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr");
             _workflowRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("feedback.review", doc.SelectSingleNode("/html/body/ol/li[@id=\"feedback\"]/ul/li[position()=1]/@id").Value);
             Assert.AreEqual("feedback.test", doc.SelectSingleNode("/html/body/ol/li[@id=\"feedback\"]/ul/li[position()=2]/@id").Value);
@@ -211,7 +212,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNull(doc.SelectSingleNode("//li[@id=\"development\"]/ol"));
             Assert.IsNull(doc.SelectSingleNode("//li[@id=\"development\"]/ul"));
@@ -222,7 +223,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNull(doc.SelectSingleNode("//li[@id=\"development\"]/h1"));
         }
@@ -234,7 +235,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             var classAttribute = doc.SelectSingleNode("//li[@id=\"development\"]/ol/li[@id=\"cr1\"]/@class");
             Assert.IsNotNull(classAttribute);
@@ -247,7 +248,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr");
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
 
-            var doc = GetFullDocument(_workflowRepository.GetWorkStep("/scheduled"));
+            var doc = GetDocument(_workflowRepository.GetWorkStep("/scheduled"));
 
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"cr1\"]"));
         }
@@ -259,7 +260,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/feedback", "/", 1, WorkStepType.Parallel, "cr");
             _workflowRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("workstep step-cr-review review", doc.SelectSingleNode("/html/body/ol/li[@id=\"feedback\"]/ul/li[position()=1]/@class").Value);
         }
@@ -273,9 +274,9 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("workitem cr cr-test", doc.SelectSingleNode("//li[@id=\"development\"]/ol/li[@id=\"cr1-test\"]/@class").Value);
             Assert.AreEqual("workitem cr cr-review", doc.SelectSingleNode("//li[@id=\"feedback.review\"]/ol/li[@id=\"cr1-review\"]/@class").Value);
@@ -290,9 +291,9 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNull(doc.SelectSingleNode("//li[@id=\"feedback\"]/ol/li[@id=\"cr1\"]"));
         }
@@ -305,7 +306,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("/html/body/ol/li[@id=\"development\"]/ol/li"));
             Assert.AreEqual("inprocess",doc.SelectSingleNode("//li[@id=\"development\"]/ol/li/@class").Value);
@@ -318,7 +319,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("expand", doc.SelectSingleNode("//li[@id='development']/ol/li/ol/li/@class").Value);
         }
@@ -331,7 +332,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("workstep step-cr", doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=1]/@class").Value);
         }
@@ -344,7 +345,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
             _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=2]"));
             Assert.AreEqual("development.inprocess.tasks", doc.SelectSingleNode("//li[@class='expand']/ol/li[position()=2]/@id").Value);
@@ -360,7 +361,7 @@ namespace WhiskWork.Web.UnitTest
             _workflowRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
             _workflowRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.AreEqual("development.inprocess.tasks.new", doc.SelectSingleNode("//li[@class='expand']/ol/li[@id='development.inprocess.tasks']/ol/li/@id").Value);
         }
@@ -376,7 +377,7 @@ namespace WhiskWork.Web.UnitTest
             _wp.Move("/development", "cr1");
 
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             //Assert.AreEqual(string.Empty, doc.InnerXml);
 
@@ -397,7 +398,7 @@ namespace WhiskWork.Web.UnitTest
             _wp.Create("/analysis", "cr1");
             _wp.Move("/development", "cr1");
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNull(doc.SelectSingleNode("//li[@class='transient']/@id"));
             Assert.AreEqual("development.inprocess.cr1", doc.SelectSingleNode("//li[@class='transient']/ol/li/@id").Value);
@@ -416,7 +417,7 @@ namespace WhiskWork.Web.UnitTest
             _wp.Move("/development", "cr1");
 
 
-            var doc = GetFullDocument();
+            var doc = GetDocument();
 
             Assert.IsNotNull(doc.SelectSingleNode("//li[@class='transient']/ol/li[@class='tasks']/h1"));
         }
@@ -463,16 +464,16 @@ namespace WhiskWork.Web.UnitTest
             var expected = new XmlDocument();
             expected.LoadXml(expectedXml);
 
-            var actual = GetFullDocument();
+            var actual = GetDocument();
             Assert.AreEqual(expected.InnerXml, actual.InnerXml);
         }
 
-        private XmlDocument GetFullDocument()
+        private XmlDocument GetDocument()
         {
-            return GetFullDocument(WorkStep.Root);        
+            return GetDocument(WorkStep.Root);        
         }   
 
-        private XmlDocument GetFullDocument(WorkStep workStep)
+        private XmlDocument GetDocument(WorkStep workStep)
         {
             var htmlRenderer = new HtmlRenderer(_workflowRepository, _workItemRepository);
 

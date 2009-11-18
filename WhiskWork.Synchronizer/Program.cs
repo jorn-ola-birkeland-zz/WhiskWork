@@ -25,41 +25,59 @@ namespace WhiskWork.Synchronizer
             const string beginStep = "/scheduled";
 
 
-            var eManagerAgent = new CachingSynchronizationAgent(eManagerSynchronizationAgent);
+            //var eManagerAgent = new CachingSynchronizationAgent(eManagerSynchronizationAgent);
+            var eManagerAgent = eManagerSynchronizationAgent;
 
             var whiskWorkAgent = new WhiskWorkSynchronizationAgent(host, rootPath, beginStep);
 
-            var map = new StatusSynchronizationMap(eManagerAgent, whiskWorkAgent);
-            map.AddReciprocalEntry("0a - Scheduled for development", "/scheduled");
+            var statusMap = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
+            statusMap.AddReciprocalEntry("0a - Scheduled for development", "/scheduled");
             
-            map.AddReciprocalEntry("2 - Development", "/analysis/inprocess");
-            map.AddReverseEntry("/anlysis/done", "2 - Development");
-            map.AddReverseEntry("/development/inprocess", "2 - Development");
-            map.AddReciprocalEntry("3 - Ready for test", "/development/done");
-            map.AddReverseEntry("/feedback/review", "3 - Ready for test");
-            map.AddReverseEntry("/feedback/test", "3 - Ready for test");
+            statusMap.AddReciprocalEntry("2 - Development", "/analysis/inprocess");
+            statusMap.AddReverseEntry("/anlysis/done", "2 - Development");
+            statusMap.AddReverseEntry("/development/inprocess", "2 - Development");
+            statusMap.AddReciprocalEntry("3 - Ready for test", "/development/done");
+            statusMap.AddReverseEntry("/feedback/review", "3 - Ready for test");
+            statusMap.AddReverseEntry("/feedback/test", "3 - Ready for test");
 
-            map.AddReciprocalEntry("4a ACCEPTED - In Dev", "/done");
-            map.AddForwardEntry("4a FAILED - In Dev", "/development/inprocess");
-            map.AddForwardEntry("4b ACCEPTED - In Test", "/done");
-            map.AddForwardEntry("4b FAILED - In Test", "/done");
-            map.AddForwardEntry("4c ACCEPTED - In Stage", "/done");
-            map.AddForwardEntry("4c FAILED - In Stage", "/done");
-            map.AddForwardEntry("5 - Approved (ready for deploy)", "/done");
-            map.AddForwardEntry("7 - Deployed to prod", "/done");
+            statusMap.AddReciprocalEntry("4a ACCEPTED - In Dev", "/done");
+            statusMap.AddForwardEntry("4a FAILED - In Dev", "/development/inprocess");
+            statusMap.AddForwardEntry("4b ACCEPTED - In Test", "/done");
+            statusMap.AddForwardEntry("4b FAILED - In Test", "/done");
+            statusMap.AddForwardEntry("4c ACCEPTED - In Stage", "/done");
+            statusMap.AddForwardEntry("4c FAILED - In Stage", "/done");
+            statusMap.AddForwardEntry("5 - Approved (ready for deploy)", "/done");
+            statusMap.AddForwardEntry("7 - Deployed to prod", "/done");
+            var creationSynchronizer = new CreationSynchronizer(statusMap, eManagerAgent, whiskWorkAgent);
+            var statusSynchronizer = new StatusSynchronizer(statusMap, whiskWorkAgent, eManagerAgent);
 
-            var creationSynchronizer = new CreationSynchronizer(map, eManagerAgent, whiskWorkAgent);
-            var statusSynchronizer = new StatusSynchronizer(map, whiskWorkAgent, eManagerAgent);
-            var dataSynchronizer = new DataSynchronizer(eManagerAgent, whiskWorkAgent);
+            var propertyMap = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
+            propertyMap.AddReciprocalEntry("unid","unid");
+            propertyMap.AddReciprocalEntry("title","title");
+            propertyMap.AddReciprocalEntry("team","team");
+            propertyMap.AddReciprocalEntry("release","release");
+            propertyMap.AddReciprocalEntry("project","project");
+            propertyMap.AddReciprocalEntry("leanstatus","leanstatus");
+            propertyMap.AddReciprocalEntry("priority","priority");
+            var propertySynchronizer = new DataSynchronizer(propertyMap, eManagerAgent, whiskWorkAgent);
+            propertySynchronizer.SynchronizeOrdinal = true;
+
+            var responsibleMap = new SynchronizationMap(whiskWorkAgent,eManagerAgent);
+            responsibleMap.AddReciprocalEntry("unid", "unid");
+            responsibleMap.AddReciprocalEntry("responsible", "Person");
+            var responsibleSynchronizer = new DataSynchronizer(responsibleMap, whiskWorkAgent, eManagerAgent);
 
             Console.WriteLine("Synchronizing existence (eManager->whiteboard)");
             creationSynchronizer.Synchronize();
 
             Console.WriteLine("Synchronizing status whiteboard->eManager");
             statusSynchronizer.Synchronize();
-            
-            Console.WriteLine("Synchronizing data eManager->whiteboard");
-            dataSynchronizer.Synchronize();
+
+            Console.WriteLine("Synchronizing properties eManager->whiteboard");
+            propertySynchronizer.Synchronize();
+
+            Console.WriteLine("Synchronizing responsible whiteboard->eManager");
+            responsibleSynchronizer.Synchronize();
 
         }
 

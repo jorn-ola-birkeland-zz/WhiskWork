@@ -44,7 +44,7 @@ namespace WhiskWork.Core
                 throw new InvalidOperationException("Cannot create item directly under expand step");
             }
 
-            if (!newWorkItem.HasOrdinal)
+            if (!newWorkItem.Ordinal.HasValue)
             {
                 newWorkItem = newWorkItem.UpdateOrdinal(WorkItemRepository.GetNextOrdinal(newWorkItem));
             }

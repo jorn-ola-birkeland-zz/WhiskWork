@@ -1,6 +1,7 @@
 ﻿using System;
 using Abb.One.MicroWebServer;
 using System.IO;
+using WhiskWork.Core;
 
 namespace WhiskWork.CommondLineWebServer
 {
@@ -39,7 +40,10 @@ namespace WhiskWork.CommondLineWebServer
                 logFilePath = args[2];
             }
 
-            var router = new WebRouter(webRootDirectory, logFilePath);
+            var workStepRepository = new MemoryWorkflowRepository();
+            var workItemRepository = new MemoryWorkItemRepository();
+
+            var router = new WebRouter(workStepRepository, workItemRepository, webRootDirectory, logFilePath);
             var server = new WebServer(router.ProcessRequest, port);
 
             Console.WriteLine("Started port:{0} directory:'{1}' logfile:'{2}'",port,webRootDirectory,logFilePath);

@@ -18,6 +18,9 @@ namespace WhiskWork.Synchronizer
         private readonly string _login;
         private readonly string _password;
         private readonly string _dominohost;
+        private DominoAuthenticatingHtmlSource _dominoSource;
+
+        private const int _undefinedOrdinal = 10000;
 
         public EManagerSynchronizationAgent(string dominohost, string login, string password)
         {
@@ -57,7 +60,7 @@ namespace WhiskWork.Synchronizer
                 var project = (string) row[5];
                 var unid = (string) row[6];
                 var status = (string)row[7];
-                int? ordinal = ToNullableInt((string)row[8]);
+                var ordinal = GetOrdinal((string)row[8]);
 
                 if ((Team!=null && team != Team) || (Release!=null && release != Release))
                 {
@@ -74,7 +77,7 @@ namespace WhiskWork.Synchronizer
                             {"release", release},
                             {"project", project},
                             {"leanstatus",leanStatus},
-                            {"priority",ordinal.HasValue ? ordinal.Value.ToString() : string.Empty}
+                            {"priority",ordinal==_undefinedOrdinal ? "undefined" : ordinal.ToString()}
                         };
 
 
@@ -85,17 +88,17 @@ namespace WhiskWork.Synchronizer
             return entries;
         }
 
-
-
         public void UpdateStatus(SynchronizationEntry entry)
         {
             var dominoSource = Login();
 
             var unid = entry.Properties["unid"];
 
-            var updateStatusPathPattern = ConfigurationManager.AppSettings["updateStatusPathPattern"];
+            var updatePathPattern = ConfigurationManager.AppSettings["updatePathPattern"];
 
-            var statusUpdatePath = string.Format(updateStatusPathPattern,unid,HttpUtility.UrlEncode(entry.Status));
+            var statusUpdatePath = string.Format(updatePathPattern,unid,"Status",HttpUtility.UrlEncode(entry.Status));
+
+            Console.WriteLine("Status: "+statusUpdatePath);
 
             dominoSource.Open(statusUpdatePath);
         }
@@ -112,31 +115,53 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateData(SynchronizationEntry entry)
         {
-            throw new NotImplementedException();
+            var dominoSource = Login();
+
+            var unid = entry.Properties["unid"];
+
+            var updatePathPattern = ConfigurationManager.AppSettings["updatePathPattern"];
+
+            foreach (var keyValue in entry.Properties)
+            {
+                if(keyValue.Key=="unid")
+                {
+                    continue;
+                }
+
+                var dataUpdatePath = string.Format(updatePathPattern, unid, HttpUtility.UrlEncode(keyValue.Key), HttpUtility.UrlEncode(keyValue.Value));
+
+                Console.WriteLine("Data: "+dataUpdatePath);
+
+                dominoSource.Open(dataUpdatePath);
+            }
         }
 
         #endregion
 
         private DominoAuthenticatingHtmlSource Login()
         {
+            if(_dominoSource!=null)
+            {
+                return _dominoSource;
+            }
             var loginUrl = ConfigurationManager.AppSettings["loginUrl"];
 
-            var dominoSource = new DominoAuthenticatingHtmlSource(_dominohost, loginUrl);
-            dominoSource.Login(_login, _password);
-            return dominoSource;
+            _dominoSource = new DominoAuthenticatingHtmlSource(_dominohost, loginUrl);
+            _dominoSource.Login(_login, _password);
+            return _dominoSource;
         }
 
-        private static int? ToNullableInt(string rowItem)
+        private static int GetOrdinal(string rowItem)
         {
             if (string.IsNullOrEmpty(rowItem))
             {
-                return null;
+                return _undefinedOrdinal;
             }
 
             decimal value;
             if(!decimal.TryParse(rowItem, NumberStyles.Number, CultureInfo.CreateSpecificCulture("en"), out value))
             {
-                return null;
+                return _undefinedOrdinal;
             }
 
             return Convert.ToInt32(Math.Round(value));

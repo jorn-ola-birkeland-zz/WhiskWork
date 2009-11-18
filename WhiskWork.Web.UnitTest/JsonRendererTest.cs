@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Core;
+using WhiskWork.Test.Common;
 using WhiskWork.Web.UnitTest.Properties;
 using System.Text;
 
@@ -139,6 +140,18 @@ namespace WhiskWork.Web.UnitTest
             const string expected = "[{workstep:\"analysis\",workitemList:[{id:\"cr2\"},{id:\"cr1\"}]}]";
             Assert.AreEqual(expected, json);
 
+        }
+
+        [TestMethod]
+        public void ShouldEscapeQuotesInProperties()
+        {
+            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "prop", "va\"l\"ue" } }));
+
+            var json = GetJson(WorkStep.Root);
+
+            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",prop:\"va\\\"l\\\"ue\"}]}]", json);
+   
         }
 
         private string GetJson(WorkStep workStep)

@@ -67,7 +67,6 @@ namespace WhiskWork.Core
 
 
             WorkItemRepository.DeleteWorkItem(workItem);
-            WorkItemRepository.RenumOrdinals(workItem.Path);
             CleanUpIfInTransientStep(workItem);
         }
 

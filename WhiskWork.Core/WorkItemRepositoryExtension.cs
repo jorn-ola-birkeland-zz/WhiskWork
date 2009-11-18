@@ -4,15 +4,15 @@ namespace WhiskWork.Core
 {
     public static class WorkItemRepositoryExtension
     {
-        public static void RenumOrdinals(this IWorkItemRepository workItemRepository, string path)
-        {
-            var ordinal = 1;
-            foreach (var workItem in workItemRepository.GetWorkItems(path).OrderBy(wi => wi.Ordinal))
-            {
-                workItemRepository.UpdateWorkItem(workItem.UpdateOrdinal(ordinal++));
-            }
+        //public static void RenumOrdinals(this IWorkItemRepository workItemRepository, string path)
+        //{
+        //    var ordinal = 1;
+        //    foreach (var workItem in workItemRepository.GetWorkItems(path).OrderBy(wi => wi.Ordinal))
+        //    {
+        //        workItemRepository.UpdateWorkItem(workItem.UpdateOrdinal(ordinal++));
+        //    }
 
-        }
+        //}
 
         public static bool TryLocateWorkItem(this IWorkItemRepository workItemRepository, string id, out WorkItem item)
         {
@@ -67,7 +67,7 @@ namespace WhiskWork.Core
         {
             var workItemsInStep = workItemRepository.GetWorkItems(workItem.Path);
 
-            return workItemsInStep.Count() > 0 ? workItemsInStep.Max(wi => wi.Ordinal) + 1 : 1;
+            return workItemsInStep.Count() > 0 ? workItemsInStep.Max(wi => wi.Ordinal.HasValue ? wi.Ordinal.Value : 0) + 1 : 1;
         }
 
 

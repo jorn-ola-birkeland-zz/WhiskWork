@@ -26,7 +26,8 @@ namespace WhiskWork.Synchronizer
         {
             var request = (HttpWebRequest)WebRequest.Create(_site + _rootPath);
 
-            request.ContentType = "text/html";
+            //request.ContentType = "text/xml";
+            request.Accept = "text/xml";
             request.Method = "GET";
 
             var doc = new XmlDocument();
@@ -34,17 +35,18 @@ namespace WhiskWork.Synchronizer
             {
                 var response = (HttpWebResponse)request.GetResponse();
 
-                Console.WriteLine(response.StatusCode);
-
                 doc.Load(response.GetResponseStream());
 
+                //doc.Save(@"c:\temp\whiskwork.xml");
+
+                //Console.WriteLine(doc.InnerXml);
             }
             catch (WebException e)
             {
                 Console.WriteLine(e.Message);
             }
 
-            var worksteps = doc.SelectNodes("//li[contains(@class,'step-cr')]");
+            var worksteps = doc.SelectNodes("//WorkStep[@workItemClass='cr']");
 
             if (worksteps == null)
             {
@@ -55,7 +57,7 @@ namespace WhiskWork.Synchronizer
             {
                 var workStepId = workstep.SelectSingleNode("@id").Value;
                 var workStepPath = "/" + workStepId.Replace('.', '/');
-                var workItems = workstep.SelectNodes("ol/li[contains(@class,'cr')]");
+                var workItems = workstep.SelectNodes("WorkItems/WorkItem");
 
                 if (workItems == null)
                 {
@@ -64,28 +66,41 @@ namespace WhiskWork.Synchronizer
 
                 foreach (XmlNode workItem in workItems)
                 {
-                    var properties = CreateProperties(workItem);
                     var workItemId = workItem.SelectSingleNode("@id").Value;
-                    yield return new SynchronizationEntry(workItemId,workStepPath,properties);
+                    var workItemClasses = workItem.SelectSingleNode("@classes").Value;
+
+                    //Exclude children of parallelled work-items. Should add property and move out
+                    if(workItemClasses.Contains("cr-review") || workItemClasses.Contains("cr-test"))
+                    {
+                        continue;
+                    }
+
+                    var properties = CreateProperties(workItem);
+                    var synchronizationEntry = new SynchronizationEntry(workItemId,workStepPath,properties);
+
+                    var ordinal = XmlConvert.ToInt32(workItem.SelectSingleNode("@ordinal").Value);
+                    synchronizationEntry.Ordinal = ordinal;
+
+                    yield return synchronizationEntry;
                 }
             }
         }
 
         private static Dictionary<string,string> CreateProperties(XmlNode workItem)
         {
-            var definitionNodes = workItem.SelectNodes("dl/dt");
+            var propertyNodes = workItem.SelectNodes("Properties/Property");
 
             var properties = new Dictionary<string, string>();
 
-            if(definitionNodes==null)
+            if(propertyNodes==null)
             {
                 return properties;
             }
 
-            foreach (XmlNode definitionNode in definitionNodes)
+            foreach (XmlNode propertyNode in propertyNodes)
             {
-                var key = definitionNode.SelectSingleNode("@class").Value;
-                var value = workItem.SelectSingleNode(string.Format("dl/dd[@class='{0}']",key)).InnerText;
+                var key = propertyNode.SelectSingleNode("@name").Value;
+                var value = propertyNode.InnerText;
 
                 properties.Add(key,value);
             }

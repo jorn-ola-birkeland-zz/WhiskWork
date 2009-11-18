@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Generic;
-using System.Linq;
+using WhiskWork.Test.Common;
 
 namespace WhiskWork.Core.UnitTest
 {
@@ -41,17 +39,14 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotCreateWorkItemInExpandStep()
         {
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () =>
-                    {
-                        _wp.CreateWorkItem(WorkItem.New("cr1","/development/inprocess"));
-                    });
+                () => _wp.Create("/development/inprocess","cr1"));
         }
 
         [TestMethod]
         public void ShouldMoveToExpandStep()
         {
-            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.Create("/analysis","cr1");
+            _wp.Move("/development","cr1");
 
             Assert.AreEqual("/development/inprocess", _workItemRepository.GetWorkItem("cr1").Path);
         }
@@ -60,7 +55,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldCreateTransientWorkStepsWhenWorkItemEnterExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             Assert.AreEqual(WorkStepType.Transient, _workflowRepository.GetWorkStep("/development/inprocess/cr1").Type);
             Assert.AreEqual(WorkStepType.Normal,
@@ -77,7 +72,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldCreateTitleOnTransientChildSteps()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             Assert.AreEqual("Tasks", _workflowRepository.GetWorkStep("/development/inprocess/cr1/tasks").Title);
         }
@@ -87,9 +82,9 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotIncludeTransientStepsOfEarlierWorkItemsWhenCreatingTransientSteps()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development"));
 
             AssertUtils.AssertThrows<ArgumentException>(
                 () => _workflowRepository.GetWorkStep("/development/inprocess/cr2/cr1")
@@ -101,7 +96,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldCreateChildItemOfExpandedWorkItemInLeafStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.AreEqual("/development/inprocess/cr1/tasks/new", _workItemRepository.GetWorkItem("cr1-1").Path);
@@ -111,7 +106,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldCreateChildItemOfExpandedWorkItemAsProperChildItem()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.AreEqual("cr1", _workItemRepository.GetWorkItem("cr1-1").ParentId);
@@ -121,7 +116,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldBeAbleToDeleteExpandedWorkItemWithoutChildren()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
 
             Assert.IsTrue(_workItemRepository.ExistsWorkItem("cr1"));
             _wp.DeleteWorkItem("cr1");
@@ -132,7 +127,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldLockExpandedWorkItemWhenChildItemIsCreated()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
             Assert.AreEqual(WorkItemStatus.Normal, _workItemRepository.GetWorkItem("cr1").Status);
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
@@ -143,7 +138,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldBeAbleToDeleteChildOfExpandedWorkItem()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.IsTrue(_workItemRepository.ExistsWorkItem("cr1-1"));
             _wp.DeleteWorkItem("cr1-1");
@@ -154,10 +149,10 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldMoveUnlockedExpandedWorkItemFromExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
             Assert.AreEqual("/development/inprocess", _workItemRepository.GetWorkItem("cr1").Path);
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done"));
             Assert.AreEqual("/development/done", _workItemRepository.GetWorkItem("cr1").Path);
         }
 
@@ -165,19 +160,19 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotMoveLockedExpandedWorkItemFromExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done", new NameValueCollection())));
+                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done")));
         }
 
         [TestMethod]
         public void ShouldAlsoDeleteChildrenWhenDeletingExpandedWorkItem()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
 
             Assert.IsTrue(_wp.ExistsWorkItem("cr1"));
@@ -193,7 +188,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldDeleteChildStepsWhenMovingFromExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             Assert.IsTrue(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1"));
             Assert.IsTrue(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1/tasks"));
@@ -201,7 +196,7 @@ namespace WhiskWork.Core.UnitTest
             Assert.IsTrue(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1/tasks/inprocess"));
             Assert.IsTrue(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1/tasks/done"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done"));
             Assert.IsFalse(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1"));
             Assert.IsFalse(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1/tasks"));
             Assert.IsFalse(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1/tasks/new"));
@@ -213,7 +208,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldAlsoDeleteTransientChildStepsWhenDeletingExpandedWorkItem()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.DeleteWorkItem("cr1");
             Assert.IsFalse(_workflowRepository.ExistsWorkStep("/development/inprocess/cr1"));
@@ -227,7 +222,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldSetWorkItemClassOnTransientSteps()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             Assert.AreEqual("cr-cr1", _workflowRepository.GetWorkStep("/development/inprocess/cr1").WorkItemClass);
             Assert.AreEqual("task-cr1",
@@ -245,7 +240,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldGiveChildOfExpandedItemCorrectClasses()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1/tasks/new"));
 
             Assert.IsTrue(_workItemRepository.GetWorkItem("cr1-1").Classes.SetEquals("task", "task-cr1"));
@@ -257,8 +252,8 @@ namespace WhiskWork.Core.UnitTest
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
+            _wp.UpdateWorkItem(WorkItem.New("cr2", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             _wp.CreateWorkItem(WorkItem.New("cr2-1","/development/inprocess/cr2/tasks/new"));
@@ -266,7 +261,7 @@ namespace WhiskWork.Core.UnitTest
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () =>
                     {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr2/tasks/inprocess", new NameValueCollection()));
+                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr2/tasks/inprocess"));
                     });
         }
 
@@ -284,14 +279,14 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotMoveChildOfWorkItemInExapndStepDirectlyToExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () =>
                     {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess", new NameValueCollection()));
+                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess"));
                     });
         }
 
@@ -299,14 +294,14 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotMoveChildOfWorkItemInExpandStepToStepUnderExpandStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () =>
                     {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/tasks/new", new NameValueCollection()));
+                        _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/tasks/new"));
                     });
         }
 
@@ -315,12 +310,12 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldRemoveExpandLockWhenSingleChildItemIsDone()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done"));
             Assert.AreEqual(WorkItemStatus.Normal, _workItemRepository.GetWorkItem("cr1").Status);
         }
 
@@ -328,13 +323,13 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotRemoveExpandLockWhenOneOfTwoChildItemsIsDone()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             _wp.CreateWorkItem(WorkItem.New("cr1-2","/development/inprocess/cr1"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
         }
 
@@ -343,15 +338,15 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldSetExpandLockWhenASingleDoneChildIsMovedToNotEndStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done"));
             Assert.AreEqual(WorkItemStatus.Normal, _workItemRepository.GetWorkItem("cr1").Status);
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/new", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/new"));
             Assert.AreEqual(WorkItemStatus.ExpandLocked, _workItemRepository.GetWorkItem("cr1").Status);
         }
 
@@ -360,12 +355,12 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldDeleteChildItemsWhenWorkItemIsMovedOutOfTransientStep()
         {
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/done"));
 
             Assert.IsFalse(_wp.ExistsWorkItem("cr1-1"));
         }

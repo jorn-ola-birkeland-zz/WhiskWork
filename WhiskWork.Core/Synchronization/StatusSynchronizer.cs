@@ -7,9 +7,9 @@ namespace WhiskWork.Core.Synchronization
     {
         private readonly ISynchronizationAgent _master;
         private readonly ISynchronizationAgent _slave;
-        private readonly StatusSynchronizationMap _map;
+        private readonly SynchronizationMap _map;
 
-        public StatusSynchronizer(StatusSynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
+        public StatusSynchronizer(SynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
         {
             _map = map;
             _master = master;
@@ -26,18 +26,27 @@ namespace WhiskWork.Core.Synchronization
                 if(slaveEntries.ContainsKey(masterId))
                 {
                     SynchronizationEntry masterMappedSlaveEntry;
-                    if(!TryGetMasterEntry(slaveEntries[masterId],out masterMappedSlaveEntry))
+                    if (!TryGetMasterEntry(slaveEntries[masterId], out masterMappedSlaveEntry))
                     {
                         continue;
                     }
 
-                    if (masterMappedSlaveEntry.Status != masterEntries[masterId].Status)
+                    if (masterMappedSlaveEntry.Status == masterEntries[masterId].Status)
                     {
-                        SynchronizationEntry slaveEntry;
-                        if (TryGetSlaveEntry(masterEntries[masterId], out slaveEntry))
-                        {
-                            _slave.UpdateStatus(slaveEntry);
-                        }
+                        continue;
+                    }
+
+                    SynchronizationEntry slaveMappedMasterEntry;
+                    if(!TryGetSlaveEntry(masterEntries[masterId],out slaveMappedMasterEntry))
+                    {
+                        continue;
+                    }
+
+                    if (slaveMappedMasterEntry.Status != slaveEntries[masterId].Status)
+                    {
+                        Console.WriteLine("Status differ: {0}-{1}", slaveMappedMasterEntry, slaveEntries[masterId]);
+
+                        _slave.UpdateStatus(slaveMappedMasterEntry);
                     }
                 }
             }
@@ -54,7 +63,7 @@ namespace WhiskWork.Core.Synchronization
             
             var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
 
-            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties);
+            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties) { Ordinal = masterEntry.Ordinal};
             return true;
         }
 
@@ -68,7 +77,7 @@ namespace WhiskWork.Core.Synchronization
             
             var masterStatus = _map.GetMappedValue(_slave, slaveEntry.Status);
 
-            masterEntry = new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties);
+            masterEntry = new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties) { Ordinal = slaveEntry.Ordinal} ;
             return true;
         }
         

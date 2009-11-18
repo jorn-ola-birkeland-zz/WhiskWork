@@ -7,9 +7,9 @@ namespace WhiskWork.Core.Synchronization
     {
         private readonly ISynchronizationAgent _master;
         private readonly ISynchronizationAgent _slave;
-        private readonly StatusSynchronizationMap _map;
+        private readonly SynchronizationMap _map;
 
-        public CreationSynchronizer(StatusSynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
+        public CreationSynchronizer(SynchronizationMap map, ISynchronizationAgent master, ISynchronizationAgent slave)
         {
             _map = map;
             _master = master;

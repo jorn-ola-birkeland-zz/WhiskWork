@@ -146,8 +146,13 @@ namespace WhiskWork.Web
         {
             foreach (var keyValue in item.Properties)
             {
-                writer.Write(",{0}:\"{1}\"",keyValue.Key, keyValue.Value);
+                writer.Write(",{0}:\"{1}\"",keyValue.Key, Encode(keyValue.Value));
             }
+        }
+
+        private static string Encode(string value)
+        {
+            return value.Replace("\"", "\\\"");
         }
 
         private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)

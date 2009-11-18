@@ -147,15 +147,9 @@ namespace WhiskWork.Core
 
         private WorkItemTransition DoMove(WorkItemTransition transition)
         {
-            var fromStepPath = transition.WorkItem.Path;
-
             var movedWorkItem = transition.WorkItem.MoveTo(transition.WorkStep);
 
-            var ordinal = WorkItemRepository.GetNextOrdinal(movedWorkItem);
-            movedWorkItem = movedWorkItem.UpdateOrdinal(ordinal);
-
             WorkItemRepository.UpdateWorkItem(movedWorkItem);
-            WorkItemRepository.RenumOrdinals(fromStepPath);
 
             return new WorkItemTransition(movedWorkItem, transition.WorkStep);
         }
@@ -185,7 +179,7 @@ namespace WhiskWork.Core
             return splitWorkItems;
         }
 
-        private WorkStep CreateTransientWorkSteps(WorkItem item, WorkStep expandStep)
+        private void CreateTransientWorkSteps(WorkItem item, WorkStep expandStep)
         {
             Debug.Assert(expandStep.Type == WorkStepType.Expand);
 
@@ -196,8 +190,6 @@ namespace WhiskWork.Core
             var workItemClass = WorkItemClass.Combine(expandStep.WorkItemClass, item.Id);
             var transientWorkStep = new WorkStep(transientRootPath, expandStep.Path, expandStep.Ordinal, WorkStepType.Transient, workItemClass, expandStep.Title);
             WorkStepRepository.CreateWorkStep(transientWorkStep);
-
-            return transientWorkStep;
         }
 
         private WorkItem MergeParallelWorkItems(WorkItem item)

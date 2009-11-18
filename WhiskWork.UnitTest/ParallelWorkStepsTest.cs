@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Generic;
+using WhiskWork.Test.Common;
 
 namespace WhiskWork.Core.UnitTest
 {
@@ -50,10 +50,7 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateSimpleParallelWorkflow();
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () =>
-                    {
-                        _wp.CreateWorkItem(WorkItem.New("cr1","/feedback"));
-                    });
+                () => _wp.CreateWorkItem(WorkItem.New("cr1","/feedback")));
         }
 
         [TestMethod]
@@ -89,7 +86,7 @@ namespace WhiskWork.Core.UnitTest
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Select(wi => wi.Id == "cr1").Count());
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
@@ -102,7 +99,7 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             Assert.IsTrue(_wp.ExistsWorkItem("cr1"));
             Assert.IsTrue(_wp.ExistsWorkItem("cr1-review"));
@@ -122,7 +119,7 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             Assert.AreEqual(0, _wp.GetWorkItems("/feedback").Where(wi => wi.Id == "cr1").Count());
         }
@@ -133,13 +130,10 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () =>
-                    {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1", "/done", new NameValueCollection()));
-                    });
+                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/done")));
         }
 
 
@@ -149,7 +143,7 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
@@ -161,12 +155,12 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/test", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/test"));
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/test").Where(wi => wi.Id == "cr1-test").Count());
         }
 
@@ -176,7 +170,7 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
@@ -195,7 +189,7 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () =>
@@ -209,13 +203,13 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/done", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/done"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/done"));
             Assert.AreEqual(1, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1-test").Count());
@@ -227,19 +221,19 @@ namespace WhiskWork.Core.UnitTest
             CreateParallelWorkflowWithExpandStep();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
             _wp.CreateWorkItem(WorkItem.New("cr1-1","/development/inprocess/cr1/tasks"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-1", "/development/inprocess/cr1/tasks/done"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/done"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/test", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/feedback/test"));
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/test").Where(wi => wi.Id == "cr1-test").Count());
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/done", new NameValueCollection()));
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/done", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/done"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/done"));
             Assert.AreEqual(1, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1-test").Count());
@@ -251,13 +245,10 @@ namespace WhiskWork.Core.UnitTest
             CreateParallelWorkflowWithExpandStep();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () =>
-                    {
-                        _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback", new NameValueCollection()));
-                    });
+                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback")));
         }
 
         //[TestMethod, Ignore]
@@ -266,10 +257,10 @@ namespace WhiskWork.Core.UnitTest
         //    CreateParallelWorkflowWithExpandStep();
 
         //    _wp.CreateWorkItem("cr1", "/scheduled");
-        //    _wp.UpdateWorkItem("cr1", "/development", new NameValueCollection());
+        //    _wp.UpdateWorkItem("cr1", "/development");
         //    Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1"));
             
-        //    _wp.UpdateWorkItem("cr1", "/feedback/review", new NameValueCollection());
+        //    _wp.UpdateWorkItem("cr1", "/feedback/review");
 
         //    Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1"));
         //    Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test"));
@@ -285,9 +276,9 @@ namespace WhiskWork.Core.UnitTest
             CreateParallelWorkflowWithExpandStep();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess"));
 
             var workItem = _wp.GetWorkItem("cr1-review");
             Assert.AreEqual("/development/inprocess", workItem.Path);
@@ -299,12 +290,12 @@ namespace WhiskWork.Core.UnitTest
             CreateParallelWorkflowWithExpandStep();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess"));
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-review"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/scheduled", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/scheduled"));
             Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1-review"));
         }
 
@@ -314,15 +305,12 @@ namespace WhiskWork.Core.UnitTest
             CreateParallelWorkflowWithExpandStep();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
-            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess", new NameValueCollection()));
+            _wp.UpdateWorkItem(WorkItem.New("cr1-review", "/development/inprocess"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-            () =>
-                {
-                    _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/development/inprocess/cr1-review", new NameValueCollection()));
-                });
+            () => _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/development/inprocess/cr1-review")));
         }
 
         private void CreateSimpleParallelWorkflow()

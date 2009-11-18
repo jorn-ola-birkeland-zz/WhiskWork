@@ -18,6 +18,8 @@ namespace WhiskWork.Web
         {
             switch(contentType)
             {
+                case "text/xml":
+                    return new XmlRenderer(_workStepRepository, _workItemRepository);
                 case "application/json":
                     return new JsonRenderer(_workStepRepository, _workItemRepository);
                 default:
