@@ -9,7 +9,7 @@ namespace WhiskWork.Core
         void CreateWorkItem(WorkItem workItem);
         IEnumerable<WorkItem> GetWorkItems(string path);
         void UpdateWorkItem(WorkItem workItem);
-        IEnumerable<WorkItem> GetChildWorkItems(string id);
+        IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent);
         void DeleteWorkItem(WorkItem workItem);
     }
 }

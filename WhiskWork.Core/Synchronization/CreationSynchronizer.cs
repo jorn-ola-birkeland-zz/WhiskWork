@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace WhiskWork.Core.Synchronization
@@ -53,8 +54,7 @@ namespace WhiskWork.Core.Synchronization
 
             var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
 
-            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties)
-                             {Ordinal = masterEntry.Ordinal};
+            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, new Dictionary<string, string>());
 
             return true;
         }

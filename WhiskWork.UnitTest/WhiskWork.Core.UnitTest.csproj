@@ -52,7 +52,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Synchronization\SynchronizerTest.cs" />
+    <Compile Include="Synchronization\DataSynchronizerTest.cs" />
+    <Compile Include="Synchronization\ExistenceSynchronizerTest.cs" />
+    <Compile Include="Synchronization\StatusSynchronizerTest.cs" />
+    <Compile Include="Synchronization\SynchronizerTestBase.cs" />
     <Compile Include="WorkflowTest.cs" />
     <Compile Include="WorkItemTest.cs" />
     <Compile Include="WorkStepTest.cs" />

@@ -1,0 +1,268 @@
+body {
+	background-color: #0c0703;
+	background-image: url('http://www.bekk.no/bekkno/graphics/page_bkg.jpg');
+	background-repeat: repeat-x;
+	background-position: top left;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 0.69em;
+	color: #261c02;
+}
+
+.board {
+	margin-left: 20px;
+}
+
+.column {
+	width: 250px;
+	border: 1px solid #444;
+	float: left;
+	xmin-height: 1000px;
+	background: rgba(64, 64, 64, 0.1);
+}
+#feedbackColumn, #test, #review {
+	width: 125px;
+}
+#schColumn, #doneColumn, #scheduled-pane, #done-done {
+	width: 143px;
+}
+
+
+
+#scheduled-pane .crlist, #done-done .crlist{
+	height: 750px;
+	min-height: 750px;
+	overflow: auto;
+	width: 143px;
+}
+
+#done {
+	min-height: 740px;
+}
+
+.crlist {
+	float: left;
+	width: 125px;
+	xpadding-bottom: 60px;
+	min-height: 760px;
+}
+
+#review .crlist, #test .crlist {
+	min-height: 360px;
+}
+
+.crlist.done, #development .crlist.done {
+	border-left: 1px dashed #444;
+	width: 124px;
+}
+
+
+#done-done  .cr {
+	height: 80px;
+	overflow: hidden;
+	margin-bottom: -50px;
+}
+
+.cr .tasks, #development .crlist.inprocess .ui-sortable-helper .tasks {
+	display: none;
+}
+#development .crlist.inprocess .tasks {
+	display: block;
+}
+#development .crlist.inprocess .cr {
+	border-bottom: 1px dashed #444;
+	margin-bottom: 5px;
+	padding-bottom: 5px;
+}
+#development .crlist.inprocess .cr.ui-sortable-helper {
+	border: none;
+}
+
+
+
+#devColumn, #development {
+	width: 500px;
+}
+
+#development .crlist {
+	width: 375px;
+}
+
+
+.column h2 {
+	margin: 0px 0px 5px 0px;
+	text-align: center;		
+	background-color: #444;
+	color: #fff;
+	padding:2px 0px 2px 0px;
+}
+.pane {
+	clear: both;
+}
+.pane h3 {
+	margin: 0px 0px 5px 0px;
+	padding-left: 5px;
+	border-bottom: 1px solid #444;
+}
+.pane h3, .tasks h3 {
+	color: #fff;
+}
+
+.crList {
+	min-height: 500px;
+}
+#feedbackColumn .crList {
+	min-height: 250px;
+}
+
+.cr {
+	float: left;
+	clear: both;
+}
+.crInner {
+	border: 1px solid #444;
+	min-height: 60px;
+	width: 100px;
+	background-color: #FFFFCC;
+	float: left;
+	font-size: 90%;
+	overflow: hidden;
+}
+
+.cr, .space {
+	margin-bottom: 3px;
+	margin-top: 3px;
+	float: left;
+	margin-left: 12px;
+}
+.crInner h3 {
+	font-size: 90%;
+	text-align: right;		
+	background-color: #FFFFAA;
+	border-bottom: 1px solid #EEEE00;
+	padding-right: 2px;
+	cursor: move;
+	color: #261c02;
+}
+
+.cr.underreview .crInner {
+	background-color: #AAAAFF;
+}
+.cr.underreview .crInner h3 {
+	background-color: #CACAFF;
+	border-bottom: 1px solid #9999EE;
+}
+.cr.undertest .crInner {
+	background-color: #FFCCFF;
+}
+.cr.undertest .crInner h3 {
+	background-color: #FFAAFF;
+	border-bottom: 1px solid #EE00EE;
+}
+
+.crInner div.title {
+	margin: 3px 3px 3px 3px;
+}
+.crInner div.name {
+	font-size: 90%;
+	margin: 5px 2px 2px 0px;
+	text-align: right;
+}
+.space {
+	border: 1px dashed #aaa;
+	max-width: 100px;
+}
+
+.tasks {
+	float: left;
+	width: 249px;
+	margin: 0px 5px 5px 5px;
+	border: 1px solid #444;
+}
+.tasks h3 {
+	text-align: center;
+	margin-bottom: 0px;
+	font-size: 90%;
+}
+.tasks .innerTaskColumn  {
+	min-height: 44px;	
+	float: left;
+	width: 50px;
+	padding-top: 5px;
+	border-left: 1px solid #444;
+}
+.tasks .innerTaskColumn.inprocess {
+	width: 146px;
+}
+.tasks .innerTaskColumn.new {
+	border: none;
+}
+.task {
+	border: 1px solid #444;
+	min-height: 40px;
+	width: 34px;
+	background-color: #FFFFCC;
+	float: left;
+	font-size: 80%;
+	padding: 2px;
+}
+.task, .tasks .space {
+	margin-left: 5px;
+	margin-bottom: 5px;
+	float: left;
+}
+
+#crBox {
+	border: 1px solid #444;
+	z-index: 1000;
+	top: 0;
+	left: 0;
+	position: absolute;
+	background: #FFFFCC;
+}
+#crBox ul {
+	list-style: none;
+	padding: 5px 5px 5px 5px;
+	margin: 0;
+	max-width: 400px;
+}
+#crBox ul.fields {
+	min-height: 60px;
+}
+#crBox li {
+	margin: 0;
+	padding: 0;
+	clear: both;
+}
+#crBox li label {
+	width: 100px;
+	font-weight: bold;
+	xfloat: left;
+	display: block;
+}
+#crBox h3 {
+	text-align: right;		
+	background-color: #FFFFAA;
+	border-bottom: 2px solid #EEEE00;
+	padding: 0;
+	margin: 0;
+	padding-right: 5px;
+}
+
+#liveEmanager {
+	top: 5px;
+	left: 20px;
+	z-index: 1000;
+	position: absolute;
+	border: 2px solid #444;
+	padding: 10px;
+	background-color: #fff;
+	width: 800px;
+	height: 600px;
+}
+#reload {
+	float: left;
+	width: 54px;
+	border: 1px solid #444;
+	margin: 0px 0px 0px 2px;
+}
+

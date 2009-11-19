@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using DominoInterOp;
 using WhiskWork.Core.Synchronization;
 using System.Web;
@@ -61,6 +62,7 @@ namespace WhiskWork.Synchronizer
                 var unid = (string) row[6];
                 var status = (string)row[7];
                 var ordinal = GetOrdinal((string)row[8]);
+                var person = (string) row[9];
 
                 if ((Team!=null && team != Team) || (Release!=null && release != Release))
                 {
@@ -77,7 +79,8 @@ namespace WhiskWork.Synchronizer
                             {"release", release},
                             {"project", project},
                             {"leanstatus",leanStatus},
-                            {"priority",ordinal==_undefinedOrdinal ? "undefined" : ordinal.ToString()}
+                            {"priority",ordinal==_undefinedOrdinal ? "undefined" : ordinal.ToString()},
+                            {"Person",person}
                         };
 
 
@@ -90,7 +93,6 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateStatus(SynchronizationEntry entry)
         {
-            var dominoSource = Login();
 
             var unid = entry.Properties["unid"];
 
@@ -100,7 +102,8 @@ namespace WhiskWork.Synchronizer
 
             Console.WriteLine("Status: "+statusUpdatePath);
 
-            dominoSource.Open(statusUpdatePath);
+            var dominoSource = Login();
+            dominoSource.Open(statusUpdatePath).Dispose();
         }
 
         public void Create(SynchronizationEntry entry)
@@ -132,7 +135,7 @@ namespace WhiskWork.Synchronizer
 
                 Console.WriteLine("Data: "+dataUpdatePath);
 
-                dominoSource.Open(dataUpdatePath);
+                dominoSource.Open(dataUpdatePath).Dispose();
             }
         }
 

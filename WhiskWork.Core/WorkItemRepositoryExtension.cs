@@ -29,9 +29,9 @@ namespace WhiskWork.Core
 
         public static bool IsChildOfParallelledWorkItem(this IWorkItemRepository workItemRepository, WorkItem workItem)
         {
-            if (workItem.ParentId != null)
+            if (workItem.Parent != null)
             {
-                var parent = workItemRepository.GetWorkItem(workItem.ParentId);
+                var parent = workItemRepository.GetWorkItem(workItem.Parent.Id);
                 if (parent.Status == WorkItemStatus.ParallelLocked)
                 {
                     return true;
@@ -49,7 +49,7 @@ namespace WhiskWork.Core
             }
 
             var isMergeable = true;
-            foreach (var childWorkItem in workItemRepository.GetChildWorkItems(item.ParentId).Where(wi => wi.Id != item.Id))
+            foreach (var childWorkItem in workItemRepository.GetChildWorkItems(item.Parent).Where(wi => wi.Id != item.Id))
             {
                 isMergeable &= childWorkItem.Path == toStep.Path;
             }

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace WhiskWork.Core
 {
-    public class MemoryWorkflowRepository : IWorkStepRepository
+    public class MemoryWorkStepRepository : IWorkStepRepository
     {
         private readonly Dictionary<string, WorkStep> _workSteps = new Dictionary<string, WorkStep>();
 

@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<script src="jquery-1.3.2.min.js"></script>
+	<script src="jquery-ui-1.7.2.custom.min.js"></script>
+	<script src="crfunctions.js"></script>
+	<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+<body>
+<div class="board">
+	<div class="column" id="schColumn">
+		<div id="scheduled-pane" class="pane">
+			<h2>Scheduled</h2>
+			<div id="scheduled" class="crlist inprocess">
+				<h3>&nbsp;</h3>
+
+			</div>
+		</div>
+	</div>
+	<div class="column">
+		<div id="analysis" class="pane">
+			<h2>Analysis</h2>
+			<div id="analysis-inprocess" class="crlist inprocess">
+				<h3>In progress</h3>
+
+			</div>
+			<div id="analysis-done" class="crlist done">
+				<h3>Done</h3>
+
+			</div>
+		</div>
+	</div>
+	<div class="column" id="devColumn">
+		<div id="development" class="pane">
+			<h2>Development</h2>
+			<div id="development-inprocess" class="crlist inprocess">
+				<h3>In progress</h3>
+
+			</div>
+			<div id="development-done" class="crlist done">
+				<h3>Done</h3>
+
+			</div>
+		</div>
+	</div>
+	<div class="column" id="feedbackColumn">
+		<div id="review" class="pane">
+			<h2>Review</h2>
+			<div id="feedback-review" class="crlist inprocess">
+				<h3>&nbsp;</h3>
+
+			</div>
+			<div style="clear: both"></div>
+		</div>
+		<div id="test" class="pane">
+			<h2>Test</h2>
+			<div id="feedback-test" class="crlist inprocess">
+
+			</div>
+		</div>
+	</div>
+	<div class="column" id="doneColumn">
+		<div id="done-done" class="pane">
+			<h2>Done</h2>
+			<div id="done" class="crlist">
+				<h3>&nbsp;</h3>
+				
+			</div>
+		</div>
+	</div>
+
+</div>
+<div id="crBox" style="display: none">
+   <h3 id="box_id"></h3>
+   <ul class="fields">
+	<li><label>Title:</label><span id="box_title"></span></li>
+	<li><label>Release:</label><span id="box_release"></span></li>
+   </ul>
+   <ul>
+	<li>
+		<label>Responsible:</label>
+		<select id="box_responsible">
+			<option value="">-</option>
+			<option>Anders Taucher</option>
+			<option>Andreas Hagli</option>
+			<option>Bj&oslash;rn Egil Bj&oslash;rnson</option>
+			<option>Erlend Oftedal</option>
+			<option>Erlend Opdahl</option>
+			<option>Hege Melg&aring;rd</option>
+			<option>Jarle M&oslash;rch</option>
+			<option>J&oslash;rn Ola Birkeland</option>
+			<option>Karl-Erik R&oslash;nsen</option>
+			<option>Tor B&aring;dshaug</option>
+			<option>Vidar Kongsli</option>
+			<option>Vegard Sund</option>
+		</select>
+		<input type="button" value="Save" onclick="saveResponsible($('#box_responsible').val(), $('#box_id').html())">
+	</li>
+
+   </ul>
+</div>
+<iframe id="liveEmanager" style="display: none">
+
+</iframe>
+
+<div id="standup" style="display:none;">
+	Standup!
+</div>
+
+<input type="button" onclick="reload()" value="Reload" id="reload"/>
+</body>

@@ -33,9 +33,9 @@ namespace WhiskWork.Core
             _workItems[workItem.Id] = workItem;
         }
 
-        public IEnumerable<WorkItem> GetChildWorkItems(string id)
+        public IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent)
         {
-            return _workItems.Values.Where(wi => wi.ParentId == id).ToList();
+            return _workItems.Values.Where(wi => wi.Parent!=null && wi.Parent.Id == parent.Id && wi.Parent.Type == parent.Type).ToList();
         }
 
         public void DeleteWorkItem(WorkItem workItem)

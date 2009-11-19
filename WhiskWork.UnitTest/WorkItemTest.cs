@@ -58,24 +58,43 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
+        public void ShouldCreateChildItemWithCorrectParentType()
+        {
+            var parent = WorkItem.New("parentId", "path");
+            var child = parent.CreateChildItem("childId", WorkItemParentType.Expanded);
+
+            Assert.AreEqual(child.Parent.Type, WorkItemParentType.Expanded);
+        }
+
+
+        [TestMethod]
         public void ShouldCreateChildItemWithCorrectParentId()
         {
             var parent = WorkItem.New("parentId", "path");
-            var child = parent.CreateChildItem("childId");
+            var child = parent.CreateChildItem("childId",WorkItemParentType.Expanded);
 
-            Assert.AreEqual(child.ParentId, parent.Id);
+            Assert.AreEqual(child.Parent.Id, parent.Id);
         }
 
         [TestMethod]
         public void ShouldCreateChildItemWithSameProperties()
         {
             var parent = WorkItem.New("parentId", "path");
-            var child = parent.CreateChildItem("childId");
+            var child = parent.CreateChildItem("childId",WorkItemParentType.Expanded);
 
             Assert.AreEqual(parent.Ordinal,child.Ordinal);
             Assert.AreEqual(parent.Status, child.Status);
         }
 
+        [TestMethod]
+        public void ShouldLeaveOriginalPropertiesUnchangedWhenUpdatingProperty()
+        {
+            var original = WorkItem.New("parentId", "path").UpdateProperties(new NameValueCollection {{"name","value1"}});
+            var changed = original.UpdateProperty("name", "value2");
+
+            Assert.AreEqual("value2", changed.Properties["name"]);
+            Assert.AreEqual("value1", original.Properties["name"]);
+        }
 
 
     }

@@ -78,8 +78,9 @@ namespace WhiskWork.Web
             {
                 Response = WorkflowHttpResponse.Forbidden;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 Response = WorkflowHttpResponse.InternalServerError;
             }
         }

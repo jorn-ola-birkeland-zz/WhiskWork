@@ -78,7 +78,7 @@ namespace WhiskWork.Web
             }
             catch (Exception e)
             {
-                Console.WriteLine("Render failed " + e.Message);
+                Console.WriteLine("Render failed " + e);
                 return WorkflowHttpResponse.InternalServerError;
             }
         }

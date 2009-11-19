@@ -8,23 +8,23 @@ namespace WhiskWork.Core.UnitTest
     [TestClass]
     public class WorkflowTest
     {
-        MemoryWorkflowRepository _workflowRepository;
+        MemoryWorkStepRepository _workStepRepository;
         MemoryWorkItemRepository _workItemRepository;
         Workflow _wp;
 
         [TestInitialize]
         public void Init()
         {
-            _workflowRepository = new MemoryWorkflowRepository();
+            _workStepRepository = new MemoryWorkStepRepository();
             _workItemRepository = new MemoryWorkItemRepository();
-            _wp = new Workflow(_workflowRepository, _workItemRepository);
+            _wp = new Workflow(_workStepRepository, _workItemRepository);
         }
 
         [TestMethod]
         public void ShouldCreateWorkItemInBeginStep()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             Assert.AreEqual("/analysis", _workItemRepository.GetWorkItem("cr1").Path);
@@ -33,8 +33,8 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldNotCreateWorkItemInNormalStep()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () =>
@@ -46,7 +46,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldCreateWorkItemWithSingleProperty()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" } }));
             var workItem = _wp.GetWorkItem("cr1");
@@ -58,7 +58,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldCreateWorkItemWithTwoProperties()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developers", "A, B" } }));
             var workItem = _wp.GetWorkItem("cr1");
@@ -71,7 +71,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdateOneOfTwoProperties()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "B" } }));
@@ -85,7 +85,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldRemovePropertyIfValueIsEmpty()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "" } }));
@@ -99,8 +99,8 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMoveAndUpdateOneOfTwoProperties()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection { { "Developer", "B" } }));
@@ -115,9 +115,9 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdatePropertyOfWorkItemInExpandStep()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
-            _workflowRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
@@ -129,7 +129,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldSetSequentialOrdinalWhenCreatingWorkItemWithoutOrdinal()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/analysis"));
@@ -143,7 +143,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldCreateWorkItemWithOrdinalsProvided()
         {
-            _workflowRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/development").UpdateOrdinal(3));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/development").UpdateOrdinal(2));
@@ -157,7 +157,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdateWorkItemOrdinalWhenNotMoving()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1","/analysis").UpdateOrdinal(3));
@@ -169,8 +169,8 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldPreserveOrdinalWhenMoving()
         {
-            _workflowRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workflowRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis").UpdateOrdinal(3));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/analysis").UpdateOrdinal(4));

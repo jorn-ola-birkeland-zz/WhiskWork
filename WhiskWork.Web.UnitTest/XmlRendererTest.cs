@@ -16,7 +16,7 @@ namespace WhiskWork.Web.UnitTest
         [TestInitialize]
         public void Init()
         {
-            var workflowRepository = new MemoryWorkflowRepository();
+            var workflowRepository = new MemoryWorkStepRepository();
             var workItemRepository = new MemoryWorkItemRepository();
 
             _xmlRenderer = new XmlRenderer(workflowRepository, workItemRepository);

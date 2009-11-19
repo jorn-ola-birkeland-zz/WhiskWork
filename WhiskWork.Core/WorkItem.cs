@@ -7,17 +7,65 @@ using System.Text.RegularExpressions;
 
 namespace WhiskWork.Core
 {
+    public enum WorkItemParentType
+    {
+        Expanded,
+        Parallelled,
+    }
+
+    public class WorkItemParent
+    {
+        public WorkItemParent(string id, WorkItemParentType type) 
+        {
+            if(id==null)
+            {
+                throw new ArgumentNullException("id");
+            }
+
+            Id = id;
+            Type = type;
+        }
+
+        public string Id { get; private set; }
+        public WorkItemParentType Type { get; private set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is WorkItemParent))
+            {
+                return false;
+            }
+
+            var workItemParent = (WorkItemParent)obj;
+
+            return Id == workItemParent.Id && Type == workItemParent.Type;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode() ^ Type.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.AppendFormat("[{0},{1}]", Id, Type);
+
+            return sb.ToString();
+        }
+    }
+
     public class WorkItem
     {
         private readonly NameValueCollection _properties;
         private readonly int? _ordinal;
-        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, string parentId, int? ordinal, NameValueCollection properties)
+        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, WorkItemParent parent, int? ordinal, NameValueCollection properties)
         {
             Id = id;
             Path = path;
             Classes = workItemClasses;
             Status = status;
-            ParentId = parentId;
+            Parent = parent;
             _ordinal = ordinal;
             _properties = properties;
         }
@@ -34,7 +82,7 @@ namespace WhiskWork.Core
                 throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
             }
 
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null,null, properties);
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, null, properties);
         }
 
         public static WorkItem NewUnchecked(string id, string path, int? ordinal, NameValueCollection properties)
@@ -47,20 +95,12 @@ namespace WhiskWork.Core
         public string Path { get; private set; }
         public IEnumerable<string> Classes { get; private set; }
         public WorkItemStatus Status  { get; private set; }
-        public string ParentId { get; private set; }
+        public WorkItemParent Parent { get; private set; }
         public int? Ordinal
         {
             get
             {
                 return _ordinal;
-            }
-        }
-
-        public bool HasOrdinal
-        {
-            get
-            {
-                return _ordinal.HasValue;
             }
         }
 
@@ -76,35 +116,44 @@ namespace WhiskWork.Core
 
         public WorkItem MoveTo(WorkStep step)
         {
-            return new WorkItem(Id,step.Path,Classes,Status,ParentId, _ordinal,_properties);
+            return new WorkItem(Id,step.Path,Classes,Status,Parent, _ordinal,_properties);
         }
 
         public WorkItem UpdateStatus(WorkItemStatus status)
         {
-            return new WorkItem(Id, Path, Classes, status, ParentId, _ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, status, Parent, _ordinal, _properties);
         }
 
 
-        public WorkItem CreateChildItem(string id)
+        public WorkItem CreateChildItem(string id, WorkItemParentType parentType)
         {
-            return new WorkItem(id, Path, Classes, Status, Id, _ordinal, _properties);
+            var parent = new WorkItemParent(Id, parentType);
+            return new WorkItem(id, Path, Classes, Status, parent, _ordinal, _properties);
         }
 
-        public WorkItem UpdateParent(WorkItem parentItem)
+        public WorkItem UpdateParent(WorkItem parentItem, WorkItemParentType parentType)
         {
-            return new WorkItem(Id, Path, Classes, Status, parentItem.Id, _ordinal, _properties);
+            var parent = new WorkItemParent(parentItem.Id, parentType);
+            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties);
         }
+
+        public WorkItem UpdateParent(string parentId, WorkItemParentType parentType)
+        {
+            var parent = new WorkItemParent(parentId, parentType);
+            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties);
+        }
+
 
         public WorkItem UpdateOrdinal(int ordinal)
         {
-            return new WorkItem(Id, Path, Classes, Status, ParentId, ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, ordinal, _properties);
         }
 
         public WorkItem AddClass(string workItemClass)
         {
             var newClasses = new List<string>(Classes) { workItemClass };
 
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
         }
 
         public WorkItem RemoveClass(string workItemClass)
@@ -112,12 +161,12 @@ namespace WhiskWork.Core
             var newClasses = new List<string>(Classes);
             newClasses.Remove(workItemClass);
 
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
         }
 
         public WorkItem ReplacesClasses(IEnumerable<string> newClasses)
         {
-            return new WorkItem(Id, Path, newClasses, Status, ParentId, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
         }
 
         public WorkItem UpdatePropertiesAndOrdinalFrom(WorkItem item)
@@ -131,7 +180,7 @@ namespace WhiskWork.Core
                 modifiedOrdinal = item.Ordinal;
             }
 
-            return new WorkItem(Id, Path, Classes, Status, ParentId, modifiedOrdinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, modifiedOrdinal, modifiedProperties);
         }
 
 
@@ -139,7 +188,7 @@ namespace WhiskWork.Core
         {
             var modifiedProperties = GetModifiedProperties(properties);
 
-            return new WorkItem(Id, Path, Classes, Status, ParentId, _ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
         }
 
         private NameValueCollection GetModifiedProperties(WorkItemProperties propertyUpdate)
@@ -162,6 +211,14 @@ namespace WhiskWork.Core
             return modifiedProperties;
         }
 
+        public WorkItem UpdateProperty(string name, string value)
+        {
+            var modifiedProperties = new NameValueCollection(_properties);
+            modifiedProperties[name] = value;
+
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
+        }
+
 
         public WorkItem UpdateProperties(NameValueCollection properties)
         {
@@ -172,7 +229,7 @@ namespace WhiskWork.Core
                 modifiedProperties[key] = properties[key];
             }
 
-            return new WorkItem(Id, Path, Classes, Status, ParentId, _ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
         }
 
 
@@ -189,7 +246,7 @@ namespace WhiskWork.Core
 
             result &= Id == item.Id;
             result &= Path == item.Path;
-            result &= ParentId == item.ParentId;
+            result &= Parent == item.Parent;
             result &= Status == item.Status;
             result &= Ordinal == item.Ordinal;
             result &= Classes.SequenceEqual(item.Classes);
@@ -202,7 +259,7 @@ namespace WhiskWork.Core
         {
             var hc = Id!=null ? Id.GetHashCode() : 1;
             hc ^= Path!=null ? Path.GetHashCode() : 2;
-            hc ^= ParentId!=null ? ParentId.GetHashCode(): 4;
+            hc ^= Parent!=null ? Parent.GetHashCode(): 4;
             hc ^= Status.GetHashCode();
             hc ^= Ordinal.GetHashCode();
             hc ^= Classes.Count()>0 ? Classes.Select(s => s.GetHashCode()).Aggregate((hash, next) => hash ^ next) : 8;
@@ -216,7 +273,7 @@ namespace WhiskWork.Core
             var sb = new StringBuilder();
             sb.AppendFormat("Id={0},", Id);
             sb.AppendFormat("Path={0},", Path);
-            sb.AppendFormat("ParentId={0},", ParentId);
+            sb.AppendFormat("Parent={0},", Parent);
             sb.AppendFormat("Status={0},", Status);
             sb.AppendFormat("Ordinal={0},", Ordinal);
             sb.AppendFormat("Classes={0},", Classes.Count()>0 ? Classes.Aggregate((current, next) => current + "&" + next): string.Empty);
@@ -232,5 +289,9 @@ namespace WhiskWork.Core
         }
 
 
+        public WorkItemParent ToParent(WorkItemParentType parentType)
+        {
+            return new WorkItemParent(Id,parentType);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Abb.One.MicroWebServer;
 using System.IO;
+using WhiskWork.AWS.SimpleDB;
 using WhiskWork.Core;
 
 namespace WhiskWork.CommondLineWebServer
@@ -13,6 +14,8 @@ namespace WhiskWork.CommondLineWebServer
             var port = 5555;
             string webRootDirectory = null;
             string logFilePath = null;
+            string awsAccessKey = null;
+            string awsSecretAccessKey = null;
 
             if(args.Length>0)
             {
@@ -40,8 +43,20 @@ namespace WhiskWork.CommondLineWebServer
                 logFilePath = args[2];
             }
 
-            var workStepRepository = new MemoryWorkflowRepository();
-            var workItemRepository = new MemoryWorkItemRepository();
+            if(args.Length>4)
+            {
+                awsAccessKey = args[3];
+                awsSecretAccessKey = args[4];
+            }
+
+            IWorkStepRepository workStepRepository = new MemoryWorkStepRepository();
+            IWorkItemRepository workItemRepository = new MemoryWorkItemRepository();
+
+            if(awsAccessKey!=null && awsSecretAccessKey!=null)
+            {
+                workItemRepository = new SimpleDBWorkItemRepository("test2", awsAccessKey,awsSecretAccessKey);
+                workStepRepository = new SimpleDBWorkStepRepository("test", awsAccessKey,awsSecretAccessKey);
+            }
 
             var router = new WebRouter(workStepRepository, workItemRepository, webRootDirectory, logFilePath);
             var server = new WebServer(router.ProcessRequest, port);

@@ -29,7 +29,7 @@ namespace WhiskWork.Core
                 WorkItem parentItem = GetTransientParentWorkItem(transientStep);
                 WorkItemRepository.UpdateWorkItem(parentItem.UpdateStatus(WorkItemStatus.ExpandLocked));
 
-                newWorkItem = newWorkItem.MoveTo(leafStep).UpdateParent(parentItem);
+                newWorkItem = newWorkItem.MoveTo(leafStep).UpdateParent(parentItem,WorkItemParentType.Expanded);
 
                 foreach (var workItemClass in newWorkItem.Classes)
                 {

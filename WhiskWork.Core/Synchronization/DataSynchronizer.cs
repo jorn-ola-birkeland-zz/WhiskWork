@@ -52,7 +52,7 @@ namespace WhiskWork.Core.Synchronization
                     updateEntry = new SynchronizationEntry(masterId, slaveEntry.Status, slaveMappedMasterProperties) {Ordinal = slaveEntry.Ordinal};
                 }
 
-                else if (SynchronizeOrdinal && masterEntry.Ordinal != slaveEntry.Ordinal)
+                if (SynchronizeOrdinal && masterEntry.Ordinal != slaveEntry.Ordinal)
                 {
                     Console.WriteLine("Ordinals differ: {0}-{1}",masterEntry,slaveEntry);
                     updateEntry = new SynchronizationEntry(masterId, slaveEntry.Status, slaveMappedMasterProperties)

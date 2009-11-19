@@ -40,12 +40,12 @@ namespace WhiskWork.Core
 
             ThrowIfMovingToStepWithWrongClass(transition);
 
-            transition = CreateTransitionIfMovingToExpandStep(transition);
-
-            transition = CleanUpIfMovingFromExpandStep(transition);
+            CleanUpIfMovingFromExpandStep(transition);
 
             transition = AttemptMergeIfMovingChildOfParallelledWorkItem(transition);
 
+            transition = CreateTransitionIfMovingToExpandStep(transition);
+            
             var resultTransition = DoMove(transition);
 
             TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(resultTransition);
@@ -125,19 +125,17 @@ namespace WhiskWork.Core
             return transition;
         }
 
-        private WorkItemTransition CleanUpIfMovingFromExpandStep(WorkItemTransition transition)
+        private void CleanUpIfMovingFromExpandStep(WorkItemTransition transition)
         {
             var remover = new WorkItemRemover(WorkStepRepository, WorkItemRepository);
-
-            transition = new WorkItemTransition(remover.CleanUpIfInTransientStep(transition.WorkItem), transition.WorkStep);
-            return transition;
+            remover.CleanUpIfInExpandStep(transition.WorkItem);
         }
 
         private WorkItemTransition AttemptMergeIfMovingChildOfParallelledWorkItem(WorkItemTransition transition)
         {
             if (WorkItemRepository.IsMergeableParallelledChild(transition.WorkItem, transition.WorkStep))
             {
-                var workItemToMove = MergeParallelWorkItems(transition.WorkItem);
+                var workItemToMove = MergeParallelWorkItems(transition);
 
                 transition = new WorkItemTransition(workItemToMove, transition.WorkStep);
             }
@@ -192,13 +190,18 @@ namespace WhiskWork.Core
             WorkStepRepository.CreateWorkStep(transientWorkStep);
         }
 
-        private WorkItem MergeParallelWorkItems(WorkItem item)
+        private WorkItem MergeParallelWorkItems(WorkItemTransition transition)
         {
-            var unlockedParentWorkItem = WorkItemRepository.GetWorkItem(item.ParentId).UpdateStatus(WorkItemStatus.Normal);
+            var unlockedParentWorkItem = WorkItemRepository.GetWorkItem(transition.WorkItem.Parent.Id).UpdateStatus(WorkItemStatus.Normal);
             WorkItemRepository.UpdateWorkItem(unlockedParentWorkItem);
 
-            foreach (var childWorkItem in WorkItemRepository.GetChildWorkItems(item.ParentId).ToList())
+            foreach (var childWorkItem in WorkItemRepository.GetChildWorkItems(transition.WorkItem.Parent).ToList())
             {
+                if (WorkStepRepository.IsExpandStep(transition.WorkStep))
+                {
+                    CleanUpIfMovingFromExpandStep(new WorkItemTransition(childWorkItem, transition.WorkStep));
+                }
+
                 WorkItemRepository.DeleteWorkItem(childWorkItem);
             }
 
@@ -207,9 +210,9 @@ namespace WhiskWork.Core
 
         private void TryUpdatingExpandLockOnParent(WorkItem item)
         {
-            var parent = WorkItemRepository.GetWorkItem(item.ParentId);
+            var parent = WorkItemRepository.GetWorkItem(item.Parent.Id);
 
-            if (WorkItemRepository.GetChildWorkItems(parent.Id).All(IsDone))
+            if (WorkItemRepository.GetChildWorkItems(item.Parent).All(IsDone))
             {
                 parent = parent.UpdateStatus(WorkItemStatus.Normal);
             }
@@ -239,12 +242,12 @@ namespace WhiskWork.Core
 
         private bool IsChildOfExpandedWorkItem(WorkItem item)
         {
-            if (item.ParentId == null)
+            if (item.Parent == null)
             {
                 return false;
             }
 
-            var parent = WorkItemRepository.GetWorkItem(item.ParentId);
+            var parent = WorkItemRepository.GetWorkItem(item.Parent.Id);
             var workStep = WorkStepRepository.GetWorkStep(parent.Path);
 
             return workStep.Type == WorkStepType.Expand;

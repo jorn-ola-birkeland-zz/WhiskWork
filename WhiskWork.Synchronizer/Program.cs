@@ -52,7 +52,8 @@ namespace WhiskWork.Synchronizer
             var statusSynchronizer = new StatusSynchronizer(statusMap, whiskWorkAgent, eManagerAgent);
 
             var propertyMap = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
-            propertyMap.AddReciprocalEntry("unid","unid");
+            propertyMap.AddReciprocalEntry("name", "name");
+            propertyMap.AddReciprocalEntry("unid", "unid");
             propertyMap.AddReciprocalEntry("title","title");
             propertyMap.AddReciprocalEntry("team","team");
             propertyMap.AddReciprocalEntry("release","release");

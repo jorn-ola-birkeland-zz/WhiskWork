@@ -22,7 +22,7 @@ namespace WhiskWork.Core
             foreach (var subStep in _workStepRepository.GetChildWorkSteps(parallelRootStep.Path))
             {
                 var childId = GetParallelId(parentItem.Id, parallelRootStep, subStep);
-                var childWorkItem = parentItem.CreateChildItem(childId).AddClass(subStep.WorkItemClass);
+                var childWorkItem = parentItem.CreateChildItem(childId,WorkItemParentType.Parallelled).AddClass(subStep.WorkItemClass);
 
 
                 childWorkItems.Add(childWorkItem);
