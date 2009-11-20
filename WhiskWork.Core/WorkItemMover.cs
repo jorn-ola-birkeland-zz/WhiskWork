@@ -32,24 +32,28 @@ namespace WhiskWork.Core
 
             ThrowIfMovingExpandLockedWorkItem(transition);
 
-            ThrowIfMovingFromExpandStepToParallelStep(transition);
-
-            transition = CreateTransitionIfMovingToWithinParallelStep(transition);
-
-            ThrowIfMovingToWithinExpandStep(transition);
-
-            ThrowIfMovingToStepWithWrongClass(transition);
-
-            CleanUpIfMovingFromExpandStep(transition);
-
-            transition = AttemptMergeIfMovingChildOfParallelledWorkItem(transition);
-
-            transition = CreateTransitionIfMovingToExpandStep(transition);
+            //ThrowIfMovingFromExpandStepToParallelStep(transition);
             
-            var resultTransition = DoMove(transition);
+            if (WorkStepRepository.IsWithinParallelStep(transition.WorkStep))
+            {
+                MoveToWithinParallelStep(transition);
+            }
+            else
+            {
+                ThrowIfMovingToWithinExpandStep(transition);
 
-            TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(resultTransition);
+                ThrowIfMovingToStepWithWrongClass(transition);
 
+                CleanUpIfMovingFromExpandStep(transition);
+
+                transition = AttemptMergeIfMovingChildOfParallelledWorkItem(transition);
+
+                transition = CreateTransitionIfMovingToExpandStep(transition);
+
+                var resultTransition = DoMove(transition);
+
+                TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(resultTransition);
+            }
         }
 
         private void ThrowIfMovingParallelLockedWorkItem(WorkItemTransition transition)
@@ -83,20 +87,58 @@ namespace WhiskWork.Core
             }
         }
 
-        private WorkItemTransition CreateTransitionIfMovingToWithinParallelStep(WorkItemTransition transition)
+        private void MoveToWithinParallelStep(WorkItemTransition transition)
         {
             WorkStep parallelStep;
-            if (WorkStepRepository.IsWithinParallelStep(transition.WorkStep, out parallelStep))
+            if (!WorkStepRepository.IsWithinParallelStep(transition.WorkStep, out parallelStep))
             {
-                if (!WorkItemRepository.IsChildOfParallelledWorkItem(transition.WorkItem))
-                {
-                    var idToMove = ParallelStepHelper.GetParallelId(transition.WorkItem.Id, parallelStep, transition.WorkStep);
-                    var workItemToMove = MoveAndLockAndSplitForParallelism(transition.WorkItem, parallelStep).First(wi => wi.Id == idToMove);
-
-                    return new WorkItemTransition(workItemToMove, transition.WorkStep);
-                }
+                return;
             }
-            return transition;
+
+            var newTransition = transition;
+
+            if (!WorkItemRepository.IsChildOfParallelledWorkItem(transition.WorkItem))
+            {
+                WorkStep expandStep;
+                var isInExpandStep = WorkStepRepository.IsInExpandStep(transition.WorkItem, out expandStep);
+
+                var lockedAndMovedItem = transition.WorkItem.MoveTo(parallelStep).UpdateStatus(WorkItemStatus.ParallelLocked);
+                WorkItemRepository.UpdateWorkItem(lockedAndMovedItem);
+
+                if(isInExpandStep)
+                {
+                    CleanUpIfMovingFromExpandStep(transition);
+                }
+
+                var helper = new ParallelStepHelper(WorkStepRepository);
+
+                var splitWorkItems = helper.SplitForParallelism(transition.WorkItem, parallelStep);
+
+                foreach (var splitWorkItem in splitWorkItems)
+                {
+                    WorkItemRepository.CreateWorkItem(splitWorkItem);
+                    
+                    if(isInExpandStep)
+                    {
+                        CreateTransientWorkSteps(splitWorkItem, expandStep);
+                    }
+                }
+
+                var idToMove = ParallelStepHelper.GetParallelId(transition.WorkItem.Id, parallelStep, transition.WorkStep);
+                var workItemToMove = splitWorkItems.First(wi => wi.Id == idToMove);
+
+                newTransition = new WorkItemTransition(workItemToMove, transition.WorkStep);
+            }
+
+            ThrowIfMovingToStepWithWrongClass(newTransition);
+
+            CleanUpIfMovingFromExpandStep(newTransition);
+
+            newTransition = AttemptMergeIfMovingChildOfParallelledWorkItem(newTransition);
+
+            var resultTransition = DoMove(newTransition);
+
+            TryUpdatingExpandLockIfMovingChildOfExpandedWorkItem(resultTransition);
         }
 
         private void ThrowIfMovingToWithinExpandStep(WorkItemTransition transition)
@@ -158,23 +200,6 @@ namespace WhiskWork.Core
             {
                 TryUpdatingExpandLockOnParent(resultTransition.WorkItem);
             }
-        }
-
-        private IEnumerable<WorkItem> MoveAndLockAndSplitForParallelism(WorkItem item, WorkStep parallelRootStep)
-        {
-            var lockedAndMovedItem = item.MoveTo(parallelRootStep).UpdateStatus(WorkItemStatus.ParallelLocked);
-            WorkItemRepository.UpdateWorkItem(lockedAndMovedItem);
-
-            var helper = new ParallelStepHelper(WorkStepRepository);
-
-            var splitWorkItems = helper.SplitForParallelism(item, parallelRootStep);
-
-            foreach (var splitWorkItem in splitWorkItems)
-            {
-                WorkItemRepository.CreateWorkItem(splitWorkItem);
-            }
-
-            return splitWorkItems;
         }
 
         private void CreateTransientWorkSteps(WorkItem item, WorkStep expandStep)

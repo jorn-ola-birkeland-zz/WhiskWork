@@ -94,7 +94,7 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldAlsoDeleteChildrenOfParalleledWorkItem()
+        public void ShouldAlsoParalleledChildrenWhenDeletingParalleledWorkItem()
         {
             CreateSimpleParallelWorkflow();
 
@@ -184,7 +184,7 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldNotBeAbleToDeleteChildOfParalleledWorkItem()
+        public void ShouldNotBeAbleToDeleteParallelledChildOfParalleledWorkItem()
         {
             CreateSimpleParallelWorkflow();
 
@@ -268,7 +268,7 @@ namespace WhiskWork.Core.UnitTest
         }
         
         [TestMethod]
-        public void ShouldMergeChildItemsWhenMovedToSameStepOutsideParallelizationAndChildWorkItemWasCreatedInExpandStep ()
+        public void ShouldMergeParallelledChildItemsWhenMovedToSameStepOutsideParallelizationAndExpandChildWorkItemWasCreatedInExpandStep ()
         {
             CreateParallelWorkflowWithExpandStep();
 
@@ -292,35 +292,20 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldNotBeAbleToMoveFromExpandStepToParallelStep()
+        public void ShouldMoveFromExpandStepToParallelStepAndCreateTransientStepsForParallelledSibling()
         {
             CreateParallelWorkflowWithExpandStep();
 
-            _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
+            _wp.Create("/scheduled", "cr1");
+            _wp.Move("/development","cr1");
+            Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1/tasks"));
 
-            AssertUtils.AssertThrows<InvalidOperationException>(
-                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback")));
+            _wp.Move("/feedback/review","cr1");
+
+            Assert.AreEqual("/feedback",_wp.GetWorkItem("cr1").Path);
+            Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test/tasks"));
+            Assert.AreEqual("/feedback/review", _wp.GetWorkItem("cr1-review").Path);
         }
-
-        //[TestMethod, Ignore]
-        //public void ShouldBeAbleToMoveFromTransientStepToParallelStepAndCreateNewTransientStepForParallelledSibling()
-        //{
-        //    CreateParallelWorkflowWithExpandStep();
-
-        //    _wp.CreateWorkItem("cr1", "/scheduled");
-        //    _wp.UpdateWorkItem("cr1", "/development");
-        //    Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1"));
-            
-        //    _wp.UpdateWorkItem("cr1", "/feedback/review");
-
-        //    Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1"));
-        //    Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test"));
-
-        //    Assert.AreEqual("/development/inprocess/cr1-test", _wp.GetWorkItem("cr1-test").Path);
-        //    Assert.AreEqual("/feedback/review", _wp.GetWorkItem("cr1-review").Path);
-
-        //}
 
         [TestMethod]
         public void ShouldBeAbleToMoveParalleledWorkItemToExpandStep()

@@ -66,6 +66,13 @@ namespace WhiskWork.Core
             return TryLocateFirstAncestorStepOfType(workStepRepository, workStep, WorkStepType.Transient, out transientStep);
         }
 
+        public static bool IsWithinParallelStep(this IWorkStepRepository workStepRepository, WorkStep workStep)
+        {
+            WorkStep parallelStepRoot;
+            return TryLocateFirstAncestorStepOfType(workStepRepository, workStep, WorkStepType.Parallel, out parallelStepRoot);
+        }
+
+
         public static bool IsWithinParallelStep(this IWorkStepRepository workStepRepository, WorkStep workStep, out WorkStep parallelStepRoot)
         {
             return TryLocateFirstAncestorStepOfType(workStepRepository, workStep, WorkStepType.Parallel, out parallelStepRoot);

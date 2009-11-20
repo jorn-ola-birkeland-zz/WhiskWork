@@ -17,16 +17,7 @@ namespace WhiskWork.Core
                 var transientStepPath = ExpandedWorkStep.GetTransientPath(expandStep, workItemToMove);
                 var transientStep = WorkStepRepository.GetWorkStep(transientStepPath);
                 
-                //DeleteChildWorkItems(workItemToMove.ToParent(WorkItemParentType.Expanded));
                 WorkStepRepository.DeleteWorkStepsRecursively(transientStep);
-            }
-        }
-
-        private void DeleteChildWorkItems(WorkItemParent parent)
-        {
-            foreach (var childWorkItem in WorkItemRepository.GetChildWorkItems(parent))
-            {
-                DeleteWorkItem(childWorkItem.Id);
             }
         }
 
@@ -53,8 +44,8 @@ namespace WhiskWork.Core
 
         private void DeleteWorkItemRecursively(WorkItem workItem)
         {
-            var expandedChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.ToParent(WorkItemParentType.Expanded));
-            var parallelChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.ToParent(WorkItemParentType.Parallelled));
+            var expandedChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Expanded));
+            var parallelChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Parallelled));
 
             var childWorkItems = expandedChildWorkItems.Concat(parallelChildWorkItems);
 

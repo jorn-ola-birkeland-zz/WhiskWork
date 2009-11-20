@@ -289,7 +289,7 @@ namespace WhiskWork.Core
         }
 
 
-        public WorkItemParent ToParent(WorkItemParentType parentType)
+        public WorkItemParent AsParent(WorkItemParentType parentType)
         {
             return new WorkItemParent(Id,parentType);
         }
