@@ -26,7 +26,7 @@ namespace WhiskWork.Web
 
         public WorkStep GetWorkStep(string parentPath)
         {
-            return new WorkStep(WorkStep.CombinePath(parentPath,_step),parentPath,_ordinal,_type, _workItemClass, _title);
+            return new WorkStep(WorkflowPath.CombinePath(parentPath,_step),parentPath,_ordinal,_type, _workItemClass, _title);
         }
 
     }

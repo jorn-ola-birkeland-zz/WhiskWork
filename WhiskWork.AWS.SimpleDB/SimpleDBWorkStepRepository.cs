@@ -9,7 +9,7 @@ using Attribute=Amazon.SimpleDB.Model.Attribute;
 
 namespace WhiskWork.AWS.SimpleDB
 {
-    public class SimpleDBWorkStepRepository : IWorkStepRepository
+    public class SimpleDBWorkStepRepository : ICacheableWorkStepRepository
     {
         private readonly AmazonSimpleDB _client;
         private readonly string _domain;
@@ -34,17 +34,33 @@ namespace WhiskWork.AWS.SimpleDB
             _client.CreateDomain(createDomainRequest);
         }
 
+        public IEnumerable<WorkStep> GetAllWorkSteps()
+        {
+            var selectRequest =
+                new SelectRequest
+                {
+                    SelectExpression = string.Format("select * from {0}", _domain)
+                };
+
+            var selectResponse = _client.Select(selectRequest);
+
+            foreach (var item in selectResponse.SelectResult.Item)
+            {
+                yield return GenerateWorkStep(item.Name, item.Attribute);
+            }
+        }
+
         public void CreateWorkStep(WorkStep workStep)
         {
             var putAttributeRequest = new PutAttributesRequest {DomainName = _domain, ItemName = workStep.Path};
-            putAttributeRequest.Attribute.Add(new ReplaceableAttribute {Name = "ParentPath", Value = workStep.ParentPath});
-            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Type", Value = workStep.Type.ToString()});
-            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Ordinal", Value = workStep.Ordinal.ToString() });
-            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "WorkItemClass", Value = workStep.WorkItemClass});
+            putAttributeRequest.Attribute.Add(new ReplaceableAttribute {Name = "ParentPath", Value = workStep.ParentPath, Replace = true});
+            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Type", Value = workStep.Type.ToString(), Replace = true });
+            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Ordinal", Value = workStep.Ordinal.ToString(), Replace = true });
+            putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "WorkItemClass", Value = workStep.WorkItemClass, Replace = true });
 
             if(!string.IsNullOrEmpty(workStep.Title))
             {
-                putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Title", Value = workStep.Title });
+                putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Title", Value = workStep.Title, Replace = true });
             }
 
             _client.PutAttributes(putAttributeRequest);

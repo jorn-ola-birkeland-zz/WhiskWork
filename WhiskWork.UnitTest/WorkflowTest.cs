@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using WhiskWork.Generic;
 using WhiskWork.Test.Common;
 
 namespace WhiskWork.Core.UnitTest
@@ -179,5 +180,7 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual(3, _wp.GetWorkItem("cr1").Ordinal);
             Assert.AreEqual(4, _wp.GetWorkItem("cr2").Ordinal);
         }
+
+
     }
 }

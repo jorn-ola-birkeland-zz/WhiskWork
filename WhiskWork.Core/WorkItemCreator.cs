@@ -54,7 +54,7 @@ namespace WhiskWork.Core
 
         private WorkItem GetTransientParentWorkItem(WorkStep transientStep)
         {
-            var workItemId = transientStep.Path.Split(WorkStep.Separator).Last();
+            var workItemId = transientStep.Path.Split(WorkflowPath.Separator).Last();
 
             return WorkItemRepository.GetWorkItem(workItemId);
         }

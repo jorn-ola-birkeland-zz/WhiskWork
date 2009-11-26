@@ -12,4 +12,9 @@ namespace WhiskWork.Core
         IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent);
         void DeleteWorkItem(WorkItem workItem);
     }
+
+    public interface  ICacheableWorkItemRepository : IWorkItemRepository
+    {
+        IEnumerable<WorkItem> GetAllWorkItems();
+    }
 }

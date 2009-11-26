@@ -121,6 +121,10 @@ namespace WhiskWork.Core.Synchronization
                 {
                     filteredProperties.Add(propertyKey, properties[propertyKey]);
                 }
+                else
+                {
+                    filteredProperties.Add(propertyKey, null);
+                }
             }
 
             return filteredProperties;

@@ -89,6 +89,28 @@ namespace WhiskWork.Core.UnitTest.Synchronization
         }
 
         [TestMethod]
+        public void ShouldRemoveExtraProperty()
+        {
+            _propertyMap.AddReciprocalEntry("Name", "Name");
+
+
+            using (Mocks.Record())
+            {
+                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done") });
+
+                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development", "Name", "name1") });
+                _slaveMock.UpdateData(Entry("1", "Development", "Name", null));
+                LastCall.Repeat.Once();
+
+            }
+            using (Mocks.Playback())
+            {
+                _synchronizer.Synchronize();
+            }
+        }
+
+
+        [TestMethod]
         public void ShouldUpdateDifferingOrdinal()
         {
             _synchronizer.SynchronizeOrdinal = true;

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
 using System.Xml;
 using Amazon;
@@ -7,9 +9,11 @@ using Amazon.SimpleDB.Model;
 using WhiskWork.Core;
 using Attribute=Amazon.SimpleDB.Model.Attribute;
 
+#endregion
+
 namespace WhiskWork.AWS.SimpleDB
 {
-    public class SimpleDBWorkItemRepository : IWorkItemRepository
+    public class SimpleDBWorkItemRepository : ICacheableWorkItemRepository
     {
         private readonly AmazonSimpleDB _client;
         private readonly string _domain;
@@ -21,17 +25,35 @@ namespace WhiskWork.AWS.SimpleDB
             EnsureDomain(_domain);
         }
 
+        #region ICacheableWorkItemRepository Members
+
         public bool ExistsWorkItem(string id)
         {
-            var getAttributesRequest = new GetAttributesRequest { ItemName = id, DomainName = _domain };
+            var getAttributesRequest = new GetAttributesRequest {ItemName = id, DomainName = _domain};
             var getAttributesResponse = _client.GetAttributes(getAttributesRequest);
 
             return getAttributesResponse.GetAttributesResult.Attribute.Count > 0;
         }
 
+        public IEnumerable<WorkItem> GetAllWorkItems()
+        {
+            var selectRequest =
+                new SelectRequest
+                    {
+                        SelectExpression = string.Format("select * from {0}", _domain)
+                    };
+
+            var selectResponse = _client.Select(selectRequest);
+
+            foreach (var item in selectResponse.SelectResult.Item)
+            {
+                yield return GenerateWorkItem(item.Name, item.Attribute);
+            }
+        }
+
         public WorkItem GetWorkItem(string id)
         {
-            var getAttributesRequest = new GetAttributesRequest { ItemName = id, DomainName = _domain };
+            var getAttributesRequest = new GetAttributesRequest {ItemName = id, DomainName = _domain};
             var getAttributesResponse = _client.GetAttributes(getAttributesRequest);
 
             var attributes = getAttributesResponse.GetAttributesResult.Attribute;
@@ -41,7 +63,7 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void CreateWorkItem(WorkItem workItem)
         {
-            UpdateWorkItem(workItem);
+            SendUpdateRequest(workItem);
         }
 
         public IEnumerable<WorkItem> GetWorkItems(string path)
@@ -59,40 +81,15 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void UpdateWorkItem(WorkItem workItem)
         {
-            var putAttributeRequest = new PutAttributesRequest { DomainName = _domain, ItemName = workItem.Id };
-            var attributes = putAttributeRequest.Attribute;
-
-            attributes.Add(new ReplaceableAttribute { Name = "Path", Value = workItem.Path });
-            attributes.Add(new ReplaceableAttribute { Name = "Status", Value = workItem.Status.ToString() });
-
-            if (workItem.Parent!= null)
-            {
-                attributes.Add(new ReplaceableAttribute { Name = "ParentId", Value = workItem.Parent.Id });
-                attributes.Add(new ReplaceableAttribute { Name = "ParentType", Value = workItem.Parent.Type.ToString() });
-            }
-
-            if (workItem.Ordinal.HasValue)
-            {
-                attributes.Add(new ReplaceableAttribute { Name = "Ordinal", Value = workItem.Ordinal.Value.ToString() });
-            }
-
-            foreach (var workItemClass in workItem.Classes)
-            {
-                attributes.Add(new ReplaceableAttribute { Name = "Classes", Value = workItemClass });
-            }
-
-            foreach (var keyValue in workItem.Properties)
-            {
-                attributes.Add(new ReplaceableAttribute { Name = keyValue.Key, Value = keyValue.Value });
-            }
-
-            _client.PutAttributes(putAttributeRequest);
+            DeleteWorkItem(workItem);
+            SendUpdateRequest(workItem);
         }
 
         public IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent)
         {
             var selectRequest = new SelectRequest();
-            selectRequest.SelectExpression = string.Format("select * from {0} where ParentId='{1}' and ParentType='{2}'", _domain, parent.Id, parent.Type);
+            selectRequest.SelectExpression = string.Format(
+                "select * from {0} where ParentId='{1}' and ParentType='{2}'", _domain, parent.Id, parent.Type);
 
             var selectResponse = _client.Select(selectRequest);
 
@@ -104,8 +101,42 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void DeleteWorkItem(WorkItem workItem)
         {
-            var deleteAttributesRequest = new DeleteAttributesRequest { ItemName = workItem.Id, DomainName = _domain };
+            var deleteAttributesRequest = new DeleteAttributesRequest {ItemName = workItem.Id, DomainName = _domain};
             _client.DeleteAttributes(deleteAttributesRequest);
+        }
+
+        #endregion
+
+        private void SendUpdateRequest(WorkItem workItem)
+        {
+            var putAttributeRequest = new PutAttributesRequest {DomainName = _domain, ItemName = workItem.Id};
+            var attributes = putAttributeRequest.Attribute;
+
+            attributes.Add(new ReplaceableAttribute {Name = "Path", Value = workItem.Path});
+            attributes.Add(new ReplaceableAttribute {Name = "Status", Value = workItem.Status.ToString()});
+
+            if (workItem.Parent != null)
+            {
+                attributes.Add(new ReplaceableAttribute {Name = "ParentId", Value = workItem.Parent.Id});
+                attributes.Add(new ReplaceableAttribute {Name = "ParentType", Value = workItem.Parent.Type.ToString()});
+            }
+
+            if (workItem.Ordinal.HasValue)
+            {
+                attributes.Add(new ReplaceableAttribute {Name = "Ordinal", Value = workItem.Ordinal.Value.ToString()});
+            }
+
+            foreach (var workItemClass in workItem.Classes)
+            {
+                attributes.Add(new ReplaceableAttribute {Name = "Classes", Value = workItemClass});
+            }
+
+            foreach (var keyValue in workItem.Properties)
+            {
+                attributes.Add(new ReplaceableAttribute {Name = keyValue.Key, Value = keyValue.Value});
+            }
+
+            _client.PutAttributes(putAttributeRequest);
         }
 
         private void EnsureDomain(string domain)
@@ -118,13 +149,13 @@ namespace WhiskWork.AWS.SimpleDB
                 return;
             }
 
-            var createDomainRequest = new CreateDomainRequest { DomainName = domain };
+            var createDomainRequest = new CreateDomainRequest {DomainName = domain};
             _client.CreateDomain(createDomainRequest);
         }
 
         private static WorkItem GenerateWorkItem(string id, IEnumerable<Attribute> attributes)
         {
-            string path = GetAttributeValue(attributes, "Path");
+            var path = GetAttributeValue(attributes, "Path");
 
             var item = WorkItem.New(id, path);
 
@@ -138,7 +169,7 @@ namespace WhiskWork.AWS.SimpleDB
                     case "Path":
                         break;
                     case "Status":
-                        item = item.UpdateStatus((WorkItemStatus)Enum.Parse(typeof(WorkItemStatus), attribute.Value));
+                        item = item.UpdateStatus((WorkItemStatus) Enum.Parse(typeof (WorkItemStatus), attribute.Value));
                         break;
                     case "Ordinal":
                         item = item.UpdateOrdinal(XmlConvert.ToInt32(attribute.Value));
@@ -148,14 +179,14 @@ namespace WhiskWork.AWS.SimpleDB
                         break;
                     case "ParentId":
                         parentId = attribute.Value;
-                        if(parentType.HasValue)
+                        if (parentType.HasValue)
                         {
-                            item = item.UpdateParent(parentId,parentType.Value);
+                            item = item.UpdateParent(parentId, parentType.Value);
                         }
                         break;
                     case "ParentType":
-                        parentType = (WorkItemParentType)Enum.Parse(typeof(WorkItemParentType), attribute.Value);
-                        if (parentId!=null)
+                        parentType = (WorkItemParentType) Enum.Parse(typeof (WorkItemParentType), attribute.Value);
+                        if (parentId != null)
                         {
                             item = item.UpdateParent(parentId, parentType.Value);
                         }
@@ -182,6 +213,5 @@ namespace WhiskWork.AWS.SimpleDB
 
             return null;
         }
-
     }
 }

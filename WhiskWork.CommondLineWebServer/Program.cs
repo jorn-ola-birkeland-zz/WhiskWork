@@ -16,6 +16,7 @@ namespace WhiskWork.CommondLineWebServer
             string logFilePath = null;
             string awsAccessKey = null;
             string awsSecretAccessKey = null;
+            string domainPrefix = null;
 
             if(args.Length>0)
             {
@@ -43,10 +44,11 @@ namespace WhiskWork.CommondLineWebServer
                 logFilePath = args[2];
             }
 
-            if(args.Length>4)
+            if(args.Length>5)
             {
                 awsAccessKey = args[3];
                 awsSecretAccessKey = args[4];
+                domainPrefix = args[5];
             }
 
             IWorkStepRepository workStepRepository = new MemoryWorkStepRepository();
@@ -54,8 +56,8 @@ namespace WhiskWork.CommondLineWebServer
 
             if(awsAccessKey!=null && awsSecretAccessKey!=null)
             {
-                workItemRepository = new SimpleDBWorkItemRepository("test2", awsAccessKey,awsSecretAccessKey);
-                workStepRepository = new SimpleDBWorkStepRepository("test", awsAccessKey,awsSecretAccessKey);
+                workItemRepository = new AsynchCachingWorkItemRepository(new SimpleDBWorkItemRepository(domainPrefix+"_items", awsAccessKey,awsSecretAccessKey));
+                workStepRepository = new CachingWorkStepRepository(new SimpleDBWorkStepRepository(domainPrefix+"_steps", awsAccessKey,awsSecretAccessKey));
             }
 
             var router = new WebRouter(workStepRepository, workItemRepository, webRootDirectory, logFilePath);

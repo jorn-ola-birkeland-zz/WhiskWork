@@ -11,4 +11,9 @@ namespace WhiskWork.Core
         void DeleteWorkStep(string path);
         bool ExistsWorkStep(string path);
     }
+
+    public interface ICacheableWorkStepRepository : IWorkStepRepository
+    {
+        IEnumerable<WorkStep> GetAllWorkSteps();
+    }
 }

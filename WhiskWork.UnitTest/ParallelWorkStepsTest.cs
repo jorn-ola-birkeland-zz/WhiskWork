@@ -350,6 +350,90 @@ namespace WhiskWork.Core.UnitTest
             () => _wp.UpdateWorkItem(WorkItem.New("cr1-test", "/development/inprocess/cr1-review")));
         }
 
+        [TestMethod]
+        public void ShouldMoveToLeafStepUnderParallelStep()
+        {
+            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
+            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
+            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
+            _workStepRepository.Add("/implementation/dev/coding", "/implementation/dev", 1, WorkStepType.Normal, "cr-dev");
+
+            _wp.Create("/planned", "cr1");
+            _wp.Move("/implementation", "cr1");
+
+            Assert.AreEqual("/implementation/dev/coding",_wp.GetWorkItem("cr1-dev").Path);
+        }
+
+        [TestMethod]
+        public void ShouldHandleNestedParallelSteps()
+        {
+            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
+            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
+            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
+            _workStepRepository.Add("/implementation/dev/coding", "/implementation/dev", 1, WorkStepType.Normal, "cr-dev");
+            _workStepRepository.Add("/implementation/dev/feedback", "/implementation/dev", 2, WorkStepType.Parallel, "cr-dev");
+            _workStepRepository.Add("/implementation/dev/feedback/review", "/implementation/dev/feedback", 1, WorkStepType.Normal, "cr-dev-review");
+            _workStepRepository.Add("/implementation/dev/feedback/test", "/implementation/dev/feedback", 2, WorkStepType.Normal, "cr-dev-test");
+            _workStepRepository.Add("/done", "/", 3, WorkStepType.End, "cr");
+
+            _wp.Create("/planned","cr1");
+            _wp.Move("/implementation","cr1");
+
+            Assert.AreEqual("/planned",_wp.GetWorkItem("cr1-doc").Path);
+            Assert.AreEqual("/implementation/dev/coding", _wp.GetWorkItem("cr1-dev").Path);
+
+            _wp.Move("/implementation/dev/feedback", "cr1-dev");
+            Assert.AreEqual("/implementation/dev/coding", _wp.GetWorkItem("cr1-dev-test").Path);
+            Assert.AreEqual("/implementation/dev/feedback/review", _wp.GetWorkItem("cr1-dev-review").Path);
+        }
+
+        [TestMethod]
+        public void ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep()
+        {
+            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
+            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
+            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
+            _workStepRepository.Add("/feedback", "/", 3, WorkStepType.Parallel, "cr");
+            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
+            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
+
+            _wp.Create("/planned", "cr1");
+            _wp.Move("/implementation", "cr1");
+
+            Assert.AreEqual("/planned", _wp.GetWorkItem("cr1-doc").Path);
+            Assert.AreEqual("/implementation/dev", _wp.GetWorkItem("cr1-dev").Path);
+
+            _wp.Move("/feedback", "cr1-dev");
+
+            Assert.AreEqual("/implementation/dev", _wp.GetWorkItem("cr1-dev-test").Path);
+            Assert.AreEqual("/feedback/review", _wp.GetWorkItem("cr1-dev-review").Path);
+        }
+
+
+        [TestMethod]
+        public void ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStepAndMergeUponReturn()
+        {
+            ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep();
+            _wp.Move("/implementation/dev", "cr1-dev-review");
+
+            Assert.IsFalse(_wp.ExistsWorkItem("cr1-dev-review"));
+            Assert.IsFalse(_wp.ExistsWorkItem("cr1-dev-test"));
+
+            Assert.AreEqual("/implementation/dev", _wp.GetWorkItem("cr1-dev").Path);
+        }
+
+        [TestMethod]
+        public void ShouldKeepAddingChildItemsWhenMovingBetweenParallelSteps()
+        {
+            ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep();
+
+            _wp.Move("/implementation/doc", "cr1-dev-review");
+            Assert.AreEqual("/implementation/doc", _wp.GetWorkItem("cr1-dev-review-doc").Path);
+        }
+        
         private void CreateSimpleParallelWorkflow()
         {
             _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");

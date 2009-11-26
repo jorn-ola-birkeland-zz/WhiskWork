@@ -78,6 +78,13 @@ namespace WhiskWork.Core
             return TryLocateFirstAncestorStepOfType(workStepRepository, workStep, WorkStepType.Parallel, out parallelStepRoot);
         }
 
+        public static bool IsInExpandStep(this IWorkStepRepository workStepRepository, WorkItem workItem)
+        {
+            WorkStep expandStep;
+
+            return IsInExpandStep(workStepRepository, workItem, out expandStep);
+        }
+
 
         public static bool IsInExpandStep(this IWorkStepRepository workStepRepository, WorkItem workItem, out WorkStep expandStep)
         {
@@ -123,7 +130,7 @@ namespace WhiskWork.Core
             yield return workStep.WorkItemClass;
         }
 
-
+        
         private static bool TryLocateFirstAncestorStepOfType(this IWorkStepRepository workStepRepository, WorkStep workStep, WorkStepType stepType, out WorkStep ancestorStep)
         {
             var currentPath = workStep.Path;

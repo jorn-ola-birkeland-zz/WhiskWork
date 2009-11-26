@@ -58,6 +58,7 @@
     <Compile Include="Synchronization\SynchronizerTestBase.cs" />
     <Compile Include="WorkflowTest.cs" />
     <Compile Include="WorkItemTest.cs" />
+    <Compile Include="WorkflowPathTest.cs" />
     <Compile Include="WorkStepTest.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -9,6 +9,7 @@ using System.IO;
 using DominoInterOp;
 using WhiskWork.Core.Synchronization;
 using System.Web;
+using System.Linq;
 
 #endregion
 
@@ -31,7 +32,7 @@ namespace WhiskWork.Synchronizer
         }
 
         public string Release { get; set; }
-        public string Team { get; set; }
+        public IEnumerable<string> Team { get; set; }
 
         #region ISynchronizationAgent Members
 
@@ -64,7 +65,7 @@ namespace WhiskWork.Synchronizer
                 var ordinal = GetOrdinal((string)row[8]);
                 var person = (string) row[9];
 
-                if ((Team!=null && team != Team) || (Release!=null && release != Release))
+                if ((Team!=null && !Team.Contains(team)) || (Release!=null && release != Release))
                 {
                     continue;
                 }
@@ -80,8 +81,12 @@ namespace WhiskWork.Synchronizer
                             {"project", project},
                             {"leanstatus",leanStatus},
                             {"priority",ordinal==_undefinedOrdinal ? "undefined" : ordinal.ToString()},
-                            {"Person",person}
                         };
+
+                if(!string.IsNullOrEmpty(person))
+                {
+                    properties.Add("CurrentPerson",person);
+                }
 
 
                 var entry = new SynchronizationEntry(id, status, properties) {Ordinal = ordinal};
@@ -131,7 +136,9 @@ namespace WhiskWork.Synchronizer
                     continue;
                 }
 
-                var dataUpdatePath = string.Format(updatePathPattern, unid, HttpUtility.UrlEncode(keyValue.Key), HttpUtility.UrlEncode(keyValue.Value));
+                var key = HttpUtility.UrlEncode(keyValue.Key);
+                var value = keyValue.Value!=null ? HttpUtility.UrlEncode(keyValue.Value) : string.Empty ;
+                var dataUpdatePath = string.Format(updatePathPattern, unid, key, value);
 
                 Console.WriteLine("Data: "+dataUpdatePath);
 

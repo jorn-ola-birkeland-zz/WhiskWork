@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WorkflowPath.cs" />
     <Compile Include="WorkItemCreator.cs" />
     <Compile Include="WorkItemMover.cs" />
     <Compile Include="WorkItemProperties.cs" />
@@ -61,7 +62,6 @@
     <Compile Include="MemoryWorkItemRepository.cs" />
     <Compile Include="ParallelStepHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Synchronization\CachingSynchronizationAgent.cs" />
     <Compile Include="Synchronization\CreationSynchronizer.cs" />
     <Compile Include="Synchronization\ISynchronizationAgent.cs" />
     <Compile Include="Synchronization\DataSynchronizer.cs" />

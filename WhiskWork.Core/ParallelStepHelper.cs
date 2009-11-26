@@ -15,14 +15,14 @@ namespace WhiskWork.Core
             return id+"-"+toStep.Path.Remove(0, parallelRootStep.Path.Length+1);
         }
 
-        public IEnumerable<WorkItem> SplitForParallelism(WorkItem parentItem, WorkStep parallelRootStep)
+        public IEnumerable<WorkItem> SplitForParallelism(WorkItem workItem, WorkStep parallelRootStep)
         {
             var childWorkItems = new List<WorkItem>();
 
             foreach (var subStep in _workStepRepository.GetChildWorkSteps(parallelRootStep.Path))
             {
-                var childId = GetParallelId(parentItem.Id, parallelRootStep, subStep);
-                var childWorkItem = parentItem.CreateChildItem(childId,WorkItemParentType.Parallelled).AddClass(subStep.WorkItemClass);
+                var childId = GetParallelId(workItem.Id, parallelRootStep, subStep);
+                var childWorkItem = workItem.CreateChildItem(childId,WorkItemParentType.Parallelled).AddClass(subStep.WorkItemClass);
 
 
                 childWorkItems.Add(childWorkItem);

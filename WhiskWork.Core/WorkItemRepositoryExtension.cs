@@ -29,15 +29,22 @@ namespace WhiskWork.Core
 
         public static bool IsChildOfParallelledWorkItem(this IWorkItemRepository workItemRepository, WorkItem workItem)
         {
+            WorkItem parent;
+            return IsChildOfParallelledWorkItem(workItemRepository, workItem, out parent);
+        }
+
+        public static bool IsChildOfParallelledWorkItem(this IWorkItemRepository workItemRepository, WorkItem workItem, out WorkItem parent)
+        {
             if (workItem.Parent != null)
             {
-                var parent = workItemRepository.GetWorkItem(workItem.Parent.Id);
+                parent = workItemRepository.GetWorkItem(workItem.Parent.Id);
                 if (parent.Status == WorkItemStatus.ParallelLocked)
                 {
                     return true;
                 }
             }
 
+            parent = null;
             return false;
         }
 
