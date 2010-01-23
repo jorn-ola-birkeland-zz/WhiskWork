@@ -21,7 +21,7 @@ namespace WhiskWork.Web.UnitTest
         {
             _workStepRepository = new MemoryWorkStepRepository();
             _workItemRepository = new MemoryWorkItemRepository();
-            _wp = new Workflow(_workStepRepository, _workItemRepository);
+            _wp = new Workflow(new WorkflowRepository(_workItemRepository, _workStepRepository));
 
         }
             
@@ -29,7 +29,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleStepWorkflow()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -39,7 +39,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleStepWithTitleWorkflow()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
 
             var doc = GetDocument();
 
@@ -50,9 +50,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderStepsInRightOrder()
         {
-            _workStepRepository.Add("/test", "/", 3, WorkStepType.End, "cr", "Test");
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr", "Development");
+            _workStepRepository.Add(WorkStep.New("/test").UpdateOrdinal(3).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr").UpdateTitle("Test"));
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Development"));
 
             var doc = GetDocument();
 
@@ -66,9 +66,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSubSteps()
         {
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr", "Development ");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Normal, "cr", "In process");
-            _workStepRepository.Add("/development/done", "/development", 2, WorkStepType.Normal, "cr", "Dev. done");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Development "));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("In process"));
+            _workStepRepository.Add(WorkStep.New("/development/done").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Dev. done"));
 
             var doc = GetDocument();
 
@@ -79,9 +79,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderClasses()
         {
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr", "Development ");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Normal, "cr", "In process");
-            _workStepRepository.Add("/development/done", "/development", 2, WorkStepType.Normal, "cr", "Dev. done");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Development "));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("In process"));
+            _workStepRepository.Add(WorkStep.New("/development/done").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Dev. done"));
 
             var doc = GetDocument();
 
@@ -91,7 +91,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleWorkItemInSingleStepWorkflow()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
 
             var doc = GetDocument();
@@ -102,7 +102,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleWorkItemProperty()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection {{"Name","CR1"}}));
 
             var doc = GetDocument();
@@ -114,7 +114,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTwoWorkItemProperties()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" },{"Developer","A"} }));
 
             var doc = GetDocument();
@@ -129,7 +129,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldLowerCasePropertyKeyInClass()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "value" } }));
 
             var doc = GetDocument();
@@ -141,7 +141,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldHtmlEncodePropertyValues()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "name", "&<> " } }));
 
             var doc = GetDocument();
@@ -152,7 +152,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldHtmlEncodeTitle()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "<Analysis & Test>");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("<Analysis & Test>"));
 
             var doc = GetDocument();
 
@@ -163,7 +163,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTwoWorkItemsInSingleStepWorkflow()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr", "Analysis");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
 
@@ -176,9 +176,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderAWorkItemInEachStepForAThreeStepWorkflow()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/done", "/", 3, WorkStepType.End, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(3).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2","/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr3","/analysis"));
@@ -196,9 +196,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderParallelStepAsUnorderedList()
         {
-            _workStepRepository.Add("/feedback", "/", 1, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(1).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
 
             var doc = GetDocument();
 
@@ -210,7 +210,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldNotRenderEmptyListTagInLeafStepWithNoWorkItems()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -221,7 +221,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldNotRenderH1TagIfWorkStepTitleIsEmpty()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -232,7 +232,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderWorkItemWithRightClasses()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
 
             var doc = GetDocument();
@@ -245,7 +245,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderFromLeafStep()
         {
-            _workStepRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/scheduled").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/scheduled"));
 
             var doc = GetDocument(_workStepRepository.GetWorkStep("/scheduled"));
@@ -257,8 +257,8 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderParallelStepsWithRightClass()
         {
-            _workStepRepository.Add("/feedback", "/", 1, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(1).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
 
             var doc = GetDocument();
 
@@ -268,10 +268,10 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderParalleledChildItemsWithRightClasses()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/feedback", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
@@ -285,10 +285,10 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldNotRenderParallelLockedWorkItem()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/feedback", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
@@ -302,9 +302,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderCorrectOuterExpandStepClass()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -315,9 +315,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderCorrectClassForExpandTemplate()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -328,9 +328,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderWorkStepForWorkItemInExpandTemplate()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
             var doc = GetDocument();
 
@@ -340,10 +340,10 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderFirstDescendantStepAfterWorkItemStepInExpandTemplate()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task"));
 
             var doc = GetDocument();
 
@@ -355,11 +355,11 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderMultiLevelDescendantsStepAfterWorkItemStepInExpandTemplate()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
 
             var doc = GetDocument();
 
@@ -369,12 +369,12 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTransientStepBeforeExpandStep()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
-            _wp.Create("/analysis", "cr1");
-            _wp.Move("/development", "cr1");
+            _wp.CreateWorkItem("/analysis", "cr1");
+            _wp.MoveWorkItem("/development", "cr1");
 
 
             var doc = GetDocument();
@@ -391,12 +391,12 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTransientStepWithCorrectIdForWorkItemContainer()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
-            _wp.Create("/analysis", "cr1");
-            _wp.Move("/development", "cr1");
+            _wp.CreateWorkItem("/analysis", "cr1");
+            _wp.MoveWorkItem("/development", "cr1");
 
             var doc = GetDocument();
 
@@ -407,14 +407,14 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTitleForChildOfTransientStep()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
-            _workStepRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task").UpdateTitle("Tasks"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
 
-            _wp.Create("/analysis", "cr1");
-            _wp.Move("/development", "cr1");
+            _wp.CreateWorkItem("/analysis", "cr1");
+            _wp.MoveWorkItem("/development", "cr1");
 
 
             var doc = GetDocument();
@@ -423,40 +423,49 @@ namespace WhiskWork.Web.UnitTest
         }
 
         [TestMethod]
+        public void ShouldRenderWorkItemWithoutTimeStamp()
+        {
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workItemRepository.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+
+            GetDocument();
+        }
+
+        [TestMethod]
         public void FullFeatureTest()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
-            _workStepRepository.Add("/analysis/inprocess", "/analysis", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/analysis/done", "/analysis", 1, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr", "Development");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal, "task", "Tasks");
-            _workStepRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1, WorkStepType.Begin, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/inprocess", "/development/inprocess/tasks", 1, WorkStepType.Normal, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1, WorkStepType.End, "task");
-            _workStepRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
-            _workStepRepository.Add("/feedback", "/", 3, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
-            _workStepRepository.Add("/feedback/demo", "/feedback", 2, WorkStepType.Normal, "cr-demo", "Demo");
-            _workStepRepository.Add("/feedback/test", "/feedback", 3, WorkStepType.Normal, "cr-test", "Test");
-            _workStepRepository.Add("/done", "/", 4, WorkStepType.End, "cr", "Done");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
+            _workStepRepository.Add(WorkStep.New("/analysis/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/analysis/done").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Development"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task").UpdateTitle("Tasks"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/done").UpdateOrdinal(1).UpdateType(WorkStepType.End).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/done").UpdateOrdinal(2).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(3).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review").UpdateTitle("Review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/demo").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-demo").UpdateTitle("Demo"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(3).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test").UpdateTitle("Test"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(4).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr").UpdateTitle("Done"));
 
-            _wp.Create("/analysis","cr1","cr2","cr3","cr4","cr5","cr6","cr7","cr8","cr9","cr10", "cr11", "cr12");
-            _wp.Move("/analysis/done", "cr4");
-            _wp.Move("/development/inprocess", "cr5", "cr6");
-            _wp.Create("/development/inprocess/cr5", "cr5-1", "cr5-2", "cr5-3", "cr5-4");
-            _wp.Create("/development/inprocess/cr6", "cr6-1", "cr6-2", "cr6-3", "cr6-4");
-            _wp.Move("/development/inprocess/cr5/tasks/done", "cr5-1", "cr5-2");
-            _wp.Move("/development/inprocess/cr6/tasks/inprocess", "cr6-1");
-            _wp.Move("/development/done", "cr7", "cr8", "cr9", "cr10", "cr11", "cr12");
-            _wp.Move("/feedback/review", "cr7", "cr8");
-            _wp.Move("/feedback/demo", "cr9", "cr10");
-            _wp.Move("/feedback/test", "cr11");
-            _wp.Move("/done", "cr7-review");
-            _wp.Move("/done", "cr9-demo");
-            _wp.Move("/done", "cr12");
+            _wp.CreateWorkItem("/analysis","cr1","cr2","cr3","cr4","cr5","cr6","cr7","cr8","cr9","cr10", "cr11", "cr12");
+            _wp.MoveWorkItem("/analysis/done", "cr4");
+            _wp.MoveWorkItem("/development/inprocess", "cr5", "cr6");
+            _wp.CreateWorkItem("/development/inprocess/cr5", "cr5-1", "cr5-2", "cr5-3", "cr5-4");
+            _wp.CreateWorkItem("/development/inprocess/cr6", "cr6-1", "cr6-2", "cr6-3", "cr6-4");
+            _wp.MoveWorkItem("/development/inprocess/cr5/tasks/done", "cr5-1", "cr5-2");
+            _wp.MoveWorkItem("/development/inprocess/cr6/tasks/inprocess", "cr6-1");
+            _wp.MoveWorkItem("/development/done", "cr7", "cr8", "cr9", "cr10", "cr11", "cr12");
+            _wp.MoveWorkItem("/feedback/review", "cr7", "cr8");
+            _wp.MoveWorkItem("/feedback/demo", "cr9", "cr10");
+            _wp.MoveWorkItem("/feedback/test", "cr11");
+            _wp.MoveWorkItem("/done", "cr7-review");
+            _wp.MoveWorkItem("/done", "cr9-demo");
+            _wp.MoveWorkItem("/done", "cr12");
 
-            AssertIsAsExpected(Resources.FullFeatureTest);
+            AssertIsAsExpected(Resources.FullHtml);
         }
 
         private void AssertIsAsExpected(string expectedXml)
@@ -475,7 +484,7 @@ namespace WhiskWork.Web.UnitTest
 
         private XmlDocument GetDocument(WorkStep workStep)
         {
-            var htmlRenderer = new HtmlRenderer(_workStepRepository, _workItemRepository);
+            var htmlRenderer = new HtmlRenderer(_wp);
 
             var doc = new XmlDocument();
             using (var writeStream = new MemoryStream())

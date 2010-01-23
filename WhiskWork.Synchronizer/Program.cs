@@ -1,7 +1,12 @@
 ﻿#region
 
 using System;
+using System.Collections.Generic;
+using System.Net;
 using WhiskWork.Core.Synchronization;
+using System.Linq;
+using System.IO;
+using WhiskWork.Web;
 
 #endregion
 
@@ -9,6 +14,9 @@ namespace WhiskWork.Synchronizer
 {
     internal class Program
     {
+        private static bool _safeSynch;
+        private static bool _isDryRun;
+
         private static void Main(string[] args)
         {
 
@@ -18,22 +26,84 @@ namespace WhiskWork.Synchronizer
                 return;
             }
 
+            _safeSynch = IsSafeSynch(args);
+
+            if(_safeSynch)
+            {
+                Console.WriteLine("Running safe synch. eManager will not be updated");
+            }
+
+            _isDryRun = IsDryRun(args);
+            if (_isDryRun)
+            {
+                Console.WriteLine("Running dry run. No changes will be performed");
+            }
+
             var host = args[0];
             var eManagerSynchronizationAgent = CreateEManagerSynchronizationAgent(args);
 
-            SynchDev(eManagerSynchronizationAgent, host);
-            SynchAnalysis(eManagerSynchronizationAgent,host);
+            Synchronize(eManagerSynchronizationAgent, host);
         }
 
-        private static void SynchDev(EManagerSynchronizationAgent eManagerSynchronizationAgent, string host)
+        private static bool IsDryRun(IEnumerable<string> args)
         {
-            const string rootPath = "/cmsdev";
+            return args.Contains("-dryrun");
+        }
+
+        private static bool IsSafeSynch(IEnumerable<string> args)
+        {
+            return args.Contains("-safe");
+        }
+
+        private static EManagerSynchronizationAgent CreateEManagerSynchronizationAgent(string[] args)
+        {
+            var dominohost = args[1];
+            var login = args[2];
+            var password = args[3];
+
+            var eManagerSynchronizationAgent = new EManagerSynchronizationAgent(dominohost, login, password);
+            eManagerSynchronizationAgent.IsDryRun = _isDryRun; 
+
+            if (args.Length > 3)
+            {
+                for (int i = 3; i < args.Length; i++)
+                {
+                    var keyValue = args[i].Split(':');
+
+                    switch (keyValue[0].ToLowerInvariant())
+                    {
+                        case "-release":
+                            eManagerSynchronizationAgent.Release = keyValue[1].Split(',');
+                            break;
+                        case "-team":
+                            eManagerSynchronizationAgent.Team = keyValue[1].Split(',');
+                            break;
+                    }
+                }
+            }
+            return eManagerSynchronizationAgent;
+        }
+
+
+        private static void Synchronize(EManagerSynchronizationAgent eManagerSynchronizationAgent, string host)
+        {
+            const string rootPath = "/";
             const string beginStep = "/cmsdev/scheduled";
             var eManagerAgent = eManagerSynchronizationAgent;
 
             var whiskWorkAgent = new WhiskWorkSynchronizationAgent(host, rootPath, beginStep);
+            whiskWorkAgent.IsDryRun = _isDryRun;
 
-            var statusMap = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
+            SynchronizationMap statusMap = CreateMap(eManagerAgent, whiskWorkAgent);
+
+            SynchronizeExistence(eManagerAgent, whiskWorkAgent, statusMap);
+            SynchronizeProperties(eManagerAgent, whiskWorkAgent);
+            SynchronizeStatus(eManagerAgent, whiskWorkAgent, statusMap);
+        }
+
+        private static SynchronizationMap CreateMap(ISynchronizationAgent eManager, ISynchronizationAgent whiskWork)
+        {
+            var statusMap = new SynchronizationMap(eManager, whiskWork);
             statusMap.AddReciprocalEntry("0a - Scheduled for development", "/cmsdev/scheduled");
 
             statusMap.AddReciprocalEntry("2 - Development", "/cmsdev/analysis/inprocess");
@@ -52,47 +122,39 @@ namespace WhiskWork.Synchronizer
             statusMap.AddForwardEntry("5 - Approved (ready for deploy)", "/done");
             statusMap.AddForwardEntry("7 - Deployed to prod", "/done");
 
-            SynchronizeExistence(eManagerAgent, whiskWorkAgent, statusMap);
-
-            SynchronizeStatus(eManagerAgent, whiskWorkAgent, statusMap);
-
-            SynchronizeProperties(eManagerAgent, whiskWorkAgent);
+            statusMap.AddReciprocalEntry("0b - Scheduled for analysis", "/cmsanalysis/scheduled");
+            statusMap.AddReciprocalEntry("1 - Analysis", "/cmsanalysis/inprocess");
+            return statusMap;
         }
 
         private static void SynchronizeStatus(EManagerSynchronizationAgent eManagerAgent, WhiskWorkSynchronizationAgent whiskWorkAgent, SynchronizationMap statusMap)
         {
-            var statusSynchronizer = new StatusSynchronizer(statusMap, whiskWorkAgent, eManagerAgent);
-            Console.WriteLine("Synchronizing status whiteboard->eManager");
-            statusSynchronizer.Synchronize();
+            if(!_safeSynch)
+            {
+                var statusSynchronizer = new StatusSynchronizer(statusMap, whiskWorkAgent, eManagerAgent);
+                Console.WriteLine("Synchronizing status whiteboard->eManager");
+                statusSynchronizer.Synchronize();
+            }
+            else
+            {
+                Console.WriteLine("Synchronizing status whiteboard->eManager DISABLED!");
+            }
         }
 
         private static void SynchronizeExistence(EManagerSynchronizationAgent eManagerAgent, WhiskWorkSynchronizationAgent whiskWorkAgent, SynchronizationMap statusMap)
         {
             var creationSynchronizer = new CreationSynchronizer(statusMap, eManagerAgent, whiskWorkAgent);
             Console.WriteLine("Synchronizing existence (eManager->whiteboard)");
-            creationSynchronizer.Synchronize();
+
+            try
+            {
+                creationSynchronizer.Synchronize();
+            }
+            catch(WebException e)
+            {
+                Console.WriteLine(WebCommunication.ReadResponseToEnd(e.Response));
+            }
         }
-
-        private static void SynchAnalysis(EManagerSynchronizationAgent eManagerSynchronizationAgent, string host)
-        {
-            const string rootPath = "/cmsanalysis";
-            const string beginStep = "/cmsanalysis/scheduled";
-            var eManagerAgent = eManagerSynchronizationAgent;
-
-            var whiskWorkAgent = new WhiskWorkSynchronizationAgent(host, rootPath, beginStep);
-
-            var statusMap = new SynchronizationMap(eManagerAgent, whiskWorkAgent);
-            statusMap.AddReciprocalEntry("0b - Scheduled for analysis", "/cmsanalysis/scheduled");
-
-            statusMap.AddReciprocalEntry("1 - Analysis", "/cmsanalysis/inprocess");
-
-            SynchronizeExistence(eManagerAgent, whiskWorkAgent, statusMap);
-
-            SynchronizeStatus(eManagerAgent, whiskWorkAgent, statusMap);
-
-            SynchronizeProperties(eManagerAgent, whiskWorkAgent);
-        }
-
 
         private static void SynchronizeProperties(ISynchronizationAgent eManagerAgent, ISynchronizationAgent whiskWorkAgent)
         {
@@ -117,36 +179,16 @@ namespace WhiskWork.Synchronizer
             Console.WriteLine("Synchronizing properties eManager->whiteboard");
             propertySynchronizer.Synchronize();
 
-            Console.WriteLine("Synchronizing responsible whiteboard->eManager");
-            responsibleSynchronizer.Synchronize();
-        }
-
-        private static EManagerSynchronizationAgent CreateEManagerSynchronizationAgent(string[] args)
-        {
-            var dominohost = args[1];
-            var login = args[2];
-            var password = args[3];
-
-            var eManagerSynchronizationAgent = new EManagerSynchronizationAgent(dominohost, login, password);
-
-            if(args.Length>3)
+            if(!_safeSynch)
             {
-                for(int i=3;i<args.Length;i++)
-                {
-                    var keyValue = args[i].Split(':');
-
-                    switch(keyValue[0].ToLowerInvariant())
-                    {
-                        case "-release":
-                            eManagerSynchronizationAgent.Release = keyValue[1];
-                            break;
-                        case "-team":
-                            eManagerSynchronizationAgent.Team = keyValue[1].Split(',');
-                            break;
-                    }
-                }
+                Console.WriteLine("Synchronizing responsible whiteboard->eManager");
+                responsibleSynchronizer.Synchronize();
             }
-            return eManagerSynchronizationAgent;
+            else
+            {
+                Console.WriteLine("Synchronizing responsible whiteboard->eManager DISABLED!");
+            }
         }
+
     }
 }

@@ -67,9 +67,9 @@ namespace WhiskWork.Web.UnitTest.Properties {
         ///				Development
         ///			&lt;/h1&gt;&lt;ol&gt;&lt;li class=&quot;inprocess&quot;&gt;&lt;ol&gt;&lt;li class=&quot;transient&quot; [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string FullFeatureTest {
+        internal static string FullHtml {
             get {
-                return ResourceManager.GetString("FullFeatureTest", resourceCulture);
+                return ResourceManager.GetString("FullHtml", resourceCulture);
             }
         }
         

@@ -17,21 +17,17 @@ namespace WhiskWork.Core.UnitTest
         {
             _workStepRepository = new MemoryWorkStepRepository();
             _workItemRepository = new MemoryWorkItemRepository();
-            _wp = new Workflow(_workStepRepository, _workItemRepository);
+            _wp = new Workflow(new WorkflowRepository(_workItemRepository, _workStepRepository));
 
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal,
-                                    "task", "Tasks");
-            _workStepRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1,
-                                    WorkStepType.Begin, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/inprocess", "/development/inprocess/tasks", 2,
-                                    WorkStepType.Normal, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 3,
-                                    WorkStepType.End, "task");
-            _workStepRepository.Add("/development/done", "/development", 2, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/done", "/", 1, WorkStepType.End, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task").UpdateTitle("Tasks"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/inprocess").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/done").UpdateOrdinal(3).UpdateType(WorkStepType.End).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/done").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(1).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
         }
 
 
@@ -39,14 +35,14 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldNotCreateWorkItemInExpandStep()
         {
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () => _wp.Create("/development/inprocess","cr1"));
+                () => _wp.CreateWorkItem("/development/inprocess","cr1"));
         }
 
         [TestMethod]
         public void ShouldMoveToExpandStep()
         {
-            _wp.Create("/analysis","cr1");
-            _wp.Move("/development","cr1");
+            _wp.CreateWorkItem("/analysis","cr1");
+            _wp.MoveWorkItem("/development","cr1");
 
             Assert.AreEqual("/development/inprocess", _workItemRepository.GetWorkItem("cr1").Path);
         }
@@ -342,13 +338,13 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldNotDeleteChildItemsWhenWorkItemIsMovedOutOfTransientStep()
         {
-            _wp.Create("/analysis","cr1");
-            _wp.Move("/development","cr1");
+            _wp.CreateWorkItem("/analysis","cr1");
+            _wp.MoveWorkItem("/development","cr1");
 
-            _wp.Create("/development/inprocess/cr1","cr1-1");
-            _wp.Move("/development/inprocess/cr1/tasks/done", "cr1-1");
+            _wp.CreateWorkItem("/development/inprocess/cr1","cr1-1");
+            _wp.MoveWorkItem("/development/inprocess/cr1/tasks/done", "cr1-1");
 
-            _wp.Move("/done","cr1");
+            _wp.MoveWorkItem("/done","cr1");
 
             Assert.IsTrue(_wp.ExistsWorkItem("cr1-1"));
         }

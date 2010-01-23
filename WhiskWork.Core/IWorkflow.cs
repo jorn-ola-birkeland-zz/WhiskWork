@@ -1,15 +1,22 @@
-using System.Collections.Specialized;
-
 namespace WhiskWork.Core
 {
-    public interface IWorkflow
+    public interface IWorkflow : IReadableWorkflowRepository, IWriteableWorkflowRepository
     {
-        bool ExistsWorkItem(string workItemId);
-        bool ExistsWorkStep(string path);
-        void UpdateWorkItem(WorkItem workItem);
-        void CreateWorkStep(WorkStep workStep);
-        void CreateWorkItem(WorkItem workItem);
-        WorkItem GetWorkItem(string workItemId);
-        void DeleteWorkItem(string workItemId);
+        void MoveWorkStep(WorkStep movingWorkStep, WorkStep toStep);
+    }
+
+    public interface IWorkflowRepository : IReadableWorkflowRepository, IWriteableWorkflowRepository
+    {
+    }
+
+
+    public interface IReadableWorkflowRepository : IReadableWorkItemRepository, IReadableWorkStepRepository
+    {
+        
+    }
+
+    public interface IWriteableWorkflowRepository : IWriteableWorkItemRepository, IWriteableWorkStepRepository
+    {
+        
     }
 }

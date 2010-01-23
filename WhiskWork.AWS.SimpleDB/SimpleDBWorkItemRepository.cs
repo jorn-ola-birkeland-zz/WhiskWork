@@ -81,7 +81,7 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void UpdateWorkItem(WorkItem workItem)
         {
-            DeleteWorkItem(workItem);
+            DeleteWorkItem(workItem.Id);
             SendUpdateRequest(workItem);
         }
 
@@ -99,13 +99,27 @@ namespace WhiskWork.AWS.SimpleDB
             }
         }
 
-        public void DeleteWorkItem(WorkItem workItem)
+        public void DeleteWorkItem(string workItemId)
         {
-            var deleteAttributesRequest = new DeleteAttributesRequest {ItemName = workItem.Id, DomainName = _domain};
+            var deleteAttributesRequest = new DeleteAttributesRequest {ItemName = workItemId, DomainName = _domain};
             _client.DeleteAttributes(deleteAttributesRequest);
         }
 
         #endregion
+
+        private void EnsureDomain(string domain)
+        {
+            var listDomainsRequest = new ListDomainsRequest();
+            var listDomainsResponse = _client.ListDomains(listDomainsRequest);
+
+            if (listDomainsResponse.ListDomainsResult.DomainName.Contains(domain))
+            {
+                return;
+            }
+
+            var createDomainRequest = new CreateDomainRequest { DomainName = domain };
+            _client.CreateDomain(createDomainRequest);
+        }
 
         private void SendUpdateRequest(WorkItem workItem)
         {
@@ -131,26 +145,22 @@ namespace WhiskWork.AWS.SimpleDB
                 attributes.Add(new ReplaceableAttribute {Name = "Classes", Value = workItemClass});
             }
 
+            if(workItem.Timestamp.HasValue)
+            {
+                attributes.Add(new ReplaceableAttribute { Name = "Timestamp", Value = XmlConvert.ToString(workItem.Timestamp.Value,XmlDateTimeSerializationMode.RoundtripKind) });
+            }
+
+            if (workItem.LastMoved.HasValue)
+            {
+                attributes.Add(new ReplaceableAttribute { Name = "LastMoved", Value = XmlConvert.ToString(workItem.LastMoved.Value, XmlDateTimeSerializationMode.RoundtripKind) });
+            }
+
             foreach (var keyValue in workItem.Properties)
             {
                 attributes.Add(new ReplaceableAttribute {Name = keyValue.Key, Value = keyValue.Value});
             }
 
             _client.PutAttributes(putAttributeRequest);
-        }
-
-        private void EnsureDomain(string domain)
-        {
-            var listDomainsRequest = new ListDomainsRequest();
-            var listDomainsResponse = _client.ListDomains(listDomainsRequest);
-
-            if (listDomainsResponse.ListDomainsResult.DomainName.Contains(domain))
-            {
-                return;
-            }
-
-            var createDomainRequest = new CreateDomainRequest {DomainName = domain};
-            _client.CreateDomain(createDomainRequest);
         }
 
         private static WorkItem GenerateWorkItem(string id, IEnumerable<Attribute> attributes)
@@ -191,7 +201,14 @@ namespace WhiskWork.AWS.SimpleDB
                             item = item.UpdateParent(parentId, parentType.Value);
                         }
                         break;
-
+                    case "Timestamp":
+                        item = item.UpdateTimestamp(XmlConvert.ToDateTime(attribute.Value,
+                                                                         XmlDateTimeSerializationMode.RoundtripKind));
+                        break;
+                    case "LastMoved":
+                        item = item.UpdateLastMoved(XmlConvert.ToDateTime(attribute.Value,
+                                                                         XmlDateTimeSerializationMode.RoundtripKind));
+                        break;
                     default:
                         item = item.UpdateProperty(attribute.Name, attribute.Value);
                         break;

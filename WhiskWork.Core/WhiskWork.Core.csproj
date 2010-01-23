@@ -45,19 +45,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ITimeSource.cs" />
+    <Compile Include="Logging\LogOperationType.cs" />
+    <Compile Include="Logging\MemoryWorkflowLog.cs" />
+    <Compile Include="Logging\WorkItemLogEntry.cs" />
+    <Compile Include="Logging\WorkStepLogEntry.cs" />
+    <Compile Include="WipLimitChecker.cs" />
     <Compile Include="WorkflowPath.cs" />
+    <Compile Include="WorkflowRepository.cs" />
     <Compile Include="WorkItemCreator.cs" />
     <Compile Include="WorkItemMover.cs" />
     <Compile Include="WorkItemProperties.cs" />
     <Compile Include="WorkItemRemover.cs" />
-    <Compile Include="WorkItemRepositoryExtension.cs" />
-    <Compile Include="WorkStepRepositoryExtensions.cs" />
-    <Compile Include="FileWorkflowLogger.cs" />
+    <Compile Include="WorkflowRepositoryExtensions.cs" />
+    <Compile Include="Logging\FileWorkflowLog.cs" />
     <Compile Include="IWorkflow.cs" />
     <Compile Include="IWorkStepRepository.cs" />
-    <Compile Include="IWorkflowLogger.cs" />
+    <Compile Include="IWorkflowLog.cs" />
     <Compile Include="IWorkItemRepository.cs" />
-    <Compile Include="WorkflowLogger.cs" />
+    <Compile Include="Logging\WorkflowLogger.cs" />
     <Compile Include="MemoryWorkStepRepository.cs" />
     <Compile Include="MemoryWorkItemRepository.cs" />
     <Compile Include="ParallelStepHelper.cs" />
@@ -74,7 +80,10 @@
     <Compile Include="Workflow.cs" />
     <Compile Include="WorkItemTransition.cs" />
     <Compile Include="WorkStep.cs" />
+    <Compile Include="WorkStepCreator.cs" />
+    <Compile Include="WorkStepMover.cs" />
     <Compile Include="WorkStepType.cs" />
+    <Compile Include="WorkStepUpdater.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">

@@ -34,8 +34,6 @@ namespace WhiskWork.Web
 
         private WorkflowHttpResponse RespondToPost(WorkflowHttpRequest request)
         {
-            Console.WriteLine(request.RawUrl);
-
             IRequestMessageParser parser;
             if (!RequestMessageParserFactory.TryCreateParser(request.ContentType, out parser))
             {
@@ -78,8 +76,7 @@ namespace WhiskWork.Web
             }
             catch (Exception e)
             {
-                Console.WriteLine("Render failed " + e);
-                return WorkflowHttpResponse.InternalServerError;
+                return WorkflowHttpResponse.InternalServerError(e);
             }
         }
 
@@ -113,8 +110,7 @@ namespace WhiskWork.Web
             }
             catch (Exception e)
             {
-                Console.WriteLine("Delete failed " + e.Message);
-                return WorkflowHttpResponse.Forbidden;
+                return WorkflowHttpResponse.Forbidden(e);
             }
 
             return WorkflowHttpResponse.Ok;

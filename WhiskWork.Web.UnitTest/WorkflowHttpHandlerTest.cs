@@ -45,7 +45,7 @@ namespace WhiskWork.Web.UnitTest
         {
             using (_mocks.Record())
             {
-                _workflow.CreateWorkStep(new WorkStep("/analysis/inprocess", "/analysis", 0, WorkStepType.Normal, "cr"));
+                _workflow.CreateWorkStep(WorkStep.New("/analysis/inprocess").UpdateWorkItemClass("cr"));
             }
             using (_mocks.Playback())
             {
@@ -217,12 +217,12 @@ namespace WhiskWork.Web.UnitTest
         {
             using (_mocks.Record())
             {
-                _workflow.CreateWorkStep(new WorkStep("/scheduled", "/", 0, WorkStepType.Normal, "cr", null));
+                _workflow.CreateWorkStep(WorkStep.New("/scheduled").UpdateWorkItemClass("cr"));
                 LastCall.Throw(exception);
             }
             using (_mocks.Playback())
             {
-                var request = CreateCsvPostRequest("/", "step=/scheduled,class=cr");
+                var request = CreateCsvPostRequest("/", "step=scheduled,class=cr");
                 Assert.AreEqual(httpStatusCode, _httpHandler.HandleRequest(request).HttpStatusCode);
             }
         }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using Abb.One.MicroWebServer;
 using WhiskWork.Core;
+using WhiskWork.Core.Logging;
 using WhiskWork.IO;
 using WhiskWork.Web;
 
@@ -14,19 +15,19 @@ namespace WhiskWork.CommondLineWebServer
         private readonly string _rootFileDirectory;
         private readonly WorkflowHttpHandler _workflowHandler;
 
-        public WebRouter(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository, string webDirectory, string logFilePath)
+        public WebRouter(IWorkflowRepository workflowRepository, string webDirectory, string logFilePath)
         {
             _rootFileDirectory = webDirectory;
 
 
-            IWorkflow workflow = new Workflow(workStepRepository, workItemRepository);
+            IWorkflow workflow = new Workflow(workflowRepository);
             if (!string.IsNullOrEmpty(logFilePath))
             {
-                var logger = new FileWorkflowLogger(logFilePath);
+                var logger = new FileWorkflowLog(logFilePath);
                 workflow = new WorkflowLogger(logger, workflow);
             }
 
-            var rendererFactory = new HtmlWorkStepRendererFactory(workItemRepository,workStepRepository);
+            var rendererFactory = new HtmlWorkStepRendererFactory(workflow);
             _workflowHandler = new WorkflowHttpHandler(workflow, rendererFactory);
         }
 

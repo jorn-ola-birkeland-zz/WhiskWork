@@ -8,20 +8,14 @@ namespace WhiskWork.Generic
     {
         public static string Join(this IEnumerable<string> values, char separator)
         {
-            var sb = new StringBuilder();
-            var isFirst = true;
-            foreach (var s in values)
+            if(values.Count()==0)
             {
-                if(!isFirst)
-                {
-                    sb.Append(separator);
-                }
-                sb.Append(s);
-
-                isFirst = false;
+                return string.Empty;
             }
 
-            return sb.ToString();
+            var sep = new string(new[] {separator });
+
+            return values.Aggregate((current, next) => current + sep + next);
         }
 
         public static bool SetEquals<T>(this IEnumerable<T> values, params T[] set)

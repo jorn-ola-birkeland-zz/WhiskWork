@@ -49,9 +49,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsynchCachingWorkItemRepository.cs" />
+    <Compile Include="CachingWorkItemRepository.cs" />
     <Compile Include="CachingWorkStepRepository.cs" />
+    <Compile Include="OptimisticAsynchWorkItemRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReadPassThroughWorkItemRepositoryProxy.cs" />
     <Compile Include="SimpleDBWorkItemRepository.cs" />
     <Compile Include="SimpleDBWorkStepRepository.cs" />
   </ItemGroup>

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Specialized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using WhiskWork.Generic;
 using WhiskWork.Test.Common;
+using Rhino.Mocks;
 
 namespace WhiskWork.Core.UnitTest
 {
@@ -18,36 +18,34 @@ namespace WhiskWork.Core.UnitTest
         {
             _workStepRepository = new MemoryWorkStepRepository();
             _workItemRepository = new MemoryWorkItemRepository();
-            _wp = new Workflow(_workStepRepository, _workItemRepository);
+            _wp = new Workflow(new WorkflowRepository(_workItemRepository, _workStepRepository));
         }
 
         [TestMethod]
         public void ShouldCreateWorkItemInBeginStep()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
 
-            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             Assert.AreEqual("/analysis", _workItemRepository.GetWorkItem("cr1").Path);
         }
 
         [TestMethod]
         public void ShouldNotCreateWorkItemInNormalStep()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () =>
-                    {
-                        _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-                    });
+                () => _wp.CreateWorkItem(WorkItem.New("cr1", "/development")));
         }
+
 
         [TestMethod]
         public void ShouldCreateWorkItemWithSingleProperty()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" } }));
             var workItem = _wp.GetWorkItem("cr1");
@@ -59,7 +57,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldCreateWorkItemWithTwoProperties()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developers", "A, B" } }));
             var workItem = _wp.GetWorkItem("cr1");
@@ -72,7 +70,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdateOneOfTwoProperties()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "B" } }));
@@ -86,7 +84,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldRemovePropertyIfValueIsEmpty()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "Developer", "" } }));
@@ -100,8 +98,8 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMoveAndUpdateOneOfTwoProperties()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/development", new NameValueCollection { { "Developer", "B" } }));
@@ -116,9 +114,9 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdatePropertyOfWorkItemInExpandStep()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/development/inprocess"));
@@ -130,7 +128,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldSetSequentialOrdinalWhenCreatingWorkItemWithoutOrdinal()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/analysis"));
@@ -144,7 +142,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldCreateWorkItemWithOrdinalsProvided()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/development").UpdateOrdinal(3));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/development").UpdateOrdinal(2));
@@ -158,7 +156,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdateWorkItemOrdinalWhenNotMoving()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/analysis",new NameValueCollection { { "Name", "CR1" }, { "Developer", "A" } }));
             _wp.UpdateWorkItem(WorkItem.New("cr1","/analysis").UpdateOrdinal(3));
@@ -168,10 +166,10 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldPreserveOrdinalWhenMoving()
+        public void ShouldPreserveOrdinalWhenMovingWorkItem()
         {
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis").UpdateOrdinal(3));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/analysis").UpdateOrdinal(4));
@@ -179,6 +177,156 @@ namespace WhiskWork.Core.UnitTest
 
             Assert.AreEqual(3, _wp.GetWorkItem("cr1").Ordinal);
             Assert.AreEqual(4, _wp.GetWorkItem("cr2").Ordinal);
+        }
+
+        [TestMethod] 
+        public void ShouldSetTimestampWhenCreatingWorkItem()
+        {
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+
+            }
+
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(expectedTime, workItem.Timestamp);
+
+        }
+
+        [TestMethod]
+        public void ShouldOverrideTimestampWhenCreatingWorkItem()
+        {
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis").UpdateTimestamp(expectedTime.AddDays(1)));
+
+            }
+
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(expectedTime, workItem.Timestamp);
+
+        }
+
+
+        [TestMethod]
+        public void ShouldSetTimestampWhenUpdatingWorkItem()
+        {
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis"));
+                var workItem = _wp.GetWorkItem("cr1");
+                Assert.AreEqual(expectedTime, workItem.Timestamp);
+            }
+        }
+
+        [TestMethod]
+        public void ShouldSetLastMovedWhenMovingWorkItem()
+        {
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
+                var workItem = _wp.GetWorkItem("cr1");
+                Assert.AreEqual(expectedTime, workItem.LastMoved);
+            }
+            
+        }
+
+        [TestMethod]
+        public void ShouldNotSetLastMovedWhenUpdatingWorkItem()
+        {
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis").UpdateProperty("name","value"));
+                var workItem = _wp.GetWorkItem("cr1");
+                Assert.AreEqual(null, workItem.LastMoved);
+            }
+        }
+
+
+        [TestMethod]
+        public void ShouldThrowExceptionWhenUpdatingIfTimeStampIsSetAndDiffersFromLastTimeStamp()
+        {
+            var mocks = new MockRepository();
+            var createTime = DateTime.Now;
+
+            _wp.MockTime(mocks, createTime);
+
+            using (mocks.Playback())
+            {
+                _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+            }
+
+            AssertUtils.AssertThrows<InvalidOperationException>(
+                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis").UpdateTimestamp(createTime.AddMilliseconds(1)))
+                );
+        }
+
+        [TestMethod]
+        public void ShouldUpdateWorkItemIfTimeStampIsSetAndEqualToLastTimeStamp()
+        {
+            var mocks = new MockRepository();
+            var createTime = DateTime.Now;
+
+            _wp.MockTime(mocks, createTime);
+
+            using (mocks.Playback())
+            {
+                _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+            }
+
+            var updateTime = createTime.AddMilliseconds(1);
+            _wp.MockTime(mocks, updateTime);
+
+            using (mocks.Playback())
+            {
+                _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis").UpdateTimestamp(createTime));
+            }
+
+            var workItem = _wp.GetWorkItem("cr1");
+            Assert.AreEqual(updateTime,workItem.Timestamp);
         }
 
 

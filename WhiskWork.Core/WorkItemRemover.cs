@@ -5,25 +5,25 @@ namespace WhiskWork.Core
 {
     internal class WorkItemRemover : WorkflowRepositoryInteraction
     {
-        public WorkItemRemover(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository) : base(workStepRepository, workItemRepository)
+        public WorkItemRemover(IWorkflowRepository workflow) : base(workflow)
         {
         }
 
         public void CleanUpIfInExpandStep(WorkItem workItemToMove)
         {
             WorkStep expandStep;
-            if (WorkStepRepository.IsInExpandStep(workItemToMove, out expandStep))
+            if (WorkflowRepository.IsInExpandStep(workItemToMove, out expandStep))
             {
                 var transientStepPath = ExpandedWorkStep.GetTransientPath(expandStep, workItemToMove);
-                var transientStep = WorkStepRepository.GetWorkStep(transientStepPath);
-                
-                WorkStepRepository.DeleteWorkStepsRecursively(transientStep);
+                var transientStep = WorkflowRepository.GetWorkStep(transientStepPath);
+
+                WorkflowRepository.DeleteWorkStepsRecursively(transientStep);
             }
         }
 
         public void DeleteWorkItem(string id)
         {
-            var workItem = WorkItemRepository.GetWorkItem(id);
+            var workItem = WorkflowRepository.GetWorkItem(id);
 
             ThrowInvalidOperationExceptionIfParentIsParallelLocked(workItem);
 
@@ -34,7 +34,7 @@ namespace WhiskWork.Core
         {
             if (workItem.Parent != null)
             {
-                var parent = WorkItemRepository.GetWorkItem(workItem.Parent.Id);
+                var parent = WorkflowRepository.GetWorkItem(workItem.Parent.Id);
                 if (parent.Status == WorkItemStatus.ParallelLocked)
                 {
                     throw new InvalidOperationException("Cannot delete workitem which is child of paralleled workitem");
@@ -44,8 +44,8 @@ namespace WhiskWork.Core
 
         private void DeleteWorkItemRecursively(WorkItem workItem)
         {
-            var expandedChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Expanded));
-            var parallelChildWorkItems = WorkItemRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Parallelled));
+            var expandedChildWorkItems = WorkflowRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Expanded));
+            var parallelChildWorkItems = WorkflowRepository.GetChildWorkItems(workItem.AsParent(WorkItemParentType.Parallelled));
 
             var childWorkItems = expandedChildWorkItems.Concat(parallelChildWorkItems);
 
@@ -58,7 +58,7 @@ namespace WhiskWork.Core
             }
 
 
-            WorkItemRepository.DeleteWorkItem(workItem);
+            WorkflowRepository.DeleteWorkItem(workItem.Id);
             CleanUpIfInExpandStep(workItem);
         }
 

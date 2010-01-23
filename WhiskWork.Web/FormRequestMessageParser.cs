@@ -8,8 +8,6 @@ namespace WhiskWork.Web
     {
         protected override Dictionary<string, string> GetKeyValueMap(string content)
         {
-            Console.WriteLine(content);
-
             var values = new Dictionary<string, string>();
             foreach (var property in content.Split('&'))
             {

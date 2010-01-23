@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Generic;
@@ -13,28 +12,30 @@ namespace WhiskWork.Core.UnitTest
         private MemoryWorkStepRepository _workStepRepository;
         private MemoryWorkItemRepository _workItemRepository;
         private Workflow _wp;
+        private WorkflowRepository _workflowRepository;
 
         [TestInitialize]
         public void Init()
         {
             _workStepRepository = new MemoryWorkStepRepository();
             _workItemRepository = new MemoryWorkItemRepository();
-            _wp = new Workflow(_workStepRepository, _workItemRepository);
+            _workflowRepository = new WorkflowRepository(_workItemRepository, _workStepRepository);
+            _wp = new Workflow(_workflowRepository);
         }
 
         [TestMethod]
         public void ShouldGetAllSubsteps()
         {
-            _workStepRepository.Add("/feedback", "/", 1, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr");
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(1).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
             Assert.AreEqual(2, _workStepRepository.GetChildWorkSteps("/feedback").Count());
         }
 
         [TestMethod]
         public void ShouldFindSingleWorkItemAddedToAStep()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
 
             WorkItem item = _workItemRepository.GetWorkItem("cr1");
@@ -59,16 +60,16 @@ namespace WhiskWork.Core.UnitTest
             CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            WorkItem item = _workItemRepository.GetWorkItem("cr1");
+            var item = _workItemRepository.GetWorkItem("cr1");
 
-            var parallelStepHelper = new ParallelStepHelper(_workStepRepository);
+            var parallelStepHelper = new ParallelStepHelper(_workflowRepository);
 
-            WorkStep feedbackStep = _workStepRepository.GetWorkStep("/feedback");
+            var feedbackStep = _workStepRepository.GetWorkStep("/feedback");
 
-            IEnumerable<WorkItem> newWorkItems = parallelStepHelper.SplitForParallelism(item, feedbackStep);
+            var newWorkItems = parallelStepHelper.SplitForParallelism(item, feedbackStep);
 
-            WorkItem reviewWorkItem = newWorkItems.ElementAt(0);
-            WorkItem testWorkItem = newWorkItems.ElementAt(1);
+            var reviewWorkItem = newWorkItems.ElementAt(0);
+            var testWorkItem = newWorkItems.ElementAt(1);
 
             Assert.IsNotNull(reviewWorkItem);
             Assert.AreEqual("/development", reviewWorkItem.Path);
@@ -112,18 +113,6 @@ namespace WhiskWork.Core.UnitTest
             Assert.IsFalse(_wp.ExistsWorkItem("cr1-test"));
         }
 
-
-        [TestMethod]
-        public void ShouldNotListParallelLockedWorkItem()
-        {
-            CreateSimpleParallelWorkflow();
-
-            _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
-            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
-
-            Assert.AreEqual(0, _wp.GetWorkItems("/feedback").Where(wi => wi.Id == "cr1").Count());
-        }
-
         [TestMethod]
         public void ShouldNotBeAbleToMoveParallelLockedWorkItem()
         {
@@ -133,7 +122,21 @@ namespace WhiskWork.Core.UnitTest
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
 
             AssertUtils.AssertThrows<InvalidOperationException>(
-                () => _wp.UpdateWorkItem(WorkItem.New("cr1", "/done")));
+                () => _wp.MoveWorkItem("/done","cr1"));
+        }
+
+        [TestMethod]
+        public void ShouldUpdateParallelLockedWorkItem()
+        {
+            CreateSimpleParallelWorkflow();
+
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/development"));
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
+
+            _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback").UpdateProperty("Test", "test"));
+
+            Assert.AreEqual("test", _wp.GetWorkItems("/feedback").Where(wi => wi.Id == "cr1").Single().Properties["Test"]);
+            
         }
 
 
@@ -202,13 +205,13 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateSimpleParallelWorkflow();
 
-            _wp.Create("/development", "cr1");
-            _wp.Move("/feedback", "cr1");
+            _wp.CreateWorkItem("/development", "cr1");
+            _wp.MoveWorkItem("/feedback", "cr1");
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Where(wi => wi.Id == "cr1-test").Count());
 
-            _wp.Move("/done", "cr1-test", "cr1-review");
+            _wp.MoveWorkItem("/done", "cr1-test", "cr1-review");
 
             Assert.AreEqual(1, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/done").Where(wi => wi.Id == "cr1-review").Count());
@@ -220,13 +223,13 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateParallelWorkflowWithExpandStep();
 
-            _wp.Create("/scheduled","cr1");
-            _wp.Move("/feedback","cr1");
+            _wp.CreateWorkItem("/scheduled","cr1");
+            _wp.MoveWorkItem("/feedback","cr1");
 
             Assert.AreEqual(1, _wp.GetWorkItems("/feedback/review").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(1, _wp.GetWorkItems("/scheduled").Where(wi => wi.Id == "cr1-test").Count());
 
-            _wp.Move("/development/inprocess", "cr1-test","cr1-review");
+            _wp.MoveWorkItem("/development/inprocess", "cr1-test","cr1-review");
 
             Assert.AreEqual(0, _wp.GetWorkItems("/development/inprocess").Where(wi => wi.Id == "cr1-review").Count());
             Assert.AreEqual(0, _wp.GetWorkItems("/development/inprocess").Where(wi => wi.Id == "cr1-test").Count());
@@ -238,14 +241,14 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateParallelWorkflowWithExpandStep();
 
-            _wp.Create("/scheduled", "cr1");
-            _wp.Move("/feedback", "cr1");
+            _wp.CreateWorkItem("/scheduled", "cr1");
+            _wp.MoveWorkItem("/feedback", "cr1");
 
-            _wp.Move("/development/inprocess", "cr1-test");
+            _wp.MoveWorkItem("/development/inprocess", "cr1-test");
 
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test/tasks"));
 
-            _wp.Move("/development/inprocess", "cr1-review");
+            _wp.MoveWorkItem("/development/inprocess", "cr1-review");
 
             Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1-test/tasks"));
         }
@@ -255,14 +258,14 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateParallelWorkflowWithExpandStep();
 
-            _wp.Create("/scheduled", "cr1");
-            _wp.Move("/feedback", "cr1");
+            _wp.CreateWorkItem("/scheduled", "cr1");
+            _wp.MoveWorkItem("/feedback", "cr1");
 
             Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1/tasks"));
-            _wp.Move("/development/inprocess", "cr1-test");
+            _wp.MoveWorkItem("/development/inprocess", "cr1-test");
 
             Assert.IsFalse(_wp.ExistsWorkStep("/development/inprocess/cr1/tasks"));
-            _wp.Move("/development/inprocess", "cr1-review");
+            _wp.MoveWorkItem("/development/inprocess", "cr1-review");
 
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1/tasks"));
         }
@@ -296,11 +299,11 @@ namespace WhiskWork.Core.UnitTest
         {
             CreateParallelWorkflowWithExpandStep();
 
-            _wp.Create("/scheduled", "cr1");
-            _wp.Move("/development","cr1");
+            _wp.CreateWorkItem("/scheduled", "cr1");
+            _wp.MoveWorkItem("/development","cr1");
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1/tasks"));
 
-            _wp.Move("/feedback/review","cr1");
+            _wp.MoveWorkItem("/feedback/review","cr1");
 
             Assert.AreEqual("/feedback",_wp.GetWorkItem("cr1").Path);
             Assert.IsTrue(_wp.ExistsWorkStep("/development/inprocess/cr1-test/tasks"));
@@ -353,14 +356,14 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMoveToLeafStepUnderParallelStep()
         {
-            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
-            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
-            _workStepRepository.Add("/implementation/dev/coding", "/implementation/dev", 1, WorkStepType.Normal, "cr-dev");
+            _workStepRepository.Add(WorkStep.New("/planned").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev"));
+            _workStepRepository.Add(WorkStep.New("/implementation/doc").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-doc"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev/coding").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev"));
 
-            _wp.Create("/planned", "cr1");
-            _wp.Move("/implementation", "cr1");
+            _wp.CreateWorkItem("/planned", "cr1");
+            _wp.MoveWorkItem("/implementation", "cr1");
 
             Assert.AreEqual("/implementation/dev/coding",_wp.GetWorkItem("cr1-dev").Path);
         }
@@ -368,23 +371,23 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldHandleNestedParallelSteps()
         {
-            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
-            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
-            _workStepRepository.Add("/implementation/dev/coding", "/implementation/dev", 1, WorkStepType.Normal, "cr-dev");
-            _workStepRepository.Add("/implementation/dev/feedback", "/implementation/dev", 2, WorkStepType.Parallel, "cr-dev");
-            _workStepRepository.Add("/implementation/dev/feedback/review", "/implementation/dev/feedback", 1, WorkStepType.Normal, "cr-dev-review");
-            _workStepRepository.Add("/implementation/dev/feedback/test", "/implementation/dev/feedback", 2, WorkStepType.Normal, "cr-dev-test");
-            _workStepRepository.Add("/done", "/", 3, WorkStepType.End, "cr");
+            _workStepRepository.Add(WorkStep.New("/planned").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev"));
+            _workStepRepository.Add(WorkStep.New("/implementation/doc").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-doc"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev/coding").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr-dev"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev-review"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev-test"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(3).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
 
-            _wp.Create("/planned","cr1");
-            _wp.Move("/implementation","cr1");
+            _wp.CreateWorkItem("/planned","cr1");
+            _wp.MoveWorkItem("/implementation","cr1");
 
             Assert.AreEqual("/planned",_wp.GetWorkItem("cr1-doc").Path);
             Assert.AreEqual("/implementation/dev/coding", _wp.GetWorkItem("cr1-dev").Path);
 
-            _wp.Move("/implementation/dev/feedback", "cr1-dev");
+            _wp.MoveWorkItem("/implementation/dev/feedback", "cr1-dev");
             Assert.AreEqual("/implementation/dev/coding", _wp.GetWorkItem("cr1-dev-test").Path);
             Assert.AreEqual("/implementation/dev/feedback/review", _wp.GetWorkItem("cr1-dev-review").Path);
         }
@@ -392,21 +395,21 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep()
         {
-            _workStepRepository.Add("/planned", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/implementation", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/implementation/dev", "/implementation", 1, WorkStepType.Normal, "cr-dev");
-            _workStepRepository.Add("/implementation/doc", "/implementation", 2, WorkStepType.Normal, "cr-doc");
-            _workStepRepository.Add("/feedback", "/", 3, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
+            _workStepRepository.Add(WorkStep.New("/planned").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/implementation/dev").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-dev"));
+            _workStepRepository.Add(WorkStep.New("/implementation/doc").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-doc"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(3).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
 
-            _wp.Create("/planned", "cr1");
-            _wp.Move("/implementation", "cr1");
+            _wp.CreateWorkItem("/planned", "cr1");
+            _wp.MoveWorkItem("/implementation", "cr1");
 
             Assert.AreEqual("/planned", _wp.GetWorkItem("cr1-doc").Path);
             Assert.AreEqual("/implementation/dev", _wp.GetWorkItem("cr1-dev").Path);
 
-            _wp.Move("/feedback", "cr1-dev");
+            _wp.MoveWorkItem("/feedback", "cr1-dev");
 
             Assert.AreEqual("/implementation/dev", _wp.GetWorkItem("cr1-dev-test").Path);
             Assert.AreEqual("/feedback/review", _wp.GetWorkItem("cr1-dev-review").Path);
@@ -417,7 +420,7 @@ namespace WhiskWork.Core.UnitTest
         public void ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStepAndMergeUponReturn()
         {
             ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep();
-            _wp.Move("/implementation/dev", "cr1-dev-review");
+            _wp.MoveWorkItem("/implementation/dev", "cr1-dev-review");
 
             Assert.IsFalse(_wp.ExistsWorkItem("cr1-dev-review"));
             Assert.IsFalse(_wp.ExistsWorkItem("cr1-dev-test"));
@@ -430,40 +433,38 @@ namespace WhiskWork.Core.UnitTest
         {
             ShouldMoveChildOfParallelledWorkItemToSubsequentParallelStep();
 
-            _wp.Move("/implementation/doc", "cr1-dev-review");
+            _wp.MoveWorkItem("/implementation/doc", "cr1-dev-review");
             Assert.AreEqual("/implementation/doc", _wp.GetWorkItem("cr1-dev-review-doc").Path);
         }
+
+
         
         private void CreateSimpleParallelWorkflow()
         {
-            _workStepRepository.Add("/development", "/", 1, WorkStepType.Begin, "cr");
-            _workStepRepository.Add("/feedback", "/", 2, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test");
-            _workStepRepository.Add("/done", "/", 2, WorkStepType.End, "cr");
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(2).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
         }
 
         private void CreateParallelWorkflowWithExpandStep()
         {
-            _workStepRepository.Add("/scheduled", "/", 1, WorkStepType.Begin, "cr", "Scheduled");
-            _workStepRepository.Add("/analysis", "/", 1, WorkStepType.Normal, "cr", "Analysis");
-            _workStepRepository.Add("/analysis/inprocess", "/analysis", 1, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/analysis/done", "/analysis", 1, WorkStepType.Normal, "cr");
-            _workStepRepository.Add("/development", "/", 2, WorkStepType.Begin, "cr", "Development");
-            _workStepRepository.Add("/development/inprocess", "/development", 1, WorkStepType.Expand, "cr");
-            _workStepRepository.Add("/development/inprocess/tasks", "/development/inprocess", 1, WorkStepType.Normal,
-                                    "task", "Tasks");
-            _workStepRepository.Add("/development/inprocess/tasks/new", "/development/inprocess/tasks", 1,
-                                    WorkStepType.Begin, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/inprocess", "/development/inprocess/tasks", 1,
-                                    WorkStepType.Normal, "task");
-            _workStepRepository.Add("/development/inprocess/tasks/done", "/development/inprocess/tasks", 1,
-                                    WorkStepType.End, "task");
-            _workStepRepository.Add("/development/done", "/development", 2, WorkStepType.End, "cr");
-            _workStepRepository.Add("/feedback", "/", 3, WorkStepType.Parallel, "cr");
-            _workStepRepository.Add("/feedback/review", "/feedback", 1, WorkStepType.Normal, "cr-review", "Review");
-            _workStepRepository.Add("/feedback/test", "/feedback", 2, WorkStepType.Normal, "cr-test", "Test");
-            _workStepRepository.Add("/done", "/", 4, WorkStepType.End, "cr", "Done");
+            _workStepRepository.Add(WorkStep.New("/scheduled").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Scheduled"));
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr").UpdateTitle("Analysis"));
+            _workStepRepository.Add(WorkStep.New("/analysis/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/analysis/done").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr").UpdateTitle("Development"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task").UpdateTitle("Tasks"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/inprocess/tasks/done").UpdateOrdinal(1).UpdateType(WorkStepType.End).UpdateWorkItemClass("task"));
+            _workStepRepository.Add(WorkStep.New("/development/done").UpdateOrdinal(2).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(3).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review").UpdateTitle("Review"));
+            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test").UpdateTitle("Test"));
+            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(4).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr").UpdateTitle("Done"));
         }
     }
 }   

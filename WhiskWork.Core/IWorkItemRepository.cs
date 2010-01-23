@@ -2,15 +2,23 @@ using System.Collections.Generic;
 
 namespace WhiskWork.Core
 {
-    public interface IWorkItemRepository
+    public interface IReadableWorkItemRepository
     {
         bool ExistsWorkItem(string id);
         WorkItem GetWorkItem(string id);
-        void CreateWorkItem(WorkItem workItem);
         IEnumerable<WorkItem> GetWorkItems(string path);
-        void UpdateWorkItem(WorkItem workItem);
         IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent);
-        void DeleteWorkItem(WorkItem workItem);
+    }
+
+    public interface IWriteableWorkItemRepository
+    {
+        void CreateWorkItem(WorkItem workItem);
+        void UpdateWorkItem(WorkItem workItem);
+        void DeleteWorkItem(string workItemId);
+    }
+
+    public interface IWorkItemRepository : IReadableWorkItemRepository, IWriteableWorkItemRepository
+    {
     }
 
     public interface  ICacheableWorkItemRepository : IWorkItemRepository

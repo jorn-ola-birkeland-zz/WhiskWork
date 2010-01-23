@@ -1,88 +1,147 @@
+#region
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
+
+#endregion
 
 namespace WhiskWork.Core
 {
     public class Workflow : WorkflowRepositoryInteraction, IWorkflow
     {
-        public Workflow(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository) : base(workStepRepository, workItemRepository)
+        public Workflow(IWorkflowRepository workflowRepository) : base(workflowRepository)
         {
+            TimeSource = new DefaultTimeSource();
         }
+
+        public ITimeSource TimeSource { get; set; }
+
+        #region IWorkflow Members
 
         public IEnumerable<WorkItem> GetWorkItems(string path)
         {
-            return WorkItemRepository.GetWorkItems(path).Where(wi => wi.Status != WorkItemStatus.ParallelLocked);
+            return WorkflowRepository.GetWorkItems(path);
         }
 
         public void CreateWorkItem(WorkItem newWorkItem)
         {
-            var creator = new WorkItemCreator(WorkStepRepository, WorkItemRepository);
+            var creator = new WorkItemCreator(WorkflowRepository);
 
-            creator.CreateWorkItem(newWorkItem);
+            creator.CreateWorkItem(newWorkItem.UpdateTimestamp(TimeSource.GetTime()));
         }
 
         public void UpdateWorkItem(WorkItem changedWorkItem)
         {
             var currentWorkItem = GetWorkItemOrThrow(changedWorkItem.Id);
 
-            currentWorkItem = currentWorkItem.UpdatePropertiesAndOrdinalFrom(changedWorkItem);
+            ThrowIfConflictingTimestamp(currentWorkItem, changedWorkItem);
 
-            var leafStep = WorkStepRepository.GetLeafStep(changedWorkItem.Path);
+            currentWorkItem =
+                currentWorkItem.UpdatePropertiesAndOrdinalFrom(changedWorkItem).UpdateTimestamp(TimeSource.GetTime());
 
-            if (currentWorkItem.Path != leafStep.Path)
+            var leafStep = WorkflowRepository.GetLeafStep(changedWorkItem.Path);
+
+            if (changedWorkItem.Path == currentWorkItem.Path || currentWorkItem.Path == leafStep.Path)
             {
-                var mover = new WorkItemMover(WorkStepRepository, WorkItemRepository);
-                mover.MoveWorkItem(currentWorkItem, leafStep);
+                WorkflowRepository.UpdateWorkItem(currentWorkItem);
             }
             else
             {
-                WorkItemRepository.UpdateWorkItem(currentWorkItem);
+                var mover = new WorkItemMover(WorkflowRepository);
+                mover.MoveWorkItem(currentWorkItem.UpdateLastMoved(TimeSource.GetTime()), leafStep);
             }
-
         }
 
         public void DeleteWorkItem(string id)
         {
-            var workItemRemover = new WorkItemRemover(WorkStepRepository, WorkItemRepository);
+            var workItemRemover = new WorkItemRemover(WorkflowRepository);
             workItemRemover.DeleteWorkItem(id);
         }
 
 
         public bool ExistsWorkItem(string workItemId)
         {
-            return WorkItemRepository.ExistsWorkItem(workItemId);
+            return WorkflowRepository.ExistsWorkItem(workItemId);
         }
 
         public WorkItem GetWorkItem(string id)
         {
-            return WorkItemRepository.GetWorkItem(id);
+            return WorkflowRepository.GetWorkItem(id);
         }
 
         public bool ExistsWorkStep(string path)
         {
-            return WorkStepRepository.ExistsWorkStep(path);
+            return WorkflowRepository.ExistsWorkStep(path);
         }
 
         public WorkStep GetWorkStep(string path)
         {
-            return WorkStepRepository.GetWorkStep(path);
+            return WorkflowRepository.GetWorkStep(path);
         }
 
         public void CreateWorkStep(WorkStep workStep)
         {
-            WorkStepRepository.CreateWorkStep(workStep);
+            var creator = new WorkStepCreator(WorkflowRepository);
+            creator.CreateWorkStep(workStep);
+        }
+
+        public IEnumerable<WorkItem> GetChildWorkItems(WorkItemParent parent)
+        {
+            return WorkflowRepository.GetChildWorkItems(parent);
+        }
+
+        public IEnumerable<WorkStep> GetChildWorkSteps(string path)
+        {
+            return WorkflowRepository.GetChildWorkSteps(path);
+        }
+
+        public void DeleteWorkStep(string path)
+        {
+            WorkflowRepository.DeleteWorkStep(path);
+        }
+
+        public void UpdateWorkStep(WorkStep workStep)
+        {
+            var updater = new WorkStepUpdater(WorkflowRepository);
+            updater.UpdateWorkStep(workStep);
+        }
+
+        public void MoveWorkStep(WorkStep stepToMove, WorkStep toStep)
+        {
+            var mover = new WorkStepMover(WorkflowRepository);
+            mover.MoveWorkStep(stepToMove, toStep);
+        }
+
+        #endregion
+
+        private static void ThrowIfConflictingTimestamp(WorkItem currentWorkItem, WorkItem changedWorkItem)
+        {
+            if (changedWorkItem.Timestamp.HasValue && changedWorkItem.Timestamp.Value != currentWorkItem.Timestamp.Value)
+            {
+                throw new InvalidOperationException("Conflicting timestamps");
+            }
         }
 
         private WorkItem GetWorkItemOrThrow(string workItemId)
         {
             WorkItem currentWorkItem;
-            if (!WorkItemRepository.TryLocateWorkItem(workItemId, out currentWorkItem))
+            if (!WorkflowRepository.TryLocateWorkItem(workItemId, out currentWorkItem))
             {
                 throw new ArgumentException("Work item was not found");
             }
             return currentWorkItem;
         }
+    }
 
+    internal class DefaultTimeSource : ITimeSource
+    {
+        #region ITimeSource Members
+
+        public DateTime GetTime()
+        {
+            return DateTime.Now;
+        }
+
+        #endregion
     }
 }

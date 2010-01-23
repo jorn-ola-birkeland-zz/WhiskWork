@@ -1,11 +1,10 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rhino.Mocks;
 using WhiskWork.Core;
 using WhiskWork.Test.Common;
-using WhiskWork.Web.UnitTest.Properties;
-using System.Text;
 
 namespace WhiskWork.Web.UnitTest
 {
@@ -18,18 +17,19 @@ namespace WhiskWork.Web.UnitTest
         [TestInitialize]
         public void Init()
         {
-            var workflowRepository = new MemoryWorkStepRepository();
+            var workStepRepository = new MemoryWorkStepRepository();
             var workItemRepository = new MemoryWorkItemRepository();
 
-            _jsonRenderer = new JsonRenderer(workflowRepository, workItemRepository);
-            _wp = new Workflow(workflowRepository, workItemRepository);
+            var workflowRepository = new WorkflowRepository(workItemRepository, workStepRepository);
+            _wp = new Workflow(workflowRepository);
+            _jsonRenderer = new JsonRenderer(_wp);
         }
 
 
         [TestMethod]
         public void ShouldRenderSingleEmptyStep()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             var json = GetJson(WorkStep.Root);
 
@@ -39,8 +39,8 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTwoEmptySteps()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkStep(new WorkStep("/development", "/", 2, WorkStepType.Normal, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr"));
 
             var json = GetJson(WorkStep.Root);
 
@@ -50,8 +50,8 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleStepWithOneWorkItem()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkItem(WorkItem.New("cr1","/analysis"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
 
             var json = GetJson(WorkStep.Root);
 
@@ -61,7 +61,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleStepWithTwoWorkItems()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.CreateWorkItem(WorkItem.New("cr2", "/analysis"));
 
@@ -73,8 +73,8 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderSingleStepWithOneWorkItemWithOneProperty()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis",new NameValueCollection {{"prop","value"}}));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "prop", "value" } }));
 
             var json = GetJson(WorkStep.Root);
 
@@ -84,8 +84,8 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderNestedWorkSteps()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkStep(new WorkStep("/analysis/inprocess", "/analysis", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis/inprocess").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
             var json = GetJson(WorkStep.Root);
 
@@ -96,9 +96,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderExpandedWorkItemWithOneChildWorkItem()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkStep(new WorkStep("/development","/",2, WorkStepType.Expand,"cr"));
-            _wp.CreateWorkStep(new WorkStep("/development/new", "/development", 1, WorkStepType.Begin, "task"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/development/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
             
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/development"));
@@ -113,12 +113,12 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldRenderTwoWorkItemsinExpandStep()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
-            _wp.CreateWorkStep(new WorkStep("/development", "/", 2, WorkStepType.Expand, "cr"));
-            _wp.CreateWorkStep(new WorkStep("/development/new", "/development", 1, WorkStepType.Begin, "task"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/development").UpdateOrdinal(2).UpdateType(WorkStepType.Expand).UpdateWorkItemClass("cr"));
+            _wp.CreateWorkStep(WorkStep.New("/development/new").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("task"));
 
-            _wp.Create("/analysis","cr1","cr2");
-            _wp.Move("/development","cr1","cr2");
+            _wp.CreateWorkItem("/analysis","cr1","cr2");
+            _wp.MoveWorkItem("/development","cr1","cr2");
 
             var json = GetJson(WorkStep.Root);
 
@@ -129,9 +129,9 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldSortAccordingToOrdinal()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
 
-            _wp.Create("/analysis", "cr1", "cr2");
+            _wp.CreateWorkItem("/analysis", "cr1", "cr2");
             _wp.UpdateOrdinal("cr1", 2);
             _wp.UpdateOrdinal("cr2", 1);
 
@@ -145,7 +145,7 @@ namespace WhiskWork.Web.UnitTest
         [TestMethod]
         public void ShouldEscapeQuotesInProperties()
         {
-            _wp.CreateWorkStep(new WorkStep("/analysis", "/", 1, WorkStepType.Begin, "cr"));
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
             _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis", new NameValueCollection { { "prop", "va\"l\"ue" } }));
 
             var json = GetJson(WorkStep.Root);
@@ -153,6 +153,29 @@ namespace WhiskWork.Web.UnitTest
             Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",prop:\"va\\\"l\\\"ue\"}]}]", json);
    
         }
+
+        [TestMethod, Ignore]
+        public void ShouldRenderTimeStamp()
+        {
+            _wp.CreateWorkStep(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+
+            var mocks = new MockRepository();
+            var expectedTime = new DateTime(2010,11,26,14,35,11,323);
+
+            _wp.MockTime(mocks,expectedTime);
+
+            using(mocks.Playback())
+            {
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+            }
+
+            var json = GetJson(WorkStep.Root);
+
+            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",timestamp:\"2010-11-26T14:35:11.323\"}]}]", json);
+
+        }
+
+
 
         private string GetJson(WorkStep workStep)
         {

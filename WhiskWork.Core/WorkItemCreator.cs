@@ -6,28 +6,28 @@ namespace WhiskWork.Core
 {
     internal class WorkItemCreator : WorkflowRepositoryInteraction
     {
-        public WorkItemCreator(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository) : base(workStepRepository, workItemRepository)
+        public WorkItemCreator(IWorkflowRepository workflowRepository) : base(workflowRepository)
         {
         }
 
         public void CreateWorkItem(WorkItem newWorkItem)
         {
-            var leafStep = WorkStepRepository.GetLeafStep(newWorkItem.Path);
+            var leafStep = WorkflowRepository.GetLeafStep(newWorkItem.Path);
 
             if (leafStep.Type != WorkStepType.Begin)
             {
                 throw new InvalidOperationException("Can only create work items in begin step");
             }
 
-            var classes = WorkStepRepository.GetWorkItemClasses(leafStep);
+            var classes = WorkflowRepository.GetWorkItemClasses(leafStep);
 
             newWorkItem = newWorkItem.MoveTo(leafStep).ReplacesClasses(classes);
 
             WorkStep transientStep;
-            if (WorkStepRepository.IsWithinTransientStep(leafStep, out transientStep))
+            if (WorkflowRepository.IsWithinTransientStep(leafStep, out transientStep))
             {
-                WorkItem parentItem = GetTransientParentWorkItem(transientStep);
-                WorkItemRepository.UpdateWorkItem(parentItem.UpdateStatus(WorkItemStatus.ExpandLocked));
+                var parentItem = GetTransientParentWorkItem(transientStep);
+                WorkflowRepository.UpdateWorkItem(parentItem.UpdateStatus(WorkItemStatus.ExpandLocked));
 
                 newWorkItem = newWorkItem.MoveTo(leafStep).UpdateParent(parentItem,WorkItemParentType.Expanded);
 
@@ -39,24 +39,24 @@ namespace WhiskWork.Core
                     }
                 }
             }
-            else if (WorkStepRepository.IsWithinExpandStep(leafStep))
+            else if (WorkflowRepository.IsWithinExpandStep(leafStep))
             {
                 throw new InvalidOperationException("Cannot create item directly under expand step");
             }
 
             if (!newWorkItem.Ordinal.HasValue)
             {
-                newWorkItem = newWorkItem.UpdateOrdinal(WorkItemRepository.GetNextOrdinal(newWorkItem));
+                newWorkItem = newWorkItem.UpdateOrdinal(WorkflowRepository.GetNextOrdinal(newWorkItem));
             }
 
-            WorkItemRepository.CreateWorkItem(newWorkItem);
+            WorkflowRepository.CreateWorkItem(newWorkItem);
         }
 
         private WorkItem GetTransientParentWorkItem(WorkStep transientStep)
         {
             var workItemId = transientStep.Path.Split(WorkflowPath.Separator).Last();
 
-            return WorkItemRepository.GetWorkItem(workItemId);
+            return WorkflowRepository.GetWorkItem(workItemId);
         }
     }
 }

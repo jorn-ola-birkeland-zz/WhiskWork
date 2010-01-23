@@ -46,20 +46,25 @@ namespace WhiskWork.Web
             TryOperation(
                 () =>
                     {
-                        WorkItem workItem = workItemNode.GetWorkItem(_path);
-
-                        if (!_workflow.ExistsWorkItem(workItem.Id))
-                        {
-                            _workflow.CreateWorkItem(workItem);
-                            Response = WorkflowHttpResponse.Created(workItem.Path);
-                        }
-                        else
-                        {
-                            _workflow.UpdateWorkItem(workItem);
-                            Response = WorkflowHttpResponse.Ok;
-                        }
+                        HandleWorkItem(workItemNode);
                     }
                 );
+        }
+
+        private void HandleWorkItem(WorkItemNode workItemNode)
+        {
+            var workItem = workItemNode.GetWorkItem(_path);
+
+            if (!_workflow.ExistsWorkItem(workItem.Id))
+            {
+                _workflow.CreateWorkItem(workItem);
+                Response = WorkflowHttpResponse.Created(workItem.Path);
+            }
+            else
+            {
+                _workflow.UpdateWorkItem(workItem);
+                Response = WorkflowHttpResponse.Ok;
+            }
         }
 
         #endregion
@@ -74,14 +79,13 @@ namespace WhiskWork.Web
             {
                 Response = WorkflowHttpResponse.BadRequest;
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
-                Response = WorkflowHttpResponse.Forbidden;
+                Response = WorkflowHttpResponse.Forbidden(e);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                Response = WorkflowHttpResponse.InternalServerError;
+                Response = WorkflowHttpResponse.InternalServerError(e);
             }
         }
     }

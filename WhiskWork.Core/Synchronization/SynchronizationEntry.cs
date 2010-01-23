@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -77,5 +78,21 @@ namespace WhiskWork.Core.Synchronization
 
             return sb.ToString();
         }
+
+        public static SynchronizationEntry FromWorkItem(WorkItem workItem)
+        {
+            return new SynchronizationEntry(workItem.Id, workItem.Path, ToDictionary(workItem.Properties)) {Ordinal = workItem.Ordinal};
+        }
+
+        private static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> properties)
+        {
+            var dictionary = new Dictionary<string, string>();
+            foreach (var kv in properties)
+            {
+                dictionary.Add(kv.Key, kv.Value);
+            }
+            return dictionary;
+        }
+
     }
 }

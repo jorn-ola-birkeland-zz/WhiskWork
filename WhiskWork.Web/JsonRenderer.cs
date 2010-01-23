@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using WhiskWork.Core;
 using System.Linq;
+using WhiskWork.Core;
 
 namespace WhiskWork.Web
 {
     public class JsonRenderer : IWorkStepRenderer
     {
-        private readonly IWorkStepRepository _workStepRepository;
-        private readonly IWorkItemRepository _workItemRepository;
+        private readonly IReadableWorkflowRepository _workflowRepository;
 
-        public JsonRenderer(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository)
+        public JsonRenderer(IReadableWorkflowRepository workflowRepository)
         {
-            _workStepRepository = workStepRepository;
-            _workItemRepository = workItemRepository;
+            _workflowRepository = workflowRepository;
         }
 
         public string ContentType
@@ -30,7 +26,7 @@ namespace WhiskWork.Web
             }
             else
             {
-                var workStep = _workStepRepository.GetWorkStep(path);
+                var workStep = _workflowRepository.GetWorkStep(path);
                 Render(stream, workStep);
             }
         }
@@ -51,18 +47,18 @@ namespace WhiskWork.Web
 
         private void RenderWorkStepsRecursively(TextWriter writer, WorkStep workStep, bool first)
         {
-            foreach (var childWorkStep in _workStepRepository.GetChildWorkSteps(workStep.Path))
+            foreach (var childWorkStep in _workflowRepository.GetChildWorkSteps(workStep.Path))
             {
                 if(!first)
                 {
                     writer.Write(",");
                 }
 
-                if (_workStepRepository.IsExpandStep(childWorkStep))
+                if (_workflowRepository.IsExpandStep(childWorkStep))
                 {
                     RenderExpandStep(writer, childWorkStep);
                 }
-                else if (_workStepRepository.IsParallelStep(childWorkStep))
+                else if (_workflowRepository.IsParallelStep(childWorkStep))
                 {
                     RenderParallelStep(writer, childWorkStep);
                 }
@@ -115,7 +111,7 @@ namespace WhiskWork.Web
         {
                 var first = true;
 
-                foreach (var workItem in _workItemRepository.GetWorkItems(step.Path).OrderBy(wi=>wi.Ordinal))
+                foreach (var workItem in _workflowRepository.GetWorkItems(step.Path).OrderBy(wi => wi.Ordinal))
                 {
                     if (!first)
                     {
@@ -159,9 +155,9 @@ namespace WhiskWork.Web
         {
             var childStepPath = ExpandedWorkStep.GetTransientPath(step, workItem);
 
-            if (_workStepRepository.ExistsWorkStep(childStepPath))
+            if (_workflowRepository.ExistsWorkStep(childStepPath))
             {
-                var childStep = _workStepRepository.GetWorkStep(childStepPath);
+                var childStep = _workflowRepository.GetWorkStep(childStepPath);
                 writer.Write(",worksteps:[");
 
                 RenderWorkStepsRecursively(writer, childStep, true);

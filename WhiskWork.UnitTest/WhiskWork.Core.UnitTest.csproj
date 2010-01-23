@@ -56,10 +56,14 @@
     <Compile Include="Synchronization\ExistenceSynchronizerTest.cs" />
     <Compile Include="Synchronization\StatusSynchronizerTest.cs" />
     <Compile Include="Synchronization\SynchronizerTestBase.cs" />
+    <Compile Include="WipLimitTest.cs" />
     <Compile Include="WorkflowTest.cs" />
     <Compile Include="WorkItemTest.cs" />
     <Compile Include="WorkflowPathTest.cs" />
+    <Compile Include="WorkStepCreatorTest.cs" />
+    <Compile Include="WorkStepMoverTest.cs" />
     <Compile Include="WorkStepTest.cs" />
+    <Compile Include="WorkStepUpdaterTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
@@ -74,12 +78,19 @@
       <Project>{2919CEE0-E7D1-477A-B677-EE499631779B}</Project>
       <Name>WhiskWork.Test.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.Web\WhiskWork.Web.csproj">
+      <Project>{03A3D0BF-2568-4A60-8774-371DB2BC2D75}</Project>
+      <Name>WhiskWork.Web</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="obj\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

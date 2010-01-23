@@ -6,12 +6,12 @@ using System.Threading;
 
 namespace WhiskWork.AWS.SimpleDB
 {
-    public class AsynchCachingWorkItemRepository : IWorkItemRepository
+    public class CachingWorkItemRepository : IWorkItemRepository
     {
         private readonly Dictionary<string, WorkItem> _workItems;
         private readonly ICacheableWorkItemRepository _innerRepository;
 
-        public AsynchCachingWorkItemRepository(ICacheableWorkItemRepository innerRepository)
+        public CachingWorkItemRepository(ICacheableWorkItemRepository innerRepository)
         {
             _innerRepository = innerRepository;
             _workItems = LoadWorkItems();
@@ -52,7 +52,7 @@ namespace WhiskWork.AWS.SimpleDB
                 throw new ArgumentException("Work item already exists: " + workItem.Id);
             }
 
-            RunOptimistic(new Thread( ()=> _innerRepository.CreateWorkItem(workItem)));
+            _innerRepository.CreateWorkItem(workItem);
             _workItems.Add(workItem.Id, workItem);
         }
 
@@ -64,7 +64,7 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void UpdateWorkItem(WorkItem workItem)
         {
-            RunOptimistic(new Thread( ()=> _innerRepository.UpdateWorkItem(workItem)));
+            _innerRepository.UpdateWorkItem(workItem);
 
             _workItems[workItem.Id] = workItem;
         }
@@ -74,16 +74,11 @@ namespace WhiskWork.AWS.SimpleDB
             return _workItems.Values.Where(wi => wi.Parent != null && wi.Parent.Id == parent.Id && wi.Parent.Type == parent.Type).ToList();
         }
 
-        public void DeleteWorkItem(WorkItem workItem)
+        public void DeleteWorkItem(string workItemId)
         {
-            RunOptimistic(new Thread( ()=> _innerRepository.DeleteWorkItem(workItem)));
+            _innerRepository.DeleteWorkItem(workItemId);
 
-            _workItems.Remove(workItem.Id);
-        }
-
-        private static void RunOptimistic(Thread thread)
-        {
-            thread.Start();
+            _workItems.Remove(workItemId);
         }
 
     }

@@ -22,7 +22,10 @@ namespace WhiskWork.Core.Synchronization
             var masterEntries = _master.GetAll();
             var slaveEntries = _slave.GetAll();
 
-            var idsForDeletion = slaveEntries.Select(e=>e.Id).Except(masterEntries.Select(e=>e.Id)); 
+            var idsForDeletion =
+                slaveEntries.Select(e => e.Id).Except(
+                    masterEntries.Where(me => _map.ContainsKey(_master, me.Status)).Select(e => e.Id));
+ 
             foreach (var id in idsForDeletion)
             {
                 var entry = slaveEntries.Where(e=>e.Id==id).Single();

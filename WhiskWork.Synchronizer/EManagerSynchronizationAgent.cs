@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using DominoInterOp;
 using WhiskWork.Core.Synchronization;
 using System.Web;
@@ -31,8 +32,10 @@ namespace WhiskWork.Synchronizer
             _password = password;
         }
 
-        public string Release { get; set; }
+        public IEnumerable<string> Release { get; set; }
         public IEnumerable<string> Team { get; set; }
+
+        public bool IsDryRun { get; set; }
 
         #region ISynchronizationAgent Members
 
@@ -65,7 +68,12 @@ namespace WhiskWork.Synchronizer
                 var ordinal = GetOrdinal((string)row[8]);
                 var person = (string) row[9];
 
-                if ((Team!=null && !Team.Contains(team)) || (Release!=null && release != Release))
+                if ((Team!=null && !Team.Contains(team)) || (Release!=null && !Release.Contains(release)))
+                {
+                    continue;
+                }
+
+                if(string.IsNullOrEmpty(id) || id=="0")
                 {
                     continue;
                 }
@@ -98,17 +106,19 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateStatus(SynchronizationEntry entry)
         {
-
             var unid = entry.Properties["unid"];
 
             var updatePathPattern = ConfigurationManager.AppSettings["updatePathPattern"];
 
             var statusUpdatePath = string.Format(updatePathPattern,unid,"Status",HttpUtility.UrlEncode(entry.Status));
 
-            Console.WriteLine("Status: "+statusUpdatePath);
+            Console.WriteLine("EManager. Update status: "+statusUpdatePath);
 
-            var dominoSource = Login();
-            dominoSource.Open(statusUpdatePath).Dispose();
+            if (!IsDryRun)
+            {
+                var dominoSource = Login();
+                dominoSource.Open(statusUpdatePath).Dispose();
+            }
         }
 
         public void Create(SynchronizationEntry entry)
@@ -123,8 +133,6 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateData(SynchronizationEntry entry)
         {
-            var dominoSource = Login();
-
             var unid = entry.Properties["unid"];
 
             var updatePathPattern = ConfigurationManager.AppSettings["updatePathPattern"];
@@ -137,12 +145,16 @@ namespace WhiskWork.Synchronizer
                 }
 
                 var key = HttpUtility.UrlEncode(keyValue.Key);
-                var value = keyValue.Value!=null ? HttpUtility.UrlEncode(keyValue.Value) : string.Empty ;
+                var value = keyValue.Value!=null ? HttpUtility.UrlEncode(keyValue.Value, Encoding.GetEncoding("iso-8859-1")) : string.Empty ;
                 var dataUpdatePath = string.Format(updatePathPattern, unid, key, value);
 
-                Console.WriteLine("Data: "+dataUpdatePath);
+                Console.WriteLine("EManager. Update data: "+dataUpdatePath);
 
-                dominoSource.Open(dataUpdatePath).Dispose();
+                if(!IsDryRun)
+                {
+                    var dominoSource = Login();
+                    dominoSource.Open(dataUpdatePath).Dispose();
+                }
             }
         }
 

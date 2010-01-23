@@ -8,16 +8,10 @@ namespace WhiskWork.Core
     {
         private readonly Dictionary<string, WorkStep> _workSteps = new Dictionary<string, WorkStep>();
 
-        public void Add(string path, string parentPath, int index, WorkStepType stepType, string workItemClass)
+        public void Add(WorkStep workStep)
         {
-            _workSteps.Add(path, new WorkStep(path,parentPath,index,stepType, workItemClass, null));
+            _workSteps.Add(workStep.Path, workStep);
         }
-
-        public void Add(string path, string parentPath, int index, WorkStepType stepType, string workItemClass, string title)
-        {
-            _workSteps.Add(path, new WorkStep(path, parentPath, index, stepType, workItemClass, title));
-        }
-
 
         public IEnumerable<WorkStep> GetChildWorkSteps(string path)
         {
@@ -31,17 +25,29 @@ namespace WhiskWork.Core
 
         public WorkStep GetWorkStep(string path)
         {
+            ThrowIfNotExists(path);
+
+            return _workSteps[path];
+        }
+
+        private void ThrowIfNotExists(string path)
+        {
             if(!_workSteps.ContainsKey(path))
             {
                 throw new ArgumentException("Workstep not found: '"+path+"'");
             }
-
-            return _workSteps[path];
         }
 
         public void DeleteWorkStep(string path)
         {
             _workSteps.Remove(path);
+        }
+
+        public void UpdateWorkStep(WorkStep workStep)
+        {
+            ThrowIfNotExists(workStep.Path);
+
+            _workSteps[workStep.Path] = workStep;
         }
 
         public void CreateWorkStep(WorkStep workStep)

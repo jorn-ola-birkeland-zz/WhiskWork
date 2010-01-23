@@ -52,8 +52,12 @@ namespace WhiskWork.AWS.SimpleDB
 
         public void CreateWorkStep(WorkStep workStep)
         {
+            SendUpdateRequest(workStep);
+        }
+
+        private void SendUpdateRequest(WorkStep workStep)
+        {
             var putAttributeRequest = new PutAttributesRequest {DomainName = _domain, ItemName = workStep.Path};
-            putAttributeRequest.Attribute.Add(new ReplaceableAttribute {Name = "ParentPath", Value = workStep.ParentPath, Replace = true});
             putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Type", Value = workStep.Type.ToString(), Replace = true });
             putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "Ordinal", Value = workStep.Ordinal.ToString(), Replace = true });
             putAttributeRequest.Attribute.Add(new ReplaceableAttribute { Name = "WorkItemClass", Value = workStep.WorkItemClass, Replace = true });
@@ -90,42 +94,41 @@ namespace WhiskWork.AWS.SimpleDB
 
         private static WorkStep GenerateWorkStep(string path, IEnumerable<Attribute> attributes)
         {
-            string parentPath = null;
-            var type=WorkStepType.Normal;
-            var ordinal=0;
-            string workItemClass=null;
-            string title=null;
+            var step = WorkStep.New(path);
 
             foreach (var attribute in attributes)
             {
                 switch(attribute.Name)
                 {
-                    case "ParentPath":
-                        parentPath = attribute.Value;
-                        break;
                     case "Type":
-                        type = (WorkStepType)Enum.Parse(typeof(WorkStepType), attribute.Value);
+                        step = step.UpdateType((WorkStepType)Enum.Parse(typeof(WorkStepType), attribute.Value));
                         break;
                     case "Ordinal":
-                        ordinal = XmlConvert.ToInt32(attribute.Value);
+                        step = step.UpdateOrdinal(XmlConvert.ToInt32(attribute.Value));
                         break;
                     case "WorkItemClass":
-                        workItemClass = attribute.Value;
+                        step = step.UpdateWorkItemClass(attribute.Value);
                         break;
                     case "Title":
-                        title = attribute.Value;
+                        step = step.UpdateTitle(attribute.Value);
                         break;
 
                 }
             }
 
-            return new WorkStep(path,parentPath,ordinal,type,workItemClass,title);
+            return step;
         }
 
         public void DeleteWorkStep(string path)
         {
             var deleteAttributesRequest = new DeleteAttributesRequest { ItemName = path, DomainName = _domain};
             _client.DeleteAttributes(deleteAttributesRequest);
+        }
+
+        public void UpdateWorkStep(WorkStep workStep)
+        {
+            DeleteWorkStep(workStep.Path);
+            SendUpdateRequest(workStep);
         }
 
         public bool ExistsWorkStep(string path)

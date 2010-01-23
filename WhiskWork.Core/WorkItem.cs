@@ -59,15 +59,18 @@ namespace WhiskWork.Core
     {
         private readonly NameValueCollection _properties;
         private readonly int? _ordinal;
-        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, WorkItemParent parent, int? ordinal, NameValueCollection properties)
+        private WorkItem(string id, string path, IEnumerable<string> workItemClasses, WorkItemStatus status, WorkItemParent parent, int? ordinal, NameValueCollection properties, DateTime? lastUpdated, DateTime? lastMoved)
         {
             Id = id;
             Path = path;
             Classes = workItemClasses;
             Status = status;
             Parent = parent;
+            Timestamp = lastUpdated;
+            LastMoved = lastMoved;
             _ordinal = ordinal;
             _properties = properties;
+
         }
 
         public static WorkItem New(string id, string path)
@@ -82,12 +85,12 @@ namespace WhiskWork.Core
                 throw new ArgumentException("Id can only consist of letters, numbers and hyphen");
             }
 
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, null, properties);
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, null, properties, null, null);
         }
 
-        public static WorkItem NewUnchecked(string id, string path, int? ordinal, NameValueCollection properties)
+        public static WorkItem NewUnchecked(string id, string path, int? ordinal, DateTime? timeStamp, NameValueCollection properties)
         {
-            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, ordinal, properties);
+            return new WorkItem(id, path, new string[0], WorkItemStatus.Normal, null, ordinal, properties, timeStamp, null);
         }
 
 
@@ -96,6 +99,9 @@ namespace WhiskWork.Core
         public IEnumerable<string> Classes { get; private set; }
         public WorkItemStatus Status  { get; private set; }
         public WorkItemParent Parent { get; private set; }
+        public DateTime? Timestamp { get; private set; }
+        public DateTime? LastMoved { get; private set; }
+
         public int? Ordinal
         {
             get
@@ -116,44 +122,44 @@ namespace WhiskWork.Core
 
         public WorkItem MoveTo(WorkStep step)
         {
-            return new WorkItem(Id,step.Path,Classes,Status,Parent, _ordinal,_properties);
+            return new WorkItem(Id,step.Path,Classes,Status,Parent, _ordinal,_properties, Timestamp, LastMoved);
         }
 
         public WorkItem UpdateStatus(WorkItemStatus status)
         {
-            return new WorkItem(Id, Path, Classes, status, Parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
 
         public WorkItem CreateChildItem(string id, WorkItemParentType parentType)
         {
             var parent = new WorkItemParent(Id, parentType);
-            return new WorkItem(id, Path, Classes, Status, parent, _ordinal, _properties);
+            return new WorkItem(id, Path, Classes, Status, parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem UpdateParent(WorkItem parentItem, WorkItemParentType parentType)
         {
             var parent = new WorkItemParent(parentItem.Id, parentType);
-            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem UpdateParent(string parentId, WorkItemParentType parentType)
         {
             var parent = new WorkItemParent(parentId, parentType);
-            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, Status, parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
 
         public WorkItem UpdateOrdinal(int ordinal)
         {
-            return new WorkItem(Id, Path, Classes, Status, Parent, ordinal, _properties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem AddClass(string workItemClass)
         {
             var newClasses = new List<string>(Classes) { workItemClass };
 
-            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem RemoveClass(string workItemClass)
@@ -161,12 +167,12 @@ namespace WhiskWork.Core
             var newClasses = new List<string>(Classes);
             newClasses.Remove(workItemClass);
 
-            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem ReplacesClasses(IEnumerable<string> newClasses)
         {
-            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties);
+            return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
         public WorkItem UpdatePropertiesAndOrdinalFrom(WorkItem item)
@@ -180,7 +186,7 @@ namespace WhiskWork.Core
                 modifiedOrdinal = item.Ordinal;
             }
 
-            return new WorkItem(Id, Path, Classes, Status, Parent, modifiedOrdinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, modifiedOrdinal, modifiedProperties, Timestamp, LastMoved);
         }
 
 
@@ -188,7 +194,7 @@ namespace WhiskWork.Core
         {
             var modifiedProperties = GetModifiedProperties(properties);
 
-            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties, Timestamp, LastMoved);
         }
 
         private NameValueCollection GetModifiedProperties(WorkItemProperties propertyUpdate)
@@ -216,7 +222,7 @@ namespace WhiskWork.Core
             var modifiedProperties = new NameValueCollection(_properties);
             modifiedProperties[name] = value;
 
-            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties, Timestamp, LastMoved);
         }
 
 
@@ -229,9 +235,18 @@ namespace WhiskWork.Core
                 modifiedProperties[key] = properties[key];
             }
 
-            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties);
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties, Timestamp, LastMoved);
         }
 
+        public WorkItem UpdateTimestamp(DateTime timeStamp)
+        {
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, _properties, timeStamp, LastMoved);
+        }
+
+        public WorkItem UpdateLastMoved(DateTime lastMoved)
+        {
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, _properties, Timestamp, lastMoved);
+        }
 
         public override bool Equals(object obj)
         {

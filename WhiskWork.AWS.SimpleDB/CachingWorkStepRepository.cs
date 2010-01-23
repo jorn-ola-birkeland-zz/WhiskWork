@@ -47,10 +47,7 @@ namespace WhiskWork.AWS.SimpleDB
 
         public WorkStep GetWorkStep(string path)
         {
-            if (!_workSteps.ContainsKey(path))
-            {
-                throw new ArgumentException("Workstep not found: '" + path + "'");
-            }
+            ThrowIfNotExists(path);
 
             return _workSteps[path];
         }
@@ -62,10 +59,28 @@ namespace WhiskWork.AWS.SimpleDB
             _workSteps.Remove(path);
         }
 
+        public void UpdateWorkStep(WorkStep workStep)
+        {
+            ThrowIfNotExists(workStep.Path);
+
+            _innerRepository.UpdateWorkStep(workStep);
+
+            _workSteps[workStep.Path] = workStep;
+        }
+
         public bool ExistsWorkStep(string path)
         {
             return _workSteps.ContainsKey(path);
         }
+
+        private void ThrowIfNotExists(string path)
+        {
+            if (!_workSteps.ContainsKey(path))
+            {
+                throw new ArgumentException("Workstep not found: '" + path + "'");
+            }
+        }
+
 
     }
 }

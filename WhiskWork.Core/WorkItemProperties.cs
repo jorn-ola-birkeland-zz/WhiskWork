@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -42,6 +43,11 @@ namespace WhiskWork.Core
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public bool ContainsKey(string key)
+        {
+            return _properties.AllKeys.Contains(key);
         }
     }
 }

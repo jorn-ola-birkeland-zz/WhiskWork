@@ -38,9 +38,9 @@ namespace WhiskWork.Core
             return _workItems.Values.Where(wi => wi.Parent!=null && wi.Parent.Id == parent.Id && wi.Parent.Type == parent.Type).ToList();
         }
 
-        public void DeleteWorkItem(WorkItem workItem)
+        public void DeleteWorkItem(string workItemId)
         {
-            _workItems.Remove(workItem.Id);
+            _workItems.Remove(workItemId);
         }
 
         public bool ExistsWorkItem(string id)

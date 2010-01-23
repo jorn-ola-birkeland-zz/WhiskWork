@@ -56,11 +56,11 @@ namespace WhiskWork.CommondLineWebServer
 
             if(awsAccessKey!=null && awsSecretAccessKey!=null)
             {
-                workItemRepository = new AsynchCachingWorkItemRepository(new SimpleDBWorkItemRepository(domainPrefix+"_items", awsAccessKey,awsSecretAccessKey));
+                workItemRepository = new CachingWorkItemRepository(new OptimisticAsynchWorkItemRepository(new SimpleDBWorkItemRepository(domainPrefix + "_items", awsAccessKey, awsSecretAccessKey)));
                 workStepRepository = new CachingWorkStepRepository(new SimpleDBWorkStepRepository(domainPrefix+"_steps", awsAccessKey,awsSecretAccessKey));
             }
 
-            var router = new WebRouter(workStepRepository, workItemRepository, webRootDirectory, logFilePath);
+            var router = new WebRouter(new WorkflowRepository(workItemRepository, workStepRepository) , webRootDirectory, logFilePath);
             var server = new WebServer(router.ProcessRequest, port);
 
             Console.WriteLine("Started port:{0} directory:'{1}' logfile:'{2}'",port,webRootDirectory,logFilePath);

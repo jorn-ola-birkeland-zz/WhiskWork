@@ -5,12 +5,12 @@ using System.Text;
 using System.IO;
 using WhiskWork.Generic;
 
-namespace WhiskWork.Core
+namespace WhiskWork.Core.Logging
 {
-    public class FileWorkflowLogger : IWorkflowLogger, IDisposable
+    public class FileWorkflowLog : IWorkflowLog, IDisposable
     {
         private readonly StreamWriter _writer;
-        public FileWorkflowLogger(string path)
+        public FileWorkflowLog(string path)
         {
             var fi = new FileInfo(path);
 
@@ -21,13 +21,13 @@ namespace WhiskWork.Core
 
             if(!fi.Directory.Exists)
             {
-              fi.Directory.Create();   
+                fi.Directory.Create();   
             }
 
             _writer = new StreamWriter(path, true);
         }
 
-        public void LogDeleteWorkItem(string id)
+        public void AddLogEntry(string id)
         {
             _writer.WriteLine("{0},{1},{2}", "DELETE ITEM", DateTime.Now, id);
             _writer.Flush();
@@ -59,6 +59,32 @@ namespace WhiskWork.Core
         public void Dispose()
         {
             _writer.Dispose();
+        }
+
+        public void AddLogEntry(WorkItemLogEntry logEntry)
+        {
+            if(logEntry.LogOperation==LogOperationType.Delete)
+            {
+                _writer.WriteLine("{0},{1},{2}", "DELETE ITEM", logEntry.Timestamp, logEntry.WorkItem.Id);
+            }
+            else if (logEntry.LogOperation == LogOperationType.Create)
+            {
+                var serializedProperties = logEntry.WorkItem.Properties.Select(kv => kv.Key + "=" + kv.Value).Join('&');
+                _writer.WriteLine("{0},{1},{2},{3},{4}", "CREATE ITEM", logEntry.Timestamp, logEntry.WorkItem.Id, logEntry.WorkItem.Path, serializedProperties);
+            }
+            else if (logEntry.LogOperation == LogOperationType.Update)
+            {
+                var serializedProperties = logEntry.WorkItem.Properties.Select(kv => kv.Key + "=" + kv.Value).Join('&');
+                _writer.WriteLine("{0},{1},{2},{3},{4},{5}", "UPDATE ITEM", DateTime.Now, logEntry.PreviousWorkItem.Id, logEntry.PreviousWorkItem.Path, logEntry.WorkItem.Path, serializedProperties);
+            }
+
+            _writer.Flush();
+        }
+
+        public void AddLogEntry(WorkStepLogEntry logEntry)
+        {
+            _writer.WriteLine("{0},{1},{2}", "CREATE STEP", DateTime.Now, logEntry.WorkStep.Path);
+            _writer.Flush();
         }
     }
 }

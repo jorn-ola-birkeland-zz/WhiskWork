@@ -40,9 +40,11 @@ namespace WhiskWork.Web
             get { return new WorkflowHttpResponse(HttpStatusCode.MethodNotAllowed); }
         }
 
-        public static WorkflowHttpResponse Forbidden
+        public static WorkflowHttpResponse Forbidden(Exception e)
         {
-            get { return new WorkflowHttpResponse(HttpStatusCode.Forbidden); }
+            var response = new WorkflowHttpResponse(HttpStatusCode.Forbidden);
+            response.Write(e.ToString());
+            return response;
         }
 
         public static WorkflowHttpResponse NotImplemented
@@ -50,9 +52,11 @@ namespace WhiskWork.Web
             get { return new WorkflowHttpResponse(HttpStatusCode.NotImplemented); }
         }
 
-        public static WorkflowHttpResponse InternalServerError
+        public static WorkflowHttpResponse InternalServerError(Exception e)
         {
-            get { return new WorkflowHttpResponse(HttpStatusCode.InternalServerError); }
+            var response = new WorkflowHttpResponse(HttpStatusCode.InternalServerError);
+            response.Write(e.ToString());
+            return response;
         }
 
         public HttpStatusCode HttpStatusCode { get; private set; }
@@ -76,6 +80,14 @@ namespace WhiskWork.Web
         {
             var fromStream = new MemoryStream(_outputStream.ToArray());
             StreamUtil.CopyStream(fromStream, toSteam);
+        }
+
+        private void Write(string message)
+        {
+            using(var writer = new StreamWriter(OutputStream))
+            {
+                writer.Write(message);
+            }
         }
     }
 }

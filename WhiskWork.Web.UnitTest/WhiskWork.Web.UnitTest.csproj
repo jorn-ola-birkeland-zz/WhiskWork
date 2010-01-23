@@ -54,12 +54,17 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="WorkflowHttpHandlerTest.cs" />
+    <Compile Include="XmlParserTest.cs" />
     <Compile Include="XmlRendererTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhiskWork.Core\WhiskWork.Core.csproj">
       <Project>{330250E7-CD02-46E8-9520-29FDABC65919}</Project>
       <Name>WhiskWork.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">
+      <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
+      <Name>WhiskWork.Generic</Name>
     </ProjectReference>
     <ProjectReference Include="..\WhiskWork.Test.Common\WhiskWork.Test.Common.csproj">
       <Project>{2919CEE0-E7D1-477A-B677-EE499631779B}</Project>
@@ -71,7 +76,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\FullFeatureTest.html" />
+    <Content Include="Resources\FullHtml.html" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

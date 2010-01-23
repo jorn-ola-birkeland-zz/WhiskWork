@@ -1,11 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Text;
-using System.Web;
 using System.Xml;
 using WhiskWork.Core.Synchronization;
+using WhiskWork.Web;
+using WhiskWork.Core;
+using System.Linq;
 
 namespace WhiskWork.Synchronizer
 {
@@ -22,95 +23,41 @@ namespace WhiskWork.Synchronizer
             _beginStep = beginStepPath;
         }
 
+        public bool IsDryRun { get; set; }
+
         public IEnumerable<SynchronizationEntry> GetAll()
         {
-            var request = (HttpWebRequest)WebRequest.Create(_site + _rootPath);
-
-            //request.ContentType = "text/xml";
-            request.Accept = "text/xml";
-            request.Method = "GET";
-
-            var doc = new XmlDocument();
+            XmlDocument doc;
             try
             {
-                var response = (HttpWebResponse)request.GetResponse();
-
-                doc.Load(response.GetResponseStream());
-
+                doc = WebCommunication.GetXmlDocument(_site + _rootPath);
                 //doc.Save(@"c:\temp\whiskwork.xml");
-
-                //Console.WriteLine(doc.InnerXml);
             }
             catch (WebException e)
             {
                 Console.WriteLine(e.Message);
+                throw;
             }
 
-            var worksteps = doc.SelectNodes("//WorkStep[@workItemClass='cr']");
-
-            if (worksteps == null)
-            {
-                yield break;
-            }
-
-            foreach (XmlNode workstep in worksteps)
-            {
-                var workStepId = workstep.SelectSingleNode("@id").Value;
-                var workStepPath = "/" + workStepId.Replace('.', '/');
-                var workItems = workstep.SelectNodes("WorkItems/WorkItem");
-
-                if (workItems == null)
-                {
-                    continue;
-                }
-
-                foreach (XmlNode workItem in workItems)
-                {
-                    var workItemId = workItem.SelectSingleNode("@id").Value;
-                    var workItemClasses = workItem.SelectSingleNode("@classes").Value;
-
-                    //Exclude children of parallelled work-items. Should add property and move out
-                    if(workItemClasses.Contains("cr-review") || workItemClasses.Contains("cr-test"))
-                    {
-                        continue;
-                    }
-
-                    var properties = CreateProperties(workItem);
-                    var synchronizationEntry = new SynchronizationEntry(workItemId,workStepPath,properties);
-
-                    var ordinal = XmlConvert.ToInt32(workItem.SelectSingleNode("@ordinal").Value);
-                    synchronizationEntry.Ordinal = ordinal;
-
-                    yield return synchronizationEntry;
-                }
-            }
+            var workItems = XmlParser.ParseWorkItems(doc, "cr");
+            return CreateSynchronizationEntries(workItems);
         }
 
-        private static Dictionary<string,string> CreateProperties(XmlNode workItem)
+        private static IEnumerable<SynchronizationEntry> CreateSynchronizationEntries(IEnumerable<WorkItem> workItems)
         {
-            var propertyNodes = workItem.SelectNodes("Properties/Property");
-
-            var properties = new Dictionary<string, string>();
-
-            if(propertyNodes==null)
-            {
-                return properties;
-            }
-
-            foreach (XmlNode propertyNode in propertyNodes)
-            {
-                var key = propertyNode.SelectSingleNode("@name").Value;
-                var value = propertyNode.InnerText;
-
-                properties.Add(key,value);
-            }
-
-            return properties;
+            var normalCrs = workItems.Where(wi => !wi.Classes.Contains("cr-review") && !wi.Classes.Contains("cr-test"));
+            return normalCrs.Select(wi=>SynchronizationEntry.FromWorkItem(wi));
         }
 
         public void Create(SynchronizationEntry entry)
         {
             Console.WriteLine("WhiskWork.Create:"+entry);
+
+            if (IsDryRun)
+            {
+                return;
+            }
+
             var payload = CreatePayload(entry);
 
             PostCsv(payload, _beginStep);
@@ -120,6 +67,13 @@ namespace WhiskWork.Synchronizer
 
         public void Delete(SynchronizationEntry entry)
         {
+            Console.WriteLine("WhiskWork.Delete:" + entry);
+
+            if(IsDryRun)
+            {
+                return;
+            }
+
             var request = (HttpWebRequest)WebRequest.Create(_site + entry.Status + "/" + entry.Id);
             request.ContentType = "text/csv";
             request.Method = "delete";
@@ -137,55 +91,54 @@ namespace WhiskWork.Synchronizer
 
         public void UpdateStatus(SynchronizationEntry entry)
         {
-            var payload = string.Format("id={0}", entry.Id);
+            Console.WriteLine("WhiskWork.Update status:" + entry);
+
+            if (IsDryRun)
+            {
+                return;
+            }
+
+            var payload = new Dictionary<string, string> { { "id", entry.Id } };
 
             PostCsv(payload, entry.Status);
         }
 
         public void UpdateData(SynchronizationEntry entry)
         {
+            Console.WriteLine("WhiskWork.Update data:" + entry);
+
+            if (IsDryRun)
+            {
+                return;
+            }
+
             var payload = CreatePayload(entry);
 
             PostCsv(payload, entry.Status);
         }
 
-        private static string CreatePayload(SynchronizationEntry entry)
+        private static IDictionary<string,string> CreatePayload(SynchronizationEntry entry)
         {
-            var payloadBuilder = new StringBuilder();
-            payloadBuilder.AppendFormat("id={0}", entry.Id);
+            var keyValues = new Dictionary<string, string>();
+
+            keyValues.Add("id",entry.Id);
 
             if(entry.Ordinal.HasValue)
             {
-                payloadBuilder.AppendFormat(",ordinal={0}", entry.Ordinal.Value);
+                keyValues.Add("ordinal", entry.Ordinal.Value.ToString());
             }
 
             foreach (var keyValuePair in entry.Properties)
             {
-                payloadBuilder.AppendFormat(",{0}={1}", HttpUtility.HtmlEncode(keyValuePair.Key), HttpUtility.HtmlEncode(keyValuePair.Value));
+                keyValues.Add(keyValuePair.Key,keyValuePair.Value);
             }
-            return payloadBuilder.ToString();
+
+            return keyValues;
         }
 
-        private void PostCsv(string payload, string path)
+        private void PostCsv(IDictionary<string, string> payload, string path)
         {
-            var request = (HttpWebRequest)WebRequest.Create(_site + path);
-            request.ContentType = "text/csv";
-            request.Method = "post";
-            request.ContentLength = payload.Length;
-
-            try
-            {
-                using (var writer = new StreamWriter(request.GetRequestStream()))
-                {
-                    writer.Write(payload);
-                }
-
-                var response = (HttpWebResponse)request.GetResponse();
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            WebCommunication.PostCsv(_site+path,payload);
         }
 
     }

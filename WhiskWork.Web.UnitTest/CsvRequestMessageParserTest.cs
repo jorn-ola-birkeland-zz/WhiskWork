@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
+using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using WhiskWork.Core;
@@ -38,6 +40,20 @@ namespace WhiskWork.Web.UnitTest
 
             var item = node.GetWorkItem("/");
             Assert.AreEqual(2,item.Ordinal);
+        }
+
+        [TestMethod]
+        public void ShoudParseTimestamp()
+        {
+            var expectedTime = DateTime.Now;
+            var xmlExpectedTime = XmlConvert.ToString(expectedTime, XmlDateTimeSerializationMode.RoundtripKind);
+
+            var parser = new CsvRequestMessageParser();
+            var node = (WorkItemNode)parser.Parse(CreateStream("id=id1,timestamp="+xmlExpectedTime));
+
+            var item = node.GetWorkItem("/");
+            Assert.AreEqual(expectedTime, item.Timestamp);
+
         }
         
         [TestMethod]

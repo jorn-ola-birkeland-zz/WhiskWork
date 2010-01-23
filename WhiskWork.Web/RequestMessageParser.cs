@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using WhiskWork.Core;
+using System.Xml;
 
 namespace WhiskWork.Web
 {
@@ -29,7 +30,7 @@ namespace WhiskWork.Web
 
             if(_values.ContainsKey("step"))
             {
-                return ParseWorkStep(_values);
+                return ParseWorkStep();
             }
 
             throw new ArgumentException("Unrecognized data");
@@ -37,23 +38,26 @@ namespace WhiskWork.Web
 
         protected abstract Dictionary<string,string> GetKeyValueMap(string content);
 
-        private IWorkflowNode ParseWorkStep(Dictionary<string,string> contentParts)
+        private IWorkflowNode ParseWorkStep()
         {
             //<path>,<parentPath>,<worksteptype>,<workItemClass>,<title>,<ordinal>
 
-            var step = ExtractValue("step",s=>s,null);
-            var type = ExtractValue("type", s => (WorkStepType) Enum.Parse(typeof (WorkStepType), s,true),WorkStepType.Normal);
-            var workItemClass = ExtractValue("class",s=>s,null);
-            var ordinal = ExtractValue("ordinal", s=> int.Parse(s), 0);
-            var title = ExtractValue("title", s => s, null);
+            var node = new WorkStepNode();
 
-            return new WorkStepNode(step, ordinal, type, workItemClass, title);
+            node.Step = ExtractValue("step",s=>s,null);
+            node.Type = ExtractValue<WorkStepType?>("type", s => (WorkStepType) Enum.Parse(typeof (WorkStepType), s,true),null);
+            node.WorkItemClass = ExtractValue("class",s=>s,null);
+            node.Ordinal = ExtractValue<int?>("ordinal", s=> int.Parse(s), null);
+            node.Title = ExtractValue("title", s => s, null);
+
+            return node;
         }
 
         private IWorkflowNode ParseWorkItem()
         {
             var id = ExtractValue("id", s => s, null);
             var ordinal = ExtractValue<int?>("ordinal", s => int.Parse(s), null);
+            var timeStamp = ExtractValue<DateTime?>("timestamp", s => XmlConvert.ToDateTime(s,XmlDateTimeSerializationMode.RoundtripKind), null);
 
             var properties = new NameValueCollection();
 
@@ -61,7 +65,7 @@ namespace WhiskWork.Web
             {
                 properties.Add(keyValuePair.Key, keyValuePair.Value);
             }
-            return new WorkItemNode(id, ordinal, properties);
+            return new WorkItemNode(id, ordinal,timeStamp, properties);
         }
 
         private T ExtractValue<T>(string key, Converter<string,T> convert, T defaultValue)

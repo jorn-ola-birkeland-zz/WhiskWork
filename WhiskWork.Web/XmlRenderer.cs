@@ -9,13 +9,11 @@ namespace WhiskWork.Web
 {
     public class XmlRenderer : IWorkStepRenderer
     {
-        private readonly IWorkStepRepository _workStepRepository;
-        private readonly IWorkItemRepository _workItemRepository;
+        private readonly IReadableWorkflowRepository _workflowRepository;
 
-        public XmlRenderer(IWorkStepRepository workStepRepository, IWorkItemRepository workItemRepository)
+        public XmlRenderer(IReadableWorkflowRepository workflowRepository)
         {
-            _workStepRepository = workStepRepository;
-            _workItemRepository = workItemRepository;
+            _workflowRepository = workflowRepository;
         }
 
         public string ContentType
@@ -31,7 +29,7 @@ namespace WhiskWork.Web
             }
             else
             {
-                var workStep = _workStepRepository.GetWorkStep(path);
+                var workStep = _workflowRepository.GetWorkStep(path);
                 Render(stream, workStep);
             }
         }
@@ -58,7 +56,7 @@ namespace WhiskWork.Web
         {
             writer.WriteStartElement("WorkSteps");
 
-            foreach (var childWorkStep in _workStepRepository.GetChildWorkSteps(workStep.Path).OrderBy(ws=>ws.Ordinal))
+            foreach (var childWorkStep in _workflowRepository.GetChildWorkSteps(workStep.Path).OrderBy(ws => ws.Ordinal))
             {
                 RenderWorkStep(writer, childWorkStep);
             }
@@ -90,7 +88,7 @@ namespace WhiskWork.Web
         {
             writer.WriteStartElement("WorkItems");
 
-            foreach (var workItem in _workItemRepository.GetWorkItems(workStep.Path).OrderBy(wi => wi.Ordinal))
+            foreach (var workItem in _workflowRepository.GetWorkItems(workStep.Path).OrderBy(wi => wi.Ordinal))
             {
                 RenderWorkItem(writer, workItem);
             }
@@ -107,9 +105,20 @@ namespace WhiskWork.Web
             writer.WriteValue(item.Id);
             writer.WriteEndAttribute();
 
-            writer.WriteStartAttribute("ordinal");
-            writer.WriteValue(item.Ordinal);
-            writer.WriteEndAttribute();
+            if(item.Ordinal.HasValue)
+            {
+                RenderAttribute(writer, "ordinal", XmlConvert.ToString(item.Ordinal.Value));
+            }
+
+            if(item.Timestamp.HasValue)
+            {
+                RenderAttribute(writer, "timestamp", XmlConvert.ToString(item.Timestamp.Value, XmlDateTimeSerializationMode.RoundtripKind));
+            }
+
+            if (item.LastMoved.HasValue)
+            {
+                RenderAttribute(writer, "lastmoved", XmlConvert.ToString(item.LastMoved.Value, XmlDateTimeSerializationMode.RoundtripKind));
+            }
 
             writer.WriteStartAttribute("classes");
             writer.WriteValue(item.Classes.Join(' '));
@@ -119,6 +128,13 @@ namespace WhiskWork.Web
             RenderProperties(writer, item);
 
             writer.WriteEndElement(); //WorkItem
+        }
+
+        private static void RenderAttribute(XmlWriter writer, string attributeName, string value)
+        {
+            writer.WriteStartAttribute(attributeName);
+            writer.WriteValue(value);
+            writer.WriteEndAttribute();
         }
 
         private static void RenderProperties(XmlWriter writer, WorkItem workItem)

@@ -77,6 +77,25 @@ namespace WhiskWork.Core.UnitTest.Synchronization
         }
 
         [TestMethod]
+        public void ShouldDeleteEntriesMissingInMap()
+        {
+            using (Mocks.Record())
+            {
+                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "scheduled"), Entry("2","deleted") });
+
+                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "planned"), Entry("2", "planned") });
+                _slaveMock.Delete(Entry("2", "planned"));
+                LastCall.Repeat.Once();
+
+            }
+            using (Mocks.Playback())
+            {
+                _synchronizer.Synchronize();
+            }
+            
+        }
+
+        [TestMethod]
         public void ShouldIgnorePropertiesWhenCreating()
         {
             using (Mocks.Record())
