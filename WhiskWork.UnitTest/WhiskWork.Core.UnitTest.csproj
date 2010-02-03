@@ -41,7 +41,13 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ParallelWorkStepsTest.cs" />
@@ -73,6 +79,10 @@
     <ProjectReference Include="..\WhiskWork.Generic\WhiskWork.Generic.csproj">
       <Project>{3AED6235-2460-4B02-ACD6-1BB8B4F8B06E}</Project>
       <Name>WhiskWork.Generic</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhiskWork.Synchronizer\WhiskWork.Synchronizer.csproj">
+      <Project>{9644963D-C671-4584-B6BE-D18F8B9234B8}</Project>
+      <Name>WhiskWork.Synchronizer</Name>
     </ProjectReference>
     <ProjectReference Include="..\WhiskWork.Test.Common\WhiskWork.Test.Common.csproj">
       <Project>{2919CEE0-E7D1-477A-B677-EE499631779B}</Project>

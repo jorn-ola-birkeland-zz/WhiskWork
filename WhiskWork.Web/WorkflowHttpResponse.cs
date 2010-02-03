@@ -30,9 +30,11 @@ namespace WhiskWork.Web
             get { return new WorkflowHttpResponse(HttpStatusCode.NotFound); }
         }
 
-        public static WorkflowHttpResponse BadRequest
+        public static WorkflowHttpResponse BadRequest(Exception e)
         {
-            get { return new WorkflowHttpResponse(HttpStatusCode.BadRequest); }
+            var response = new WorkflowHttpResponse(HttpStatusCode.BadRequest);
+            response.Write(e.ToString());
+            return response;
         }
 
         public static WorkflowHttpResponse MethodNotAllowed

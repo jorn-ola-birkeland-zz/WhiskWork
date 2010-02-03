@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Specialized;
 using System.Linq;
 using WhiskWork.Core;
 using System.Net;
@@ -21,6 +20,7 @@ namespace WhiskWork.Web
         {
             switch (request.HttpMethod.ToLowerInvariant())
             {
+
                 case "post":
                     return RespondToPost(request);
                 case "get":
@@ -41,7 +41,14 @@ namespace WhiskWork.Web
             }
 
             var visitor = new HttpPostWorkflowNodeVisitor(_workflow, request.RawUrl);
-            parser.Parse(request.InputStream).AcceptVisitor(visitor);
+            try
+            {
+                parser.Parse(request.InputStream).AcceptVisitor(visitor);
+            }
+            catch(ArgumentException e)
+            {
+                return WorkflowHttpResponse.BadRequest(e);
+            }
 
             return visitor.Response;
         }

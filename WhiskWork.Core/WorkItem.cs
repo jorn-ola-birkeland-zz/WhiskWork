@@ -238,6 +238,19 @@ namespace WhiskWork.Core
             return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties, Timestamp, LastMoved);
         }
 
+        public WorkItem UpdateProperties(Dictionary<string, string> properties)
+        {
+            var modifiedProperties = new NameValueCollection(_properties);
+
+            foreach (var key in properties.Keys)
+            {
+                modifiedProperties[key] = properties[key];
+            }
+
+            return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, modifiedProperties, Timestamp, LastMoved);
+        }
+
+
         public WorkItem UpdateTimestamp(DateTime timeStamp)
         {
             return new WorkItem(Id, Path, Classes, Status, Parent, _ordinal, _properties, timeStamp, LastMoved);
@@ -308,5 +321,6 @@ namespace WhiskWork.Core
         {
             return new WorkItemParent(Id,parentType);
         }
+
     }
 }

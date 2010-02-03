@@ -75,9 +75,9 @@ namespace WhiskWork.Web
             {
                 action.Invoke();
             }
-            catch (ArgumentException)
+            catch (ArgumentException e)
             {
-                Response = WorkflowHttpResponse.BadRequest;
+                Response = WorkflowHttpResponse.BadRequest(e);
             }
             catch (InvalidOperationException e)
             {

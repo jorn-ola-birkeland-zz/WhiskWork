@@ -51,9 +51,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BugSynchronizer.cs" />
+    <Compile Include="ChangeRequestSynchronizer.cs" />
+    <Compile Include="CommandLineArguments.cs" />
+    <Compile Include="DominoRepository.cs" />
+    <Compile Include="ReadOnlyDominoRepository.cs" />
+    <Compile Include="ReadOnlyWhiskWorkRepository.cs" />
     <Compile Include="EManagerSynchronizationAgent.cs" />
+    <Compile Include="EManagerWhiskWorkSynchronizer.cs" />
+    <Compile Include="IDominoRepository.cs" />
+    <Compile Include="IWhiskWorkRepository.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WhiskWorkRepository.cs" />
     <Compile Include="WhiskWorkSynchronizationAgent.cs" />
   </ItemGroup>
   <ItemGroup>

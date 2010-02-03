@@ -86,10 +86,12 @@ namespace WhiskWork.Core
                 throw new InvalidOperationException("Incompatible work item class. Should be same as parent");
             }
 
-            if(firstSibling!=null && firstSibling.WorkItemClass!=workStep.WorkItemClass)
+            if (firstSibling != null && firstSibling.WorkItemClass != workStep.WorkItemClass)
             {
-                throw new InvalidOperationException("Incompatible work item class. Should be same as siblings");
-                
+                if(parent == null || parent.Type != WorkStepType.Parallel)
+                {
+                    throw new InvalidOperationException("Incompatible work item class. Should be same as siblings");
+                }
             }
 
             WorkflowRepository.CreateWorkStep(workStep);

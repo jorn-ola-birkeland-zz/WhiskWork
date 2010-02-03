@@ -35,13 +35,21 @@ namespace WhiskWork.Core.Synchronization
             var idsForCreation = masterEntries.Select(e => e.Id).Except(slaveEntries.Select(e => e.Id));
             foreach (var id in idsForCreation)
             {
-                var entry = masterEntries.Where(e => e.Id == id).Single();
-
-                SynchronizationEntry slaveEntry;
-
-                if (TryGetSlaveEntry(entry, out slaveEntry))
+                try
                 {
-                    _slave.Create(slaveEntry);
+
+                    var entry = masterEntries.Where(e => e.Id == id).Single();
+
+                    SynchronizationEntry slaveEntry;
+
+                    if (TryGetSlaveEntry(entry, out slaveEntry))
+                    {
+                        _slave.Create(slaveEntry);
+                    }
+                }
+                catch(InvalidOperationException e)
+                {
+                    throw new InvalidOperationException("Id='"+id+"'",e);
                 }
             }
         }

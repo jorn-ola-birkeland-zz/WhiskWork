@@ -163,7 +163,7 @@ namespace WhiskWork.Web.UnitTest
             var expectedTime = new DateTime(2010,11,26,14,35,11,323);
 
             _wp.MockTime(mocks,expectedTime);
-
+            
             using(mocks.Playback())
             {
                 _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));

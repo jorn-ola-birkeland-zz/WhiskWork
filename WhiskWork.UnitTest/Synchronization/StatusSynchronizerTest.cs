@@ -1,3 +1,4 @@
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 using WhiskWork.Core.Synchronization;
@@ -36,7 +37,6 @@ namespace WhiskWork.Core.UnitTest.Synchronization
 
                 Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development") });
                 _slaveMock.UpdateStatus(Entry("1", "Done"));
-                LastCall.Repeat.Once();
 
             }
             using (Mocks.Playback())
@@ -44,6 +44,45 @@ namespace WhiskWork.Core.UnitTest.Synchronization
                 _synchronizer.Synchronize();
             }
         }
+
+        [TestMethod]
+        public void ShouldNotUpdateNewerStatus()
+        {
+            DateTime now = DateTime.Now;
+
+            using (Mocks.Record())
+            {
+                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done", now) });
+
+                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development",now.AddSeconds(1)) });
+
+            }
+            using (Mocks.Playback())
+            {
+                _synchronizer.Synchronize();
+            }
+           
+        }
+
+        [TestMethod]
+        public void ShouldUpdateOlderStatus()
+        {
+
+            DateTime now = DateTime.Now;
+            using (Mocks.Record())
+            {
+                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done", now) });
+
+                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development", now.AddSeconds(-1)) });
+                _slaveMock.UpdateStatus(Entry("1", "Done", now));
+
+            }
+            using (Mocks.Playback())
+            {
+                _synchronizer.Synchronize();
+            }
+        }
+
 
         [TestMethod]
         public void ShouldIgnoreMissingMappingWhenSynchronizingStatus()
@@ -55,7 +94,6 @@ namespace WhiskWork.Core.UnitTest.Synchronization
             {
                 SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done") });
                 Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "UnknownMap") });
-                LastCall.Repeat.Once();
             }
 
             using (Mocks.Playback())
@@ -73,7 +111,6 @@ namespace WhiskWork.Core.UnitTest.Synchronization
 
                 Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("2", "Done") });
                 _slaveMock.UpdateStatus(Entry("2", "Development"));
-                LastCall.Repeat.Once();
 
             }
             using (Mocks.Playback())

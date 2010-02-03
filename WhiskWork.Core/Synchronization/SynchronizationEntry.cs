@@ -34,6 +34,8 @@ namespace WhiskWork.Core.Synchronization
             get; set;
         }
 
+        public DateTime? TimeStamp { get; set; }
+
         public Dictionary<string, string> Properties
         {
             get { return new Dictionary<string, string>(_properties); }
@@ -54,6 +56,7 @@ namespace WhiskWork.Core.Synchronization
             result &= _status == entry._status;
             result &= _properties.SequenceEqual(entry._properties);
             result &= Ordinal == entry.Ordinal;
+            result &= TimeStamp == entry.TimeStamp;
 
             return result;
         }
@@ -64,6 +67,7 @@ namespace WhiskWork.Core.Synchronization
             hc ^= _status != null ? _status.GetHashCode() : 2;
             hc ^= _properties.Count > 0 ? _properties.Select(kv => kv.Key.GetHashCode() ^ kv.Value.GetHashCode()).Aggregate((hash, next) => hash ^ next) : 4;
             hc ^= Ordinal.HasValue ? Ordinal.Value.GetHashCode() : 8;
+            hc ^= TimeStamp.HasValue ? TimeStamp.Value.GetHashCode() : 16;
 
             return hc;
         }
@@ -75,13 +79,14 @@ namespace WhiskWork.Core.Synchronization
             sb.AppendFormat("Status={0},", _status);
             sb.AppendFormat("Properties={0},", _properties.Count() > 0 ? _properties.Select(kv => kv.Key + ":" + kv.Value).Aggregate((current, next) => current + "&" + next) : string.Empty);
             sb.AppendFormat("Ordinal={0}", Ordinal.HasValue ? Ordinal.Value.ToString() : "<undefined>");
+            sb.AppendFormat("TimeStamp={0}", TimeStamp.HasValue ? TimeStamp.Value.ToString() : "<undefined>");
 
             return sb.ToString();
         }
 
         public static SynchronizationEntry FromWorkItem(WorkItem workItem)
         {
-            return new SynchronizationEntry(workItem.Id, workItem.Path, ToDictionary(workItem.Properties)) {Ordinal = workItem.Ordinal};
+            return new SynchronizationEntry(workItem.Id, workItem.Path, ToDictionary(workItem.Properties)) {Ordinal = workItem.Ordinal, TimeStamp = workItem.LastMoved};
         }
 
         private static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> properties)

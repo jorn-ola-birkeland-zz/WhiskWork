@@ -98,6 +98,16 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
+        public void ShouldCreateChildrenOfParallelStepWithDifferentWorkItemClass()
+        {
+            _creator.CreateWorkStep(
+                WorkStep.New("/feedback").UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            _creator.CreateWorkStep(WorkStep.New("/feedback/review").UpdateWorkItemClass("cr-review"));
+            _creator.CreateWorkStep(WorkStep.New("/feedback/test").UpdateWorkItemClass("cr-test"));
+        }
+
+
+        [TestMethod]
         public void ShouldThrowIfCreatingChildOfParallelStepWithOtherThanParentWorkItemClassConcatenatedWithParentsLeafStep()
         {
             _creator.CreateWorkStep(

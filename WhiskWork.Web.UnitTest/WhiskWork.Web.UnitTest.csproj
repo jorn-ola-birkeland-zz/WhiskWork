@@ -44,6 +44,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CsvFormatTest.cs" />
     <Compile Include="CsvRequestMessageParserTest.cs" />
     <Compile Include="HtmlRendererTest.cs" />
     <Compile Include="JsonRendererTest.cs" />
@@ -53,6 +54,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="WebCommunicationTest.cs" />
     <Compile Include="WorkflowHttpHandlerTest.cs" />
     <Compile Include="XmlParserTest.cs" />
     <Compile Include="XmlRendererTest.cs" />

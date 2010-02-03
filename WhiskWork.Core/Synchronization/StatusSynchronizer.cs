@@ -36,6 +36,12 @@ namespace WhiskWork.Core.Synchronization
                         continue;
                     }
 
+                    if (masterMappedSlaveEntry.TimeStamp.HasValue && masterEntries[masterId].TimeStamp.HasValue && masterMappedSlaveEntry.TimeStamp > masterEntries[masterId].TimeStamp)
+                    {
+                        continue;
+                    }
+
+
                     SynchronizationEntry slaveMappedMasterEntry;
                     if(!TryGetSlaveEntry(masterEntries[masterId],out slaveMappedMasterEntry))
                     {
@@ -63,7 +69,7 @@ namespace WhiskWork.Core.Synchronization
             
             var slaveStatus = _map.GetMappedValue(_master, masterEntry.Status);
 
-            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties) { Ordinal = masterEntry.Ordinal};
+            slaveEntry = new SynchronizationEntry(masterEntry.Id, slaveStatus, masterEntry.Properties) { Ordinal = masterEntry.Ordinal, TimeStamp = masterEntry.TimeStamp};
             return true;
         }
 
@@ -77,7 +83,7 @@ namespace WhiskWork.Core.Synchronization
             
             var masterStatus = _map.GetMappedValue(_slave, slaveEntry.Status);
 
-            masterEntry = new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties) { Ordinal = slaveEntry.Ordinal} ;
+            masterEntry = new SynchronizationEntry(slaveEntry.Id, masterStatus, slaveEntry.Properties) { Ordinal = slaveEntry.Ordinal, TimeStamp = slaveEntry.TimeStamp} ;
             return true;
         }
         

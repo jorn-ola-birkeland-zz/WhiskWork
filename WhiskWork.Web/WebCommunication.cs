@@ -9,18 +9,120 @@ using WhiskWork.Core;
 
 namespace WhiskWork.Web
 {
-    public static class WebCommunication
+    public interface IHttpRequest
     {
-        public static XmlDocument GetXmlDocument(string url)
+        string Accept { get; set; }
+        string Method { get; set; }
+        string ContentType { get; set; }
+        long ContentLength { get; set; }
+        Stream GetRequestStream();
+        IHttpResponse GetResponse();
+    }
+
+    public interface IHttpResponse : IDisposable
+    {
+        Stream GetResponseStream();
+    }
+
+    public interface IHttpRequestFactory
+    {
+        IHttpRequest Create(string url);
+    }
+
+    internal class HttpRequestFactory : IHttpRequestFactory
+    {
+        public IHttpRequest Create(string url)
         {
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            return new HttpRequest((HttpWebRequest)WebRequest.Create(url));
+        }
+    }
+
+    internal class HttpRequest : IHttpRequest
+    {
+        private readonly HttpWebRequest _request;
+
+        public HttpRequest(HttpWebRequest webRequest)
+        {
+            _request = webRequest;
+        }
+
+        public string Accept
+        {
+            get { return _request.Accept; }
+            set { _request.Accept = value; }
+        }
+
+        public string Method
+        {
+            get { return _request.Method; }
+            set { _request.Method = value; }
+        }
+
+        public string ContentType
+        {
+            get { return _request.ContentType; }
+            set { _request.ContentType = value; }
+        }
+
+        public long ContentLength
+        {
+            get { return _request.ContentLength; }
+            set { _request.ContentLength = value; }
+        }
+
+        public Stream GetRequestStream()
+        {
+            return _request.GetRequestStream();
+        }
+
+        public IHttpResponse GetResponse()
+        {
+            return new HttpResponse(_request.GetResponse());
+        }
+    }
+
+    internal class HttpResponse : IHttpResponse
+    {
+        private readonly WebResponse _response;
+        public HttpResponse(WebResponse response)
+        {
+            _response = response;
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)_response).Dispose();
+        }
+
+        public Stream GetResponseStream()
+        {
+            return _response.GetResponseStream();
+        }
+    }
+
+    public class WebCommunication
+    {
+        private readonly IHttpRequestFactory _httpRequestFactory;
+        public WebCommunication() : this(new HttpRequestFactory())
+        {
+            
+        }
+
+        public WebCommunication(IHttpRequestFactory httpRequestFactory)
+        {
+            _httpRequestFactory = httpRequestFactory;
+        }
+
+        public XmlDocument GetXmlDocument(string url)
+        {
+            var request = _httpRequestFactory.Create(url);
 
             request.Accept = "text/xml";
             request.Method = "GET";
 
             var doc = new XmlDocument();
 
-            using(var response = (HttpWebResponse)request.GetResponse())
+            using(var response = request.GetResponse())
             {
                 doc.Load(response.GetResponseStream());
             }
@@ -28,9 +130,9 @@ namespace WhiskWork.Web
             return doc;
         }
 
-        public static void SendCsvRequest(string url, string httpverb, string payload)
+        public void SendCsvRequest(string url, string httpverb, string payload)
         {
-            var request = (HttpWebRequest) WebRequest.Create(url);
+            var request = _httpRequestFactory.Create(url);
 
             request.ContentType = "text/csv";
             request.Method = httpverb;
@@ -45,14 +147,14 @@ namespace WhiskWork.Web
             response.Dispose();
         }
 
-        public static void PostCsv(string url, IDictionary<string,string> keyValues)
+        public void PostCsv(string url, IDictionary<string,string> keyValues)
         {
             var payload = CreatePayload(keyValues);
 
             SendCsvRequest(url,"post",payload);
         }
 
-        public static void PostCsv(string host, WorkItem workItem)
+        public void PostCsv(string host, WorkItem workItem)
         {
             var url = host + workItem.Path;
 
@@ -74,9 +176,9 @@ namespace WhiskWork.Web
 
             var payload = CreatePayload(keyValues);
 
-            Console.WriteLine("url:'{0}', payload:'{1}'",url, payload);
             SendCsvRequest(url, "post", payload);
         }
+
 
         private static string CreatePayload(IEnumerable<KeyValuePair<string, string>> keyValues)
         {
@@ -90,7 +192,10 @@ namespace WhiskWork.Web
                 {
                     payloadBuilder.Append(",");
                 }
-                payloadBuilder.AppendFormat("{0}={1}", HttpUtility.HtmlEncode(keyValuePair.Key), HttpUtility.HtmlEncode(keyValuePair.Value));
+
+                var item = string.Format("{0}={1}", HttpUtility.HtmlEncode(keyValuePair.Key),
+                                         HttpUtility.HtmlEncode(keyValuePair.Value));
+                payloadBuilder.Append(CsvFormat.Escape(item));
 
                 first = false;
             }

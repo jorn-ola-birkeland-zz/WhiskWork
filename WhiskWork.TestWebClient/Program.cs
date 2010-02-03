@@ -2,6 +2,7 @@
 using System.Net;
 using WhiskWork.Core;
 using WhiskWork.Web;
+using System.IO;
 
 namespace WhiskWork.TestWebClient
 {
@@ -21,7 +22,18 @@ namespace WhiskWork.TestWebClient
 
             //Console.WriteLine("url:'{0}' httpverb:'{1}' payload:'{2}'",url,httpverb,payload);
 
-            WebCommunication.SendCsvRequest(url, httpverb, payload);
+            try
+            {
+                new WebCommunication().SendCsvRequest(url, httpverb, payload);
+            }
+            catch(WebException e)
+            {
+                using (var reader = new StreamReader(e.Response.GetResponseStream()))
+                {
+                    Console.WriteLine(reader.ReadToEnd());
+                }
+                throw;
+            }
 
             //InitializeWorkflow();
 
@@ -89,7 +101,7 @@ namespace WhiskWork.TestWebClient
                     payload = parts[2];
                 }
 
-                WebCommunication.SendCsvRequest("http://localhost:5555" + path, httpverb, payload);
+                new WebCommunication().SendCsvRequest("http://localhost:5555" + path, httpverb, payload);
 
             } while (!string.IsNullOrEmpty(line));
         }
@@ -98,13 +110,13 @@ namespace WhiskWork.TestWebClient
         private static void CreateWorkStep(string step, string parentPath, int ordinal, WorkStepType type, string workItemClass)
         {
             var payload = string.Format("step={0},type={1},class={2},ordinal={3}", step, type, workItemClass, ordinal);
-            WebCommunication.SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
+            new WebCommunication().SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
         }
 
         private static void CreateWorkStep(string step, string parentPath, int ordinal, WorkStepType type, string workItemClass, string title)
         {
             var payload = string.Format("step={0},type={1},class={2},ordinal={3},title={4}", step, type, workItemClass, ordinal,title);
-            WebCommunication.SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
+            new WebCommunication().SendCsvRequest("http://localhost:5555" + parentPath, "post", payload);
         }
     }
 }

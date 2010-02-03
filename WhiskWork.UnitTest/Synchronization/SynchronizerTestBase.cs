@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Rhino.Mocks;
 using WhiskWork.Core.Synchronization;
 
@@ -20,6 +21,10 @@ namespace WhiskWork.Core.UnitTest.Synchronization
             return entry;
         }
 
+        protected static SynchronizationEntry Entry(string id, string status, DateTime? timeStamp)
+        {
+            return new SynchronizationEntry(id, status, new Dictionary<string, string>()) {TimeStamp = timeStamp};
+        }
 
         protected static SynchronizationEntry Entry(string id, string status)
         {

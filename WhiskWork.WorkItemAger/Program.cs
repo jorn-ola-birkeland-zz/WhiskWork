@@ -20,7 +20,7 @@ namespace WhiskWork.WorkItemAger
 
             var host = args[0];
 
-            var doc = WebCommunication.GetXmlDocument(host + "/");
+            var doc = new WebCommunication().GetXmlDocument(host + "/");
 
             Console.WriteLine("Setting age ...");
             foreach (var workItem in XmlParser.ParseWorkItems(doc))
@@ -47,7 +47,7 @@ namespace WhiskWork.WorkItemAger
         {
             try
             {
-                WebCommunication.PostCsv(host, ageUpdateWorkItem);
+                new WebCommunication().PostCsv(host, ageUpdateWorkItem);
             }
             catch(WebException)
             {

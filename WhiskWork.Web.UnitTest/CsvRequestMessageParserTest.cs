@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using WhiskWork.Core;
+using WhiskWork.Test.Common;
 namespace WhiskWork.Web.UnitTest
 {
     [TestClass]
@@ -81,6 +83,17 @@ namespace WhiskWork.Web.UnitTest
             Assert.AreEqual("title1", step.Title);
             Assert.AreEqual(WorkStepType.Begin, step.Type);
             Assert.AreEqual("class1", step.WorkItemClass);
+        }
+
+        [TestMethod]
+        public void ShouldParseQuotedItem()
+        {
+            var parser = new CsvRequestMessageParser();
+            var node = parser.Parse(CreateStream("step=step1,ordinal=1,\"title=title,with,comma\",type=begin,class=class1")) as WorkStepNode;
+
+            Assert.IsNotNull(node);
+            var step = node.GetWorkStep("/");
+            Assert.AreEqual("title,with,comma", step.Title);
         }
 
 
