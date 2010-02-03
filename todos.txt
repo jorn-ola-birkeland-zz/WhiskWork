@@ -1,0 +1,27 @@
+- Work items with ',' in title will crash WhiskWork when sending as CSV. Need way to escape.
+
+- Make sure SimpleDBRepository stores WipLimit
+-- Create WorkItemQueryResult and WorkItemUpdateQuery to capture data to ensure handling?
+- Move logging out of core
+-- Create application to take snapshots regurarly and log diffs
+- Remove LastMoved from WorkItem
+-- Move aging functionality out to separate application. Use snapshot diffs or log to calculate age
+- Add possibility to reconfigure worksteps
+-- post /cmsdev/cmswip step=/cmsdev/development => /cmsdev/cmswip/development
+--- all workitems should be moved
+-- post /cmsdev/cmswip step=development => post /cmsdev/cmswip step=development
+
+- Look into a transactional repository
+- Consolidate Caching...Repository og InMemory...Repository
+-- Create Null...repository
+
+- ToString/HashCode etc on WorkItem should be updated with UpdatedTime
+
+- Add nested properties?
+/analysis/inprocess/cr4543/properties/history/1/responsible 
+/analysis/inprocess/cr4543/properties/history/1/partner 
+/analysis/inprocess/cr4543/properties/history/1/date
+/analysis/inprocess/cr4543/properties/history/1/from
+/analysis/inprocess/cr4543/properties/history/1/to
+
+	 
