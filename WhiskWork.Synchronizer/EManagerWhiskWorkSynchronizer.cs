@@ -199,5 +199,21 @@ namespace WhiskWork.Synchronizer
             }
             return timeStamp;
         }
+
+        protected static int? ParseNumber(string rowItem)
+        {
+            if (string.IsNullOrEmpty(rowItem))
+            {
+                return null;
+            }
+
+            decimal value;
+            if (!decimal.TryParse(rowItem, NumberStyles.Number, CultureInfo.CreateSpecificCulture("en"), out value))
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(Math.Round(value));
+        }
     }
 }

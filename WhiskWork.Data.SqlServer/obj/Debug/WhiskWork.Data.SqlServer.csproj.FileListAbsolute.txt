@@ -1,0 +1,5 @@
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Data.SqlServer.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Data.SqlServer.pdb
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\ResolveAssemblyReference.cache
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\WhiskWork.Data.SqlServer.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\WhiskWork.Data.SqlServer.pdb

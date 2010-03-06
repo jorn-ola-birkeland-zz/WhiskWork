@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhiskWork.Test.Common;
 using Rhino.Mocks;
@@ -202,6 +203,29 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
+        public void ShouldSetLastMovedWhenCreatingWorkItem()
+        {
+            var mocks = new MockRepository();
+            var expectedTime = DateTime.Now;
+
+            _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+
+            _wp.MockTime(mocks, expectedTime);
+
+            using (mocks.Playback())
+            {
+                _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+
+            }
+
+            var workItem = _wp.GetWorkItem("cr1");
+
+            Assert.AreEqual(expectedTime, workItem.LastMoved);
+
+        }
+
+
+        [TestMethod]
         public void ShouldOverrideTimestampWhenCreatingWorkItem()
         {
             var mocks = new MockRepository();
@@ -265,21 +289,22 @@ namespace WhiskWork.Core.UnitTest
         }
 
         [TestMethod]
-        public void ShouldNotSetLastMovedWhenUpdatingWorkItem()
+        public void ShouldNotUpdateLastMovedWhenUpdatingWorkItem()
         {
             _workStepRepository.Add(WorkStep.New("/analysis").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
-            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
 
             var mocks = new MockRepository();
-            var expectedTime = DateTime.Now;
+            _wp.CreateWorkItem(WorkItem.New("cr1", "/analysis"));
+            var createdTime = _wp.GetWorkItem("cr1").LastMoved;
 
-            _wp.MockTime(mocks, expectedTime);
+            var mocktime = new DateTime(2009, 3, 4);
+            _wp.MockTime(mocks, mocktime);
 
             using (mocks.Playback())
             {
                 _wp.UpdateWorkItem(WorkItem.New("cr1", "/analysis").UpdateProperty("name","value"));
                 var workItem = _wp.GetWorkItem("cr1");
-                Assert.AreEqual(null, workItem.LastMoved);
+                Assert.AreEqual(createdTime, workItem.LastMoved);
             }
         }
 

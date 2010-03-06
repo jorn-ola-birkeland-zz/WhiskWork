@@ -1,3 +1,4 @@
+using System;
 namespace WhiskWork.Core
 {
     public interface IWorkflow : IReadableWorkflowRepository, IWriteableWorkflowRepository
@@ -7,6 +8,8 @@ namespace WhiskWork.Core
 
     public interface IWorkflowRepository : IReadableWorkflowRepository, IWriteableWorkflowRepository
     {
+        IDisposable BeginTransaction();
+        void CommitTransaction();
     }
 
 

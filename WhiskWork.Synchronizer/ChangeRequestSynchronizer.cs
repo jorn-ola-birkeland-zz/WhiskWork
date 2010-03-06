@@ -10,9 +10,6 @@ namespace WhiskWork.Synchronizer
 {
     public class ChangeRequestSynchronizer : EManagerWhiskWorkSynchronizer
     {
-        private const int _undefinedOrdinal = 10000;
-
-
         public ChangeRequestSynchronizer(IWhiskWorkRepository whiskWorkRepository, IDominoRepository dominoRepository) : base(whiskWorkRepository, dominoRepository)
         {
         }
@@ -40,23 +37,23 @@ namespace WhiskWork.Synchronizer
             var statusMap = new SynchronizationMap(EManagerAgent, WhiskWorkAgent);
             statusMap.AddReciprocalEntry("0a - Scheduled for development", WhiskWorkBeginStep);
 
-            statusMap.AddReciprocalEntry("2 - Development", "/cmsdev/analysis/inprocess");
-            statusMap.AddReverseEntry("/cmsdev/analysis/done", "2 - Development");
-            statusMap.AddReverseEntry("/cmsdev/development/inprocess", "2 - Development");
-            statusMap.AddReciprocalEntry("3 - Ready for test", "/cmsdev/development/done");
-            statusMap.AddReverseEntry("/cmsdev/feedback", "3 - Ready for test");
-            statusMap.AddReverseEntry("/cmsdev/feedback/review", "3 - Ready for test");
-            statusMap.AddReverseEntry("/cmsdev/feedback/test", "3 - Ready for test");
+            statusMap.AddReciprocalEntry("2 - Development", "/cmsdev/wip/analysis/inprocess");
+            statusMap.AddReverseEntry("/cmsdev/wip/analysis/done", "2 - Development");
+            statusMap.AddReverseEntry("/cmsdev/wip/development/inprocess", "2 - Development");
+            statusMap.AddReciprocalEntry("3 - Ready for test", "/cmsdev/wip/development/done");
+            statusMap.AddReverseEntry("/cmsdev/wip/feedback", "3 - Ready for test");
+            statusMap.AddReverseEntry("/cmsdev/wip/feedback/review", "3 - Ready for test");
+            statusMap.AddReverseEntry("/cmsdev/wip/feedback/test", "3 - Ready for test");
 
             statusMap.AddReciprocalEntry("4a ACCEPTED - In Dev", "/done");
-            statusMap.AddForwardEntry("4a FAILED - In Dev", "/cmsdev/development/inprocess");
+            statusMap.AddForwardEntry("4a FAILED - In Dev", "/cmsdev/wip/development/inprocess");
             statusMap.AddReverseEntry("/test/inprocess", "4a ACCEPTED - In Dev");
             statusMap.AddReciprocalEntry("4b ACCEPTED - In Test", "/test/done");
-            statusMap.AddForwardEntry("4b FAILED - In Test", "/cmsdev/development/inprocess");
+            statusMap.AddForwardEntry("4b FAILED - In Test", "/cmsdev/wip/development/inprocess");
             statusMap.AddReverseEntry("/stage", "4b ACCEPTED - In Test");
             statusMap.AddReciprocalEntry("5 - Approved (ready for deploy)", "/approved");
             statusMap.AddForwardEntry("4c ACCEPTED - In Stage", "/approved");
-            statusMap.AddForwardEntry("4c FAILED - In Stage", "/cmsdev/development/inprocess");
+            statusMap.AddForwardEntry("4c FAILED - In Stage", "/cmsdev/wip/development/inprocess");
             statusMap.AddReciprocalEntry("7 - Deployed to prod", "/deployed");
 
 
@@ -83,7 +80,7 @@ namespace WhiskWork.Synchronizer
 
         protected override IEnumerable<SynchronizationEntry> MapFromWhiskWork(IEnumerable<WorkItem> workItems)
         {
-            var crs = workItems.Where(wi => wi.Classes.Contains("cr") && !wi.Id.StartsWith("B"));
+            var crs = workItems.Where(wi => wi.Classes.Contains("cr") && !wi.Id.StartsWith("B") && !wi.Id.StartsWith("S") && !wi.Id.StartsWith("T"));
             var normalCrs = crs.Where(wi => !wi.Classes.Contains("cr-review") && !wi.Classes.Contains("cr-test"));
             return normalCrs.Select(wi => SynchronizationEntry.FromWorkItem(wi));
         }
@@ -98,9 +95,10 @@ namespace WhiskWork.Synchronizer
             var project = (string)dataRow[5];
             var unid = (string)dataRow[6];
             var status = (string)dataRow[7];
-            var ordinal = GetOrdinal((string)dataRow[8]);
+            var ordinal = ParseNumber((string)dataRow[8]);
             var person = (string)dataRow[9];
-            var timeStamp = ParseDominoTimeStamp((string)dataRow[10]);
+            DateTime? timeStamp = null;
+            //var timeStamp = ParseDominoTimeStamp((string)dataRow[10]);
 
 
             if ((TeamFilter != null && !TeamFilter.Contains(team)) || (ReleaseFilter != null && !ReleaseFilter.Contains(release)))
@@ -123,7 +121,7 @@ namespace WhiskWork.Synchronizer
                         {"release", release},
                         {"project", project},
                         {"leanstatus",leanStatus},
-                        {"priority",ordinal==_undefinedOrdinal ? "undefined" : ordinal.ToString()},
+                        {"priority",!ordinal.HasValue ? "undefined" : ordinal.ToString()},
                     };
 
             if (!string.IsNullOrEmpty(person))
@@ -132,22 +130,6 @@ namespace WhiskWork.Synchronizer
             }
 
             return new SynchronizationEntry(id, status, properties) { Ordinal = ordinal, TimeStamp = timeStamp};
-        }
-
-        private static int GetOrdinal(string rowItem)
-        {
-            if (string.IsNullOrEmpty(rowItem))
-            {
-                return _undefinedOrdinal;
-            }
-
-            decimal value;
-            if (!decimal.TryParse(rowItem, NumberStyles.Number, CultureInfo.CreateSpecificCulture("en"), out value))
-            {
-                return _undefinedOrdinal;
-            }
-
-            return Convert.ToInt32(Math.Round(value));
         }
     }
 }

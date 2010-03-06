@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using WhiskWork.Core;
-using System.Threading;
 
-namespace WhiskWork.AWS.SimpleDB
+namespace WhiskWork.Core
 {
     public class CachingWorkItemRepository : IWorkItemRepository
     {

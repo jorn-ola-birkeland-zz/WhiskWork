@@ -26,14 +26,16 @@ namespace WhiskWork.Core
         public void CreateWorkItem(WorkItem newWorkItem)
         {
             var creator = new WorkItemCreator(WorkflowRepository);
-
-            creator.CreateWorkItem(newWorkItem.UpdateTimestamp(TimeSource.GetTime()));
+            
+            
+            var timeStamp = TimeSource.GetTime();
+            creator.CreateWorkItem(newWorkItem.UpdateTimestamp(timeStamp).UpdateLastMoved(timeStamp));
         }
 
         public void UpdateWorkItem(WorkItem changedWorkItem)
         {
             var currentWorkItem = GetWorkItemOrThrow(changedWorkItem.Id);
-
+            
             ThrowIfConflictingTimestamp(currentWorkItem, changedWorkItem);
 
             currentWorkItem =
@@ -47,8 +49,8 @@ namespace WhiskWork.Core
             }
             else
             {
-                var mover = new WorkItemMover(WorkflowRepository);
-                mover.MoveWorkItem(currentWorkItem.UpdateLastMoved(TimeSource.GetTime()), leafStep);
+                var mover = new WorkItemMover(WorkflowRepository,TimeSource);
+                mover.MoveWorkItem(currentWorkItem, leafStep);
             }
         }
 

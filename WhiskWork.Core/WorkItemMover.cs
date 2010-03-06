@@ -18,11 +18,22 @@ namespace WhiskWork.Core
 
     internal class WorkItemMover : WorkflowRepositoryInteraction
     {
-        public WorkItemMover(IWorkflowRepository workflowRepository) : base(workflowRepository)
+        private readonly ITimeSource _timeSource;
+        public WorkItemMover(IWorkflowRepository workflowRepository, ITimeSource timeSource) : base(workflowRepository)
         {
+            _timeSource = timeSource;
         }
 
         public void MoveWorkItem(WorkItem workItem, WorkStep toStep)
+        {
+            using(WorkflowRepository.BeginTransaction())
+            {
+                Move(workItem, toStep);
+                WorkflowRepository.CommitTransaction();
+            }
+        }
+
+        private void Move(WorkItem workItem, WorkStep toStep)
         {
             var transition = new WorkItemTransition(workItem, toStep);
 
@@ -237,7 +248,7 @@ namespace WhiskWork.Core
 
         private WorkItemTransition DoMove(WorkItemTransition transition)
         {
-            var movedWorkItem = transition.WorkItem.MoveTo(transition.WorkStep);
+            var movedWorkItem = transition.WorkItem.MoveTo(transition.WorkStep).UpdateLastMoved(_timeSource.GetTime());
 
             WorkflowRepository.UpdateWorkItem(movedWorkItem);
 

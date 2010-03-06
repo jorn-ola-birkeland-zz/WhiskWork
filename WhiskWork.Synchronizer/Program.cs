@@ -38,14 +38,22 @@ namespace WhiskWork.Synchronizer
             var whiskWorkRepository = new WhiskWorkRepository(whiskWorkHost);
             var dominoRepository = new DominoRepository(dominoLogin, dominoPassword, dominoHost, dominoLoginUrl, bugViewUrl);
 
-            var synchronizer = new BugSynchronizer(whiskWorkRepository, dominoRepository);
+            var synchronizer = new ProblemReportSynchronizer(whiskWorkRepository, dominoRepository);
             synchronizer.ApplicationIdFilter = arguments.GetSafeValues("-appid");
             synchronizer.ReleaseFilter = arguments.GetSafeValues("-release");
 
             synchronizer.IsSafeSynch = arguments.ContainsArg("-safe");
             synchronizer.IsDryRun = arguments.ContainsArg("-dryrun");
 
-            synchronizer.Synchronize();
+            try
+            {
+                synchronizer.Synchronize();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         private static void SynchronizeChangeRequests(CommandLineArguments arguments)

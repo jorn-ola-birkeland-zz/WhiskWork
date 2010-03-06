@@ -1,8 +1,6 @@
 ﻿using System;
 using Abb.One.MicroWebServer;
 using System.IO;
-using WhiskWork.AWS.SimpleDB;
-using WhiskWork.Core;
 
 namespace WhiskWork.CommondLineWebServer
 {
@@ -14,9 +12,8 @@ namespace WhiskWork.CommondLineWebServer
             var port = 5555;
             string webRootDirectory = null;
             string logFilePath = null;
-            string awsAccessKey = null;
-            string awsSecretAccessKey = null;
-            string domainPrefix = null;
+            string storageType = null;
+            string connectionString = null;
 
             if(args.Length>0)
             {
@@ -44,27 +41,44 @@ namespace WhiskWork.CommondLineWebServer
                 logFilePath = args[2];
             }
 
-            if(args.Length>5)
+            if(args.Length>3)
             {
-                awsAccessKey = args[3];
-                awsSecretAccessKey = args[4];
-                domainPrefix = args[5];
+                storageType = args[3];
             }
 
-            IWorkStepRepository workStepRepository = new MemoryWorkStepRepository();
-            IWorkItemRepository workItemRepository = new MemoryWorkItemRepository();
-
-            if(awsAccessKey!=null && awsSecretAccessKey!=null)
+            if(args.Length>4)
             {
-                workItemRepository = new CachingWorkItemRepository(new OptimisticAsynchWorkItemRepository(new SimpleDBWorkItemRepository(domainPrefix + "_items", awsAccessKey, awsSecretAccessKey)));
-                workStepRepository = new CachingWorkStepRepository(new SimpleDBWorkStepRepository(domainPrefix+"_steps", awsAccessKey,awsSecretAccessKey));
+                connectionString = args[4];
             }
 
-            var router = new WebRouter(new WorkflowRepository(workItemRepository, workStepRepository) , webRootDirectory, logFilePath);
+            var workflowRepository = ParseRepository(storageType, connectionString).WorkflowRepository;
+
+            var router = new WebRouter(workflowRepository, webRootDirectory, logFilePath);
             var server = new WebServer(router.ProcessRequest, port);
 
             Console.WriteLine("Started port:{0} directory:'{1}' logfile:'{2}'",port,webRootDirectory,logFilePath);
             server.Start();
+        }
+
+        private static IWorkflowRepositoryFactory ParseRepository(string storageType, string connectionString)
+        {
+            switch(storageType.ToLowerInvariant())
+            {
+                case "-aws":
+                    var parameters = connectionString.Split(';');
+                    var awsAccessKey = parameters[0];
+                    var awsSecretAccessKey = parameters[1];
+                    var domainPrefix = parameters[2];
+
+                    return new SimpleDbWorkflowRepositoryFactory(domainPrefix,awsAccessKey,awsSecretAccessKey);
+                case "-sql":
+                case "-ado":
+                    return new AdoWorkflowRepositoryFactory(connectionString);
+
+                default:
+                    return new MemoryWorkflowRepositoryFactory();
+
+            }
         }
     }
 }

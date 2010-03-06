@@ -170,7 +170,7 @@ namespace WhiskWork.Core
             return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }
 
-        public WorkItem ReplacesClasses(IEnumerable<string> newClasses)
+        public WorkItem UpdateClasses(IEnumerable<string> newClasses)
         {
             return new WorkItem(Id, Path, newClasses, Status, Parent, _ordinal, _properties, Timestamp, LastMoved);
         }

@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace WhiskWork.Core
 {
-    public class WorkflowRepository : IWorkflowRepository
+    public class WorkflowRepository : IWorkflowRepository, IDisposable
     {
         private readonly IWorkItemRepository _workItemRepsitory;
         private readonly IWorkStepRepository _workStepRepository;
@@ -79,6 +80,19 @@ namespace WhiskWork.Core
         public bool ExistsWorkStep(string path)
         {
             return _workStepRepository.ExistsWorkStep(path);
+        }
+
+        public virtual IDisposable BeginTransaction()
+        {
+            return this;
+        }
+
+        public virtual void CommitTransaction()
+        {
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

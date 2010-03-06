@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CachingWorkItemRepository.cs" />
+    <Compile Include="CachingWorkStepRepository.cs" />
     <Compile Include="ITimeSource.cs" />
     <Compile Include="Logging\LogOperationType.cs" />
     <Compile Include="Logging\MemoryWorkflowLog.cs" />

@@ -12,6 +12,15 @@ namespace WhiskWork.Core
 
         public void CreateWorkItem(WorkItem newWorkItem)
         {
+            using(WorkflowRepository.BeginTransaction())
+            {
+                Create(newWorkItem);
+                WorkflowRepository.CommitTransaction();                
+            }
+        }
+
+        private void Create(WorkItem newWorkItem)
+        {
             var leafStep = WorkflowRepository.GetLeafStep(newWorkItem.Path);
 
             if (leafStep.Type != WorkStepType.Begin)
@@ -21,7 +30,7 @@ namespace WhiskWork.Core
 
             var classes = WorkflowRepository.GetWorkItemClasses(leafStep);
 
-            newWorkItem = newWorkItem.MoveTo(leafStep).ReplacesClasses(classes);
+            newWorkItem = newWorkItem.MoveTo(leafStep).UpdateClasses(classes);
 
             WorkStep transientStep;
             if (WorkflowRepository.IsWithinTransientStep(leafStep, out transientStep))

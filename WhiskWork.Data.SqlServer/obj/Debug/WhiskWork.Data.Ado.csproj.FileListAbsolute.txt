@@ -1,0 +1,9 @@
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Data.Ado.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Data.Ado.pdb
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Core.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Generic.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Generic.pdb
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\bin\Debug\WhiskWork.Core.pdb
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\ResolveAssemblyReference.cache
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\WhiskWork.Data.Ado.dll
+d:\Documents and Settings\Jørn Ola Birkeland\WhiskWork\WhiskWork.Data.SqlServer\obj\Debug\WhiskWork.Data.Ado.pdb

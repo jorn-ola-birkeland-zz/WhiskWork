@@ -145,7 +145,18 @@ namespace WhiskWork.Core.UnitTest
             Assert.IsTrue(_wipLimit.CanAcceptWorkStep(ws1, ws2));
         }
 
+        [TestMethod, Ignore]
+        public void ShouldAcceptSettingWorkStepWipLimitBelowWipCount()
+        {
+            _workStepRepository.CreateWorkStep("/step1",1);
+            _workStepRepository.CreateWorkStep("/step1/sub1");
+            var ws3 = _workStepRepository.CreateWorkStep("/step1/sub2");
 
+            _workItemRepository.CreateWorkItem("/step1/sub1", "wi1", "wi2");
+
+            Assert.IsTrue(CanAcceptWip(ws3,"wi1"));
+            
+        }
 
         private void AssertBelowWipLimitAndCreateWorkItem(WorkStep workStep, params string[] ids)
         {

@@ -99,7 +99,7 @@ namespace WhiskWork.Web
             var workItemClasses = SelectNodeValueOrDefault(workItemNode,"@classes",null);
             if(!String.IsNullOrEmpty(workItemClasses))
             {
-                workItem = workItem.ReplacesClasses(workItemClasses.Split(' '));
+                workItem = workItem.UpdateClasses(workItemClasses.Split(' '));
             }
             return workItem;
         }

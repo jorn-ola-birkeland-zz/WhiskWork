@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rhino.Mocks;
 using WhiskWork.Generic;
 using WhiskWork.Test.Common;
 
@@ -49,7 +50,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldNotCreateWorkItemInParallelStep()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
             AssertUtils.AssertThrows<InvalidOperationException>(
                 () => _wp.CreateWorkItem(WorkItem.New("cr1","/feedback")));
         }
@@ -57,7 +58,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldSplitWorkItem()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             var item = _workItemRepository.GetWorkItem("cr1");
@@ -82,7 +83,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldLockWorkItemAndCreateChildWorkItemsWhenMovedToParallelStep()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             Assert.AreEqual(1, _wp.GetWorkItems("/development").Select(wi => wi.Id == "cr1").Count());
@@ -97,7 +98,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldAlsoParalleledChildrenWhenDeletingParalleledWorkItem()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
@@ -116,7 +117,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldNotBeAbleToMoveParallelLockedWorkItem()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
@@ -128,7 +129,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldUpdateParallelLockedWorkItem()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1", "/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
@@ -143,7 +144,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldLockWorkItemAndCreateChildWorkItemsWhenMovedToRootOfParallelStep()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
@@ -155,7 +156,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMoveSecondChildItemWhenParentParallelized()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
@@ -170,7 +171,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldOnlyBeAbleToMoveChildItemToDedicatedParallelStep()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback"));
@@ -189,7 +190,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldNotBeAbleToDeleteParallelledChildOfParalleledWorkItem()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem(WorkItem.New("cr1","/development"));
             _wp.UpdateWorkItem(WorkItem.New("cr1", "/feedback/review"));
@@ -203,7 +204,7 @@ namespace WhiskWork.Core.UnitTest
         [TestMethod]
         public void ShouldMergeChildItemsWhenBothMovedToSameNormalStepOutsideParallelization()
         {
-            CreateSimpleParallelWorkflow();
+            _workStepRepository.CreateSimpleParallelWorkflow();
 
             _wp.CreateWorkItem("/development", "cr1");
             _wp.MoveWorkItem("/feedback", "cr1");
@@ -437,15 +438,21 @@ namespace WhiskWork.Core.UnitTest
             Assert.AreEqual("/implementation/doc", _wp.GetWorkItem("cr1-dev-review-doc").Path);
         }
 
-
-        
-        private void CreateSimpleParallelWorkflow()
+        [TestMethod]
+        public void ShouldUpdateParentsLastMovedWhenMergingParalleledChildItems()
         {
-            _workStepRepository.Add(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
-            _workStepRepository.Add(WorkStep.New("/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
-            _workStepRepository.Add(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
-            _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
-            _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(2).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
+            var mock = new MockRepository();
+            _workStepRepository.CreateSimpleParallelWorkflow();
+
+            _wp.CreateWorkItem("/development", "cr1");
+            _wp.MoveWorkItem("/feedback", "cr1");
+
+
+            var expected = new DateTime(2000, 1, 1);
+            _wp.MockTime(mock, expected);
+            _wp.MoveWorkItem("/done", "cr1-test", "cr1-review");
+
+            Assert.AreEqual(expected, _wp.GetWorkItem("cr1").LastMoved);
         }
 
         private void CreateParallelWorkflowWithExpandStep()
@@ -466,5 +473,18 @@ namespace WhiskWork.Core.UnitTest
             _workStepRepository.Add(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test").UpdateTitle("Test"));
             _workStepRepository.Add(WorkStep.New("/done").UpdateOrdinal(4).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr").UpdateTitle("Done"));
         }
+    }
+
+    internal static class ParallelWorkflowExtension
+    {
+        public static void CreateSimpleParallelWorkflow(this IWorkStepRepository workStepRepository)
+        {
+            workStepRepository.CreateWorkStep(WorkStep.New("/development").UpdateOrdinal(1).UpdateType(WorkStepType.Begin).UpdateWorkItemClass("cr"));
+            workStepRepository.CreateWorkStep(WorkStep.New("/feedback").UpdateOrdinal(2).UpdateType(WorkStepType.Parallel).UpdateWorkItemClass("cr"));
+            workStepRepository.CreateWorkStep(WorkStep.New("/feedback/review").UpdateOrdinal(1).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-review"));
+            workStepRepository.CreateWorkStep(WorkStep.New("/feedback/test").UpdateOrdinal(2).UpdateType(WorkStepType.Normal).UpdateWorkItemClass("cr-test"));
+            workStepRepository.CreateWorkStep(WorkStep.New("/done").UpdateOrdinal(2).UpdateType(WorkStepType.End).UpdateWorkItemClass("cr"));
+        }
+
     }
 }   

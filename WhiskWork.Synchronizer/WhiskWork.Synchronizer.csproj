@@ -51,7 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BugSynchronizer.cs" />
+    <Compile Include="ProblemReportSynchronizer.cs" />
     <Compile Include="ChangeRequestSynchronizer.cs" />
     <Compile Include="CommandLineArguments.cs" />
     <Compile Include="DominoRepository.cs" />

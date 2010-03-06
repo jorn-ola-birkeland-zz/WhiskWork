@@ -23,11 +23,16 @@ namespace WhiskWork.Core
 
         public void DeleteWorkItem(string id)
         {
-            var workItem = WorkflowRepository.GetWorkItem(id);
+            using(WorkflowRepository.BeginTransaction())
+            {
+                var workItem = WorkflowRepository.GetWorkItem(id);
 
-            ThrowInvalidOperationExceptionIfParentIsParallelLocked(workItem);
+                ThrowInvalidOperationExceptionIfParentIsParallelLocked(workItem);
 
-            DeleteWorkItemRecursively(workItem);
+                DeleteWorkItemRecursively(workItem);
+
+                WorkflowRepository.CommitTransaction();
+            }
         }
 
         private void ThrowInvalidOperationExceptionIfParentIsParallelLocked(WorkItem workItem)

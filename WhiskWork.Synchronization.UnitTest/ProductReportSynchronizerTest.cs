@@ -10,7 +10,7 @@ using System.Globalization;
 namespace WhiskWork.Synchronization.UnitTest
 {
     [TestClass]
-    public class BugSynchronizerTest : EManagerSynchronizerTestBase
+    public class ProductReportSynchronizerTest : EManagerSynchronizerTestBase
     {
         [TestMethod]
         public void ShouldCreateWorkItemAndMoveItToCorrectStep()
@@ -24,7 +24,7 @@ namespace WhiskWork.Synchronization.UnitTest
                         SetupResult.For(DominoRepository.OpenTable()).Return(CreateDominoData());
 
                         WhiskWorkRepository.PostWorkItem(WorkItem.New("B2404", "/cmsdev/scheduled"));
-                        WhiskWorkRepository.PostWorkItem(WorkItem.New("B2404", "/cmsdev/analysis/inprocess"));
+                        WhiskWorkRepository.PostWorkItem(WorkItem.New("B2404", "/cmsdev/wip/analysis/inprocess"));
                     }
                 );
 
@@ -163,7 +163,7 @@ namespace WhiskWork.Synchronization.UnitTest
                     SetupResult.For(WhiskWorkRepository.GetWorkItems()).Return(new[] { bug });
                     SetupResult.For(DominoRepository.OpenTable()).Return(CreateDominoData(now.AddSeconds(1)));
 
-                    WhiskWorkRepository.PostWorkItem(WorkItem.New("B2404","/cmsdev/analysis/inprocess"));
+                    WhiskWorkRepository.PostWorkItem(WorkItem.New("B2404","/cmsdev/wip/analysis/inprocess"));
                 });
 
             Playback();
@@ -252,7 +252,7 @@ namespace WhiskWork.Synchronization.UnitTest
 
         protected override EManagerWhiskWorkSynchronizer CreateSynchronizer(IWhiskWorkRepository whiskWorkRepository, IDominoRepository dominoRepository)
         {
-            return new BugSynchronizer(whiskWorkRepository, dominoRepository);
+            return new ProblemReportSynchronizer(whiskWorkRepository, dominoRepository);
         }
 
         private static DataTable CreateDominoData()
@@ -287,10 +287,11 @@ namespace WhiskWork.Synchronization.UnitTest
             dominoData.Columns.Add("Priority");
             dominoData.Columns.Add("Severity");
             dominoData.Columns.Add("TimeStamp");
+            dominoData.Columns.Add("Type");
 
             string timeStampText = DominoFormatDateTime(timeStamp);
 
-            dominoData.Rows.Add("Release20091212", "1", id, "A bug", "unid1", "2", priority, "1", timeStampText);
+            dominoData.Rows.Add("Release20091212", "1", id, "A bug", "unid1", "2", priority, "1", timeStampText,"1");
             return dominoData;
         }
 
