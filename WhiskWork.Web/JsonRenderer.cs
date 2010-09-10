@@ -34,7 +34,7 @@ namespace WhiskWork.Web
 
         public void Render(Stream stream, WorkStep workStep)
         {
-            using(var writer = new StreamWriter(stream))
+            using (var writer = new StreamWriter(stream))
             {
                 writer.Write("[");
 
@@ -43,13 +43,13 @@ namespace WhiskWork.Web
                 writer.Write("]");
             }
 
-       }
+        }
 
         private void RenderWorkStepsRecursively(TextWriter writer, WorkStep workStep, bool first)
         {
             foreach (var childWorkStep in _workflowRepository.GetChildWorkSteps(workStep.Path))
             {
-                if(!first)
+                if (!first)
                 {
                     writer.Write(",");
                 }
@@ -68,12 +68,12 @@ namespace WhiskWork.Web
                 }
 
                 first = false;
-            } 
+            }
         }
 
         private void RenderParallelStep(TextWriter writer, WorkStep workStep)
         {
-            RenderWorkStepsRecursively(writer,workStep,true);
+            RenderWorkStepsRecursively(writer, workStep, true);
         }
 
         private void RenderNormalStep(TextWriter writer, WorkStep childWorkStep)
@@ -90,12 +90,12 @@ namespace WhiskWork.Web
 
         private void RenderWorkStep(TextWriter writer, WorkStep childWorkStep)
         {
-            writer.Write("{workstep:");
+            writer.Write("{\"workstep\":");
 
             writer.Write(CreateWorkStepName(childWorkStep));
             writer.Write(",");
 
-            writer.Write("workitemList:");
+            writer.Write("\"workitemList\":");
 
             writer.Write("[");
 
@@ -109,26 +109,26 @@ namespace WhiskWork.Web
 
         private void RenderWorkItems(TextWriter writer, WorkStep step)
         {
-                var first = true;
+            var first = true;
 
-                foreach (var workItem in _workflowRepository.GetWorkItems(step.Path).OrderBy(wi => wi.Ordinal))
+            foreach (var workItem in _workflowRepository.GetWorkItems(step.Path).OrderBy(wi => wi.Ordinal))
+            {
+                if (!first)
                 {
-                    if (!first)
-                    {
-                        writer.Write(",");
-                    }
-
-                    RenderWorkItem(step, writer, workItem);
-
-                    first = false;
+                    writer.Write(",");
                 }
+
+                RenderWorkItem(step, writer, workItem);
+
+                first = false;
+            }
         }
 
         private void RenderWorkItem(WorkStep step, TextWriter writer, WorkItem workItem)
         {
             writer.Write("{");
 
-            writer.Write("id:\"{0}\"",workItem.Id);
+            writer.Write("\"id\":\"{0}\"", workItem.Id);
 
             RenderProperties(writer, workItem);
 
@@ -142,13 +142,17 @@ namespace WhiskWork.Web
         {
             foreach (var keyValue in item.Properties)
             {
-                writer.Write(",{0}:\"{1}\"",keyValue.Key, Encode(keyValue.Value));
+                writer.Write(",\"{0}\":\"{1}\"", keyValue.Key, Encode(keyValue.Value));
             }
         }
 
         private static string Encode(string value)
         {
-            return value.Replace("\"", "\\\"");
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
         }
 
         private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)
@@ -158,7 +162,7 @@ namespace WhiskWork.Web
             if (_workflowRepository.ExistsWorkStep(childStepPath))
             {
                 var childStep = _workflowRepository.GetWorkStep(childStepPath);
-                writer.Write(",worksteps:[");
+                writer.Write(",\"worksteps\":[");
 
                 RenderWorkStepsRecursively(writer, childStep, true);
 
