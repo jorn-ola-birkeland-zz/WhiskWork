@@ -33,7 +33,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[]}]",json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[]}]", json);
         }
 
         [TestMethod]
@@ -44,7 +44,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[]},{workstep:\"development\",workitemList:[]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[]},{\"workstep\":\"development\",\"workitemList\":[]}]", json);
         }
 
         [TestMethod]
@@ -55,7 +55,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\"}]}]", json);
         }
 
         [TestMethod]
@@ -67,7 +67,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\"},{id:\"cr2\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\"},{\"id\":\"cr2\"}]}]", json);
         }
 
         [TestMethod]
@@ -78,7 +78,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",prop:\"value\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\",\"prop\":\"value\"}]}]", json);
         }
 
         [TestMethod]
@@ -89,7 +89,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[]},{workstep:\"analysis-inprocess\",workitemList:[]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[]},{\"workstep\":\"analysis-inprocess\",\"workitemList\":[]}]", json);
         }
 
 
@@ -106,7 +106,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            const string expected = "[{workstep:\"analysis\",workitemList:[]},{workstep:\"development\",workitemList:[{id:\"cr1\",worksteps:[{workstep:\"development-cr1-new\",workitemList:[{id:\"cr1-1\"}]}]}]}]";
+            const string expected = "[{\"workstep\":\"analysis\",\"workitemList\":[]},{\"workstep\":\"development\",\"workitemList\":[{\"id\":\"cr1\",\"worksteps\":[{\"workstep\":\"development-cr1-new\",\"workitemList\":[{\"id\":\"cr1-1\"}]}]}]}]";
             Assert.AreEqual(expected, json);
         }
 
@@ -122,7 +122,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            const string expected = "[{workstep:\"analysis\",workitemList:[]},{workstep:\"development\",workitemList:[{id:\"cr1\",worksteps:[{workstep:\"development-cr1-new\",workitemList:[]}]},{id:\"cr2\",worksteps:[{workstep:\"development-cr2-new\",workitemList:[]}]}]}]";
+            const string expected = "[{\"workstep\":\"analysis\",\"workitemList\":[]},{\"workstep\":\"development\",\"workitemList\":[{\"id\":\"cr1\",\"worksteps\":[{\"workstep\":\"development-cr1-new\",\"workitemList\":[]}]},{\"id\":\"cr2\",\"worksteps\":[{\"workstep\":\"development-cr2-new\",\"workitemList\":[]}]}]}]";
             Assert.AreEqual(expected, json);
         }
 
@@ -137,7 +137,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            const string expected = "[{workstep:\"analysis\",workitemList:[{id:\"cr2\"},{id:\"cr1\"}]}]";
+            const string expected = "[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr2\"},{\"id\":\"cr1\"}]}]";
             Assert.AreEqual(expected, json);
 
         }
@@ -150,7 +150,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",prop:\"va\\\"l\\\"ue\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\",\"prop\":\"va\\x22l\\x22ue\"}]}]", json);
    
         }
 
@@ -171,7 +171,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{workstep:\"analysis\",workitemList:[{id:\"cr1\",timestamp:\"2010-11-26T14:35:11.323\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\",\"timestamp\":\"2010-11-26T14:35:11.323\"}]}]", json);
 
         }
 

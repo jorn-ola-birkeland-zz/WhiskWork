@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using Microsoft.Security.Application;
 using WhiskWork.Core;
 
 namespace WhiskWork.Web
@@ -128,7 +129,7 @@ namespace WhiskWork.Web
         {
             writer.Write("{");
 
-            writer.Write("\"id\":\"{0}\"", workItem.Id);
+            writer.Write("\"id\":\"{0}\"", Encode(workItem.Id));
 
             RenderProperties(writer, workItem);
 
@@ -142,17 +143,13 @@ namespace WhiskWork.Web
         {
             foreach (var keyValue in item.Properties)
             {
-                writer.Write(",\"{0}\":\"{1}\"", keyValue.Key, Encode(keyValue.Value));
+                writer.Write(",\"{0}\":\"{1}\"", Encode(keyValue.Key), Encode(keyValue.Value));
             }
         }
 
         private static string Encode(string value)
         {
-            return value
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\r", "\\r")
-                .Replace("\n", "\\n");
+            return AntiXss.JavaScriptEncode(value, false);
         }
 
         private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)
