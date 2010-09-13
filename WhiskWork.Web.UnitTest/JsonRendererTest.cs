@@ -150,7 +150,7 @@ namespace WhiskWork.Web.UnitTest
 
             var json = GetJson(WorkStep.Root);
 
-            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\",\"prop\":\"va\\x22l\\x22ue\"}]}]", json);
+            Assert.AreEqual("[{\"workstep\":\"analysis\",\"workitemList\":[{\"id\":\"cr1\",\"prop\":\"va\\u0022l\\u0022ue\"}]}]", json);
    
         }
 

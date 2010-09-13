@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Security.Application;
 using WhiskWork.Core;
 using System.Web;
@@ -151,7 +152,7 @@ namespace WhiskWork.Web
 
         private static string Encode(string value)
         {
-            return AntiXss.JavaScriptEncode(value, false);
+            return Regex.Replace(AntiXss.JavaScriptEncode(value, false), @"(?<!\\)\\[x]([0-9]{2})", "\\u00$1");
         }
 
         private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)
