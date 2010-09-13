@@ -6,8 +6,11 @@ namespace WhiskWork.Core
 {
     internal class WorkItemCreator : WorkflowRepositoryInteraction
     {
-        public WorkItemCreator(IWorkflowRepository workflowRepository) : base(workflowRepository)
+        private readonly ITimeSource _timeSource;
+
+        public WorkItemCreator(IWorkflowRepository workflowRepository, ITimeSource timeSource) : base(workflowRepository)
         {
+            _timeSource = timeSource;
         }
 
         public void CreateWorkItem(WorkItem newWorkItem)
@@ -30,7 +33,7 @@ namespace WhiskWork.Core
 
             var classes = WorkflowRepository.GetWorkItemClasses(leafStep);
 
-            newWorkItem = newWorkItem.MoveTo(leafStep).UpdateClasses(classes);
+            newWorkItem = newWorkItem.MoveTo(leafStep,_timeSource.GetTime()).UpdateClasses(classes);
 
             WorkStep transientStep;
             if (WorkflowRepository.IsWithinTransientStep(leafStep, out transientStep))
@@ -38,7 +41,7 @@ namespace WhiskWork.Core
                 var parentItem = GetTransientParentWorkItem(transientStep);
                 WorkflowRepository.UpdateWorkItem(parentItem.UpdateStatus(WorkItemStatus.ExpandLocked));
 
-                newWorkItem = newWorkItem.MoveTo(leafStep).UpdateParent(parentItem,WorkItemParentType.Expanded);
+                newWorkItem = newWorkItem.MoveTo(leafStep,_timeSource.GetTime()).UpdateParent(parentItem,WorkItemParentType.Expanded);
 
                 foreach (var workItemClass in newWorkItem.Classes)
                 {

@@ -3,6 +3,7 @@
 using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rhino.Mocks;
 using WhiskWork.Test.Common;
 
 #endregion
@@ -14,12 +15,16 @@ namespace WhiskWork.Core.UnitTest
     {
         private WorkStepMover _mover;
         private IWorkflowRepository _wr;
+        private MockRepository _mocks;
+        private ITimeSource _timeSourceStub;
 
         [TestInitialize]
         public void Init()
         {
+            _mocks = new MockRepository();
             _wr = new WorkflowRepository(new MemoryWorkItemRepository(), new MemoryWorkStepRepository());
-            _mover = new WorkStepMover(_wr);
+            _timeSourceStub = _mocks.Stub<ITimeSource>();
+            _mover = new WorkStepMover(_wr,_timeSourceStub);
         }
 
         [TestMethod]
@@ -195,5 +200,7 @@ namespace WhiskWork.Core.UnitTest
                 () => _mover.MoveWorkStep(step1Sub, step2)
                 );
         }
+
+
     }
 }

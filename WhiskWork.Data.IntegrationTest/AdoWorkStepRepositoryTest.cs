@@ -9,7 +9,7 @@ namespace WhiskWork.Data.IntegrationTest
     [TestClass]
     public class AdoWorkStepRepositoryTest
     {
-        private const string _connectionString = @"Data Source=BEKK-JORNOBI\SQLEXPRESS;Initial Catalog=WhiskWorkTest;Integrated Security=SSPI;";
+        private const string _connectionString = @"Data Source=BEKK-JORNOB;Initial Catalog=WhiskWorkTest;Integrated Security=SSPI;";
         private TransactionScope _tx;
         private AdoWorkStepRepository _repository;
         private WorkStep _ws;

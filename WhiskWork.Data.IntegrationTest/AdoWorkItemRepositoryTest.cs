@@ -10,7 +10,7 @@ namespace WhiskWork.Data.IntegrationTest
     [TestClass]
     public class AdoWorkItemRepositoryTest
     {
-        private const string _connectionString = @"Data Source=BEKK-JORNOBI\SQLEXPRESS;Initial Catalog=WhiskWorkTest;Integrated Security=SSPI;";
+        private const string _connectionString = @"Data Source=BEKK-JORNOB;Initial Catalog=WhiskWorkTest;Integrated Security=SSPI;";
         private TransactionScope _tx;
         private AdoWorkItemRepository _repository;
         private WorkItem _wi;
@@ -50,6 +50,15 @@ namespace WhiskWork.Data.IntegrationTest
             Assert.AreEqual(3, actual.Ordinal);
         }
 
+        [TestMethod]
+        public void ShouldCreateAndReadNullOrdinal()
+        {
+            _repository.CreateWorkItem(_wi);
+            var actual = _repository.GetWorkItem(_wi.Id);
+
+            Assert.IsNull(actual.Ordinal);
+        }
+        
         [TestMethod]
         public void ShouldCreateAndReadLastMovedTime()
         {
@@ -146,7 +155,7 @@ namespace WhiskWork.Data.IntegrationTest
         [TestMethod]
         public void ShouldUpdatePath()
         {
-            var wi = _wi.MoveTo(WorkStep.New("/path2"));
+            var wi = _wi.MoveTo(WorkStep.New("/path2"),DateTime.Now);
             _repository.UpdateWorkItem(wi);
 
             var actual = _repository.GetWorkItem(wi.Id);

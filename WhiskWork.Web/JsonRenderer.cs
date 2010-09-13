@@ -1,6 +1,8 @@
 using System.IO;
 using System.Linq;
 using WhiskWork.Core;
+using System.Web;
+using Microsoft.Security.Application;
 
 namespace WhiskWork.Web
 {
@@ -148,7 +150,7 @@ namespace WhiskWork.Web
 
         private static string Encode(string value)
         {
-            return value.Replace("\"", "\\\"");
+            return AntiXss.JavaScriptEncode(value, false);
         }
 
         private void RenderTransientWorkSteps(WorkStep step, TextWriter writer, WorkItem workItem)

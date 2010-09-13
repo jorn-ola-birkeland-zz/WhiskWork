@@ -29,7 +29,7 @@ namespace WhiskWork.Synchronizer
         {
             var workItem = CreateWorkItem(entry);
 
-            _repository.PostWorkItem(workItem.MoveTo(_beginStep));
+            _repository.PostWorkItem(workItem.MoveTo(_beginStep,DateTime.Now));
 
             _repository.PostWorkItem(workItem);
         }

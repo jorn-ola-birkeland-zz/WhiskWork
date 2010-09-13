@@ -102,6 +102,12 @@ namespace WhiskWork.Core.Synchronization
                     return false;
                 }
 
+                // Null or empty properties will be treated the same (removed), so no need to differ if one is empty and the other is null
+                if (string.IsNullOrEmpty(properties1[key]) && string.IsNullOrEmpty(properties2[key]))
+                {
+                    continue;
+                }
+
                 if (properties1[key] != properties2[key])
                 {
                     return false;

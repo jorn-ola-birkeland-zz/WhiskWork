@@ -6,10 +6,12 @@ namespace WhiskWork.Core
     public class WorkStepMover
     {
         private readonly IWorkflowRepository _workflowRepository;
+        private readonly ITimeSource _timeSource;
 
-        public WorkStepMover(IWorkflowRepository workflowRepository)
+        public WorkStepMover(IWorkflowRepository workflowRepository, ITimeSource timeSource)
         {
             _workflowRepository = workflowRepository;
+            _timeSource = timeSource;
         }
 
         public void MoveWorkStep(WorkStep stepToMove, WorkStep toStep)
@@ -75,7 +77,7 @@ namespace WhiskWork.Core
 
             foreach (var workItem in _workflowRepository.GetWorkItems(stepToMove.Path))
             {
-                _workflowRepository.UpdateWorkItem(workItem.MoveTo(newStep));
+                _workflowRepository.UpdateWorkItem(workItem.MoveTo(newStep,_timeSource.GetTime()));
             }
 
             foreach (var childWorkStep in _workflowRepository.GetChildWorkSteps(stepToMove.Path))

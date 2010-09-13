@@ -145,8 +145,8 @@ namespace WhiskWork.Core.UnitTest
             Assert.IsTrue(_wipLimit.CanAcceptWorkStep(ws1, ws2));
         }
 
-        [TestMethod, Ignore]
-        public void ShouldAcceptSettingWorkStepWipLimitBelowWipCount()
+        [TestMethod]
+        public void ShouldAcceptMovingWorkItemViolatingWipLimitWhenUnchangedWipUnderWipLimit()
         {
             _workStepRepository.CreateWorkStep("/step1",1);
             _workStepRepository.CreateWorkStep("/step1/sub1");

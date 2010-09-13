@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using WhiskWork.Core.Exception;
 
 namespace WhiskWork.Core
 {
@@ -16,13 +17,21 @@ namespace WhiskWork.Core
 
     }
 
-    internal class WorkItemMover : WorkflowRepositoryInteraction
+    public class WorkItemMover : WorkflowRepositoryInteraction
     {
         private readonly ITimeSource _timeSource;
+
+        public WorkItemMover(IWorkflowRepository workflowRepository) : this(workflowRepository,new DefaultTimeSource())
+        {
+        }
+
         public WorkItemMover(IWorkflowRepository workflowRepository, ITimeSource timeSource) : base(workflowRepository)
         {
             _timeSource = timeSource;
+            WipLimitChecker = new WipLimitChecker(workflowRepository);
         }
+
+        public IWipLimitChecker WipLimitChecker { get; set; }
 
         public void MoveWorkItem(WorkItem workItem, WorkStep toStep)
         {
@@ -40,6 +49,8 @@ namespace WhiskWork.Core
             ThrowIfMovingParallelLockedWorkItem(transition);
 
             ThrowIfMovingExpandLockedWorkItem(transition);
+
+            ThrowIfViolatingWipLimit(transition);
 
             if (IsMovingWithinParallelStep(transition))
             {
@@ -81,6 +92,14 @@ namespace WhiskWork.Core
             if (WorkflowRepository.IsExpandLockedWorkItem(transition.WorkItem))
             {
                 throw new InvalidOperationException("Item is expandlocked and cannot be moved");
+            }
+        }
+
+        private void ThrowIfViolatingWipLimit(WorkItemTransition transition)
+        {
+            if(!WipLimitChecker.CanAcceptWorkItem(transition.WorkItem.MoveTo(transition.WorkStep,_timeSource.GetTime())))
+            {
+                throw new WipLimitViolationException(transition.WorkItem,transition.WorkStep);
             }
         }
 
@@ -169,7 +188,10 @@ namespace WhiskWork.Core
         {
             ThrowIfMovingToStepWithWrongClass(transition);
 
-            var lockedAndMovedItem = transition.WorkItem.MoveTo(transition.WorkStep).UpdateStatus(WorkItemStatus.ParallelLocked);
+            var lockedAndMovedItem = transition.WorkItem
+                .MoveTo(transition.WorkStep, _timeSource.GetTime())
+                .UpdateStatus(WorkItemStatus.ParallelLocked);
+
             WorkflowRepository.UpdateWorkItem(lockedAndMovedItem);
 
             if (WorkflowRepository.IsInExpandStep(transition.WorkItem))
@@ -248,7 +270,7 @@ namespace WhiskWork.Core
 
         private WorkItemTransition DoMove(WorkItemTransition transition)
         {
-            var movedWorkItem = transition.WorkItem.MoveTo(transition.WorkStep).UpdateLastMoved(_timeSource.GetTime());
+            var movedWorkItem = transition.WorkItem.MoveTo(transition.WorkStep,_timeSource.GetTime());
 
             WorkflowRepository.UpdateWorkItem(movedWorkItem);
 

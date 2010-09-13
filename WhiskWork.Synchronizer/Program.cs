@@ -3,6 +3,7 @@
 using System;
 using System.Configuration;
 using System.IO;
+using System.Net;
 
 #endregion
 
@@ -75,7 +76,19 @@ namespace WhiskWork.Synchronizer
             synchronizer.IsSafeSynch = arguments.ContainsArg("-safe");
             synchronizer.IsDryRun = arguments.ContainsArg("-dryrun");
 
-            synchronizer.Synchronize();
+            try
+            {
+                synchronizer.Synchronize();
+            }
+            catch(WebException we)
+            {
+                Console.WriteLine(new StreamReader(we.Response.GetResponseStream()).ReadToEnd());
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
     }

@@ -61,7 +61,14 @@ namespace WhiskWork.Synchronizer
             var statusMap = CreateStatusMap();
 
             SynchronizeExistence(statusMap);
+
             SynchronizeProperties();
+
+            if (SynchronizeResponsibleEnabled)
+            {
+                SynchronizeResponsible();
+            }
+
             SynchronizeStatus(statusMap);
 
             if(SynchronizeStatusReverseEnabled)
@@ -69,14 +76,7 @@ namespace WhiskWork.Synchronizer
                 SynchronizeStatusReverse(statusMap);
             }
 
-            if (SynchronizeResponsibleEnabled)
-            {
-                SynchronizeResponsible();
-            }
         }
-
-
-
 
         private EManagerSynchronizationAgent CreateEManagerChangeRequestSynchronizationAgent()
         {
@@ -133,23 +133,13 @@ namespace WhiskWork.Synchronizer
             var creationSynchronizer = new CreationSynchronizer(statusMap, _eManagerAgent, _whiskWorkAgent);
             Console.WriteLine("Synchronizing existence (eManager->whiteboard)");
 
-            try
-            {
-                creationSynchronizer.Synchronize();
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine(WebCommunication.ReadResponseToEnd(e.Response));
-                throw;
-            }
+            creationSynchronizer.Synchronize();
         }
 
         private void SynchronizeProperties()
         {
             DataSynchronizer propertySynchronizer = CreatePropertyMap();
-
-
-
+            
             Console.WriteLine("Synchronizing properties eManager->whiteboard");
             try
             {

@@ -9,7 +9,13 @@ using System.Linq;
 
 namespace WhiskWork.Core
 {
-    public class WipLimitChecker
+    public interface IWipLimitChecker
+    {
+        bool CanAcceptWorkItem(WorkItem workItem);
+        bool CanAcceptWorkStep(WorkStep addToStep, WorkStep workStepToAdd);
+    }
+
+    public class WipLimitChecker : IWipLimitChecker
     {
         private readonly IWorkflowRepository _workflowRepository;
 
@@ -50,14 +56,16 @@ namespace WhiskWork.Core
         {
             var currentWorkStep = workStep;
             WorkStep childStep = null;
-            int wipCount = workItemsToAdd;
+
+            var wipCount = workItemsToAdd;
+            var fullWipCount = 0;
 
             while (currentWorkStep != null)
             {
                 wipCount += CountSubTree(currentWorkStep, workItemsToExclude, childStep);
+                fullWipCount += CountSubTree(currentWorkStep, null, childStep);
 
-
-                var allowed = !currentWorkStep.WipLimit.HasValue || currentWorkStep.WipLimit.Value >= wipCount;
+                var allowed = !currentWorkStep.WipLimit.HasValue || currentWorkStep.WipLimit.Value >= wipCount || wipCount<=fullWipCount;
                 if (!allowed)
                 {
                     return false;

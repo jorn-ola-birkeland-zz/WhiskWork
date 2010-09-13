@@ -37,7 +37,7 @@ namespace WhiskWork.Synchronizer
 
         protected override bool SynchronizeResponsibleEnabled
         {
-            get { return false; }
+            get { return true; }
         }
 
         protected override bool SynchronizeStatusReverseEnabled
@@ -105,6 +105,7 @@ namespace WhiskWork.Synchronizer
             var severity = (string)row[7];
             var timeStamp = ParseDominoTimeStamp((string)row[8]);
             var type = GetProblemReportType((string) row[9]);
+            var person = (string)row[10];
 
             if ((ApplicationIdFilter != null && !ApplicationIdFilter.Contains(applicationId)) || (ReleaseFilter != null && !ReleaseFilter.Contains(release)))
             {
@@ -131,7 +132,12 @@ namespace WhiskWork.Synchronizer
                         {"type",type},
                     };
 
-            var ordinal = !priority.HasValue ? -1 : -4+priority;
+            if (!string.IsNullOrEmpty(person))
+            {
+                properties.Add("CurrentPerson", person);
+            }
+
+            var ordinal = !priority.HasValue ? -1 : -priority;
             return new SynchronizationEntry(id, status, properties) { Ordinal = ordinal, TimeStamp=timeStamp};
         }
 

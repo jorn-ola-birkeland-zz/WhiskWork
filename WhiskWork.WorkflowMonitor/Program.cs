@@ -67,7 +67,7 @@ namespace WhiskWork.WorkflowMonitor
 
                 using (var reader = cmd.ExecuteReader())
                 {
-                    while (reader != null && reader.Read())
+                    while (reader.Read())
                     {
                         var id = reader.GetString(0);
                         var path = reader.GetString(1);

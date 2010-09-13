@@ -45,7 +45,7 @@ namespace WhiskWork.Web
         public static WorkflowHttpResponse Forbidden(Exception e)
         {
             var response = new WorkflowHttpResponse(HttpStatusCode.Forbidden);
-            response.Write(e.ToString());
+            response.Write(e.Message);
             return response;
         }
 

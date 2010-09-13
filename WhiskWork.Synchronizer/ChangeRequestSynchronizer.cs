@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using WhiskWork.Core;
 using WhiskWork.Core.Synchronization;
@@ -10,6 +8,8 @@ namespace WhiskWork.Synchronizer
 {
     public class ChangeRequestSynchronizer : EManagerWhiskWorkSynchronizer
     {
+        private const int _maxOrdinal = 100000;
+
         public ChangeRequestSynchronizer(IWhiskWorkRepository whiskWorkRepository, IDominoRepository dominoRepository) : base(whiskWorkRepository, dominoRepository)
         {
         }
@@ -29,7 +29,7 @@ namespace WhiskWork.Synchronizer
 
         protected override bool SynchronizeStatusReverseEnabled
         {
-            get { return false; }
+            get { return true; }
         }
 
         protected override SynchronizationMap CreateStatusMap()
@@ -97,10 +97,8 @@ namespace WhiskWork.Synchronizer
             var status = (string)dataRow[7];
             var ordinal = ParseNumber((string)dataRow[8]);
             var person = (string)dataRow[9];
-            DateTime? timeStamp = null;
-            //var timeStamp = ParseDominoTimeStamp((string)dataRow[10]);
-
-
+            var timeStamp = ParseDominoTimeStamp((string)dataRow[10]);
+            
             if ((TeamFilter != null && !TeamFilter.Contains(team)) || (ReleaseFilter != null && !ReleaseFilter.Contains(release)))
             {
                 return null;
@@ -127,6 +125,11 @@ namespace WhiskWork.Synchronizer
             if (!string.IsNullOrEmpty(person))
             {
                 properties.Add("CurrentPerson", person);
+            }
+
+            if(!ordinal.HasValue)
+            {
+                ordinal = _maxOrdinal;
             }
 
             return new SynchronizationEntry(id, status, properties) { Ordinal = ordinal, TimeStamp = timeStamp};

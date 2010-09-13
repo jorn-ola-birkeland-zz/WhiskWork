@@ -120,9 +120,9 @@ namespace WhiskWork.Core
 
 
 
-        public WorkItem MoveTo(WorkStep step)
+        public WorkItem MoveTo(WorkStep step, DateTime timeStamp)
         {
-            return new WorkItem(Id,step.Path,Classes,Status,Parent, _ordinal,_properties, Timestamp, LastMoved);
+            return new WorkItem(Id,step.Path,Classes,Status,Parent, _ordinal,_properties, timeStamp, timeStamp);
         }
 
         public WorkItem UpdateStatus(WorkItemStatus status)

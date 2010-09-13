@@ -57,8 +57,8 @@ namespace WhiskWork.Synchronization.UnitTest
             Playback();
         }
 
-        [TestMethod]
-        public void ShouldNotReverseSynchronizeStatus()
+        [TestMethod, Ignore]
+        public void ShouldReverseSynchronizeStatus()
         {
             StubDominoAndMockWhiskWork();
 
@@ -72,6 +72,7 @@ namespace WhiskWork.Synchronization.UnitTest
                             CreateProperties()).UpdateLastMoved(now);
                     SetupResult.For(WhiskWorkRepository.GetWorkItems()).Return(new[] { cr });
                     SetupResult.For(DominoRepository.OpenTable()).Return(CreateDominoData(now.AddSeconds(1)));
+                    WhiskWorkRepository.PostWorkItem(cr.UpdateLastMoved(now.AddSeconds(1)));
                 });
 
             Playback();

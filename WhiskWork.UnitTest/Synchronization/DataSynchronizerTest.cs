@@ -162,7 +162,21 @@ namespace WhiskWork.Core.UnitTest.Synchronization
             }
         }
 
+        [TestMethod]
+        public void ShouldNotUpdateIfSlavePropertyIsMissingAndMasterPropertyIsEmpty()
+        {
+            _propertyMap.AddReciprocalEntry("Name", "Name");
 
+            using (Mocks.Record())
+            {
+                SetupResult.For(_masterStub.GetAll()).Return(new[] { Entry("1", "/done", "Name", string.Empty) });
+                Expect.Call(_slaveMock.GetAll()).Return(new[] { Entry("1", "Development", "Name", null) });
 
+            }
+            using (Mocks.Playback())
+            {
+                _synchronizer.Synchronize();
+            }
+        }
     }
 }

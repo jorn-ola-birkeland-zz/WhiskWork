@@ -25,7 +25,7 @@ namespace WhiskWork.Core
 
         public void CreateWorkItem(WorkItem newWorkItem)
         {
-            var creator = new WorkItemCreator(WorkflowRepository);
+            var creator = new WorkItemCreator(WorkflowRepository, TimeSource);
             
             
             var timeStamp = TimeSource.GetTime();
@@ -110,7 +110,7 @@ namespace WhiskWork.Core
 
         public void MoveWorkStep(WorkStep stepToMove, WorkStep toStep)
         {
-            var mover = new WorkStepMover(WorkflowRepository);
+            var mover = new WorkStepMover(WorkflowRepository,TimeSource);
             mover.MoveWorkStep(stepToMove, toStep);
         }
 
